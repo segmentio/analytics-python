@@ -1,4 +1,17 @@
 
+import sys
+
+try:
+    import requests
+except ImportError:
+    print >>sys.stderr, 'The Segmentio library requires that you have a Python "requests" library installed. Try running "pip install requests"'
+
+try:
+    import gevent
+except ImportError:
+    print >>sys.stderr, 'The Segmentio library requires that you have a Python "gevent" library installed. Try running "pip install gevent". Note: gevent requires libevent-dev to build.'
+
+
 from stats import Statistics
 stats = Statistics()
 

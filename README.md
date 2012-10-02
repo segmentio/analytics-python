@@ -105,6 +105,11 @@ segmentio.on_failure(on_failure)
 You can import previous data by using the Identify / Track override that accepts a timestamp. If you are tracking things that are
 happening now, we prefer that you leave the timestamp out and let our servers timestamp your requests.
 
+#### Testing
+
+```bash
+python test.py
+```
 
 #### License
 
