@@ -8,7 +8,8 @@ setup(
     packages=['segmentio'],
     license='MIT License',
     install_requires=[
-        'grequests'
+        'gevent',
+        'requests'
     ],
     description='Official Segment.io Python Client',
     long_description=open('README.md').read()

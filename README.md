@@ -10,9 +10,12 @@ You can use this driver to identify and track your users' events into your Segme
 
 ## Design
 
-This client uses batching to efficiently record your events in aggregate, rather than making an HTTP
-request every time. This means that it is safe to use in your web server controllers, or in back-end services
+This client is non-blocking, and uses batching to efficiently record your events in aggregate, rather than making
+an HTTP request every time. This means that it is safe to use in your web server controllers, or in back-end services
 without worrying that it will make too many HTTP requests and slow down the system.
+
+This implementation uses another thread to periodically flush the queue. Gevent's Greenlets are used in
+combination with requests to guarentee efficient thread use.
 
 Check out the source to see how the batching, and async HTTP requests are handled. Feedback is very welcome!
 
