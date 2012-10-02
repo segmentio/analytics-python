@@ -28,7 +28,7 @@ python setup.py install
 
 #### Initialize the client
 
-You can create seperate Segmentio clients, but the easiest and recommended way is to use the static Segmentio singleton client.
+You can create separate Segmentio clients, but the easiest and recommended way is to use the static Segmentio singleton client.
 
 ```python
 import segmentio
