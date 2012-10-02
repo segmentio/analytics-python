@@ -3,8 +3,18 @@
 class Statistics(object):
 
     def __init__(self):
-        self.identifies = 0
-        self.tracks = 0
+        # The number of submitted identifies/tracks
         self.submitted = 0
+
+        # The number of identifies submitted
+        self.identifies = 0
+        # The number of tracks submitted
+        self.tracks = 0
+
+        # The number of actions to be successful
         self.successful = 0
-        self.failures = 0
+        # The number of actions to fail
+        self.failed = 0
+
+        # The number of flushes to happen
+        self.flushes = 0
