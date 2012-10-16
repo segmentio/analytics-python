@@ -4,11 +4,6 @@ import threading
 import datetime
 import collections
 
-import gevent
-from gevent import monkey
-monkey.patch_thread()
-import gevent.pool
-
 import requests
 
 from stats import Statistics
@@ -16,8 +11,19 @@ from errors import ApiError, BatchError
 
 import options
 
+logging_enabled = True
+import logging
+logger = logging.getLogger('segment')
+
+
+def log(level, *args):
+    if logging_enabled:
+        method = getattr(logger, level)
+        method(*args)
+
 
 def package_exception(client, data, e):
+    log('warn', 'Segment.io request error', e)
     client._on_failed_flush(data, e)
 
 
@@ -49,52 +55,64 @@ def package_response(client, data, response):
 
 
 def request(client, url, data):
-    print 'Request started'
+
+    log('debug', 'Sending request to Segment.io ...')
     try:
         response = requests.post(url, data=json.dumps(data),
             headers={'content-type': 'application/json'})
+
+        log('debug', 'Finished Segment.io request.')
+
         package_response(client, data, response)
+
     except requests.ConnectionError as e:
         package_exception(client, data, e)
 
 
 class FlushThread(threading.Thread):
 
-    def __init__(self, client, url, batches, pool_size=2):
+    def __init__(self, client, url, batches):
         threading.Thread.__init__(self)
         self.client = client
         self.url = url
         self.batches = batches
-        self.pool = gevent.pool.Pool(pool_size)
 
     def run(self):
-        print 'Flushing thread started'
-        for data in self.batches:
-            self.pool.spawn(request, self.client, self.url, data)
+        log('debug', 'Flushing thread running ...')
 
-        self.pool.join()
+        for data in self.batches:
+            request(self.client, self.url, data)
+
+        log('debug', 'Flushing thread done.')
 
 
 class Client(object):
 
-    def __init__(self, api_key=None, logging=True, pool_size=2, flush_size=10,
-                    max_size=100000, flush_size_trigger=50,
-                    flush_time_trigger=datetime.timedelta(0, 10),
-                    stats=Statistics()):
+    def __init__(self, api_key=None,
+                       log_level=logging.INFO, log=True,
+                       flush_at=10, max_flush_size=10, flush_after=datetime.timedelta(0, 10),
+                       async=True, max_queue_size=100000,
+                       stats=Statistics()):
 
         self.api_key = api_key
 
         self.queue = collections.deque()
         self.last_flushed = None
 
-        self.pool_size = pool_size
-        self.logging = logging
+        if not log:
+            logging_enabled = False
+            # effectively disables the logger
+            logger.setLevel(logging.CRITICAL)
+        else:
+            logger.setLevel(log_level)
 
-        self.max_size = max_size
-        self.flush_size = flush_size
+        self.async = async
 
-        self.flush_size_trigger = flush_size_trigger
-        self.flush_time_trigger = flush_time_trigger
+        self.max_queue_size = max_queue_size
+        self.max_flush_size = max_flush_size
+
+        self.flush_at = flush_at
+        self.flush_after = flush_after
 
         self.stats = stats
 
@@ -104,12 +122,22 @@ class Client(object):
         self.success_callbacks = []
         self.failure_callbacks = []
 
+    def set_log_level(self, level):
+        logger.setLevel(level)
+
     def _check_for_api_key(self):
         if not self.api_key:
             raise Exception('Please set segmentio.api_key before calling identify or track.')
 
-    def _clean(self, dict):
-        pass
+    def _clean(self, d):
+        to_delete = []
+        for key in d.iterkeys():
+            val = d[key]
+            if not isinstance(val, (str, int, long, float, bool, datetime.date)):
+                log('warn', 'Dictionary values must be strings, integers, longs, floats, booleans, or dates. Dictioary key\'s "{0}" value {1} of type {2} is unsupported.'.format(key, val, type(val)))
+                to_delete.append(key)
+        for key in to_delete:
+            del d[key]
 
     def on_success(self, callback):
         self.success_callbacks.append(callback)
@@ -187,11 +215,11 @@ class Client(object):
     def _should_flush(self):
         """ Determine whether we should sync """
 
-        full = len(self.queue) >= self.flush_size_trigger
+        full = len(self.queue) >= self.flush_at
         stale = self.last_flushed is None
 
         if not stale:
-            stale = datetime.datetime.now() - self.last_flushed > self.flush_time_trigger
+            stale = datetime.datetime.now() - self.last_flushed > self.flush_after
 
         return full or stale
 
@@ -199,12 +227,15 @@ class Client(object):
 
         submitted = False
 
-        if len(self.queue) < self.max_size:
+        if len(self.queue) < self.max_queue_size:
             self.queue.append(action)
 
             self.stats.submitted += 1
 
             submitted = True
+
+        else:
+            log('warn', 'Segment.io queue is full')
 
         if self._should_flush():
             self.flush()
@@ -226,44 +257,70 @@ class Client(object):
                     callback(data, error)
 
     def _flush_thread_is_free(self):
-        return self.flushing_thread is None or self.flushing_thread.is_alive()
+        return self.flushing_thread is None or not self.flushing_thread.is_alive()
 
     def flush(self):
         """ Flushes a batch to the server """
 
         flushing = False
 
-        with self.flush_lock:
+        url = options.host + options.endpoints['batch']
 
-            if self._flush_thread_is_free():
+        if self.async:
 
-                batches = []
+            # Flushes on another thread
 
-                while len(self.queue) > 0:
-                    batch = []
-                    for i in range(self.flush_size):
-                        if len(self.queue) == 0:
-                            break
-                        batch.append(self.queue.pop())
+            with self.flush_lock:
 
-                    batches.append({
-                        'batch':          batch,
-                        'apiKey':         self.api_key
-                    })
+                if self._flush_thread_is_free():
 
-                if len(batches) > 0:
+                    log('debug', 'Attempting asynchronous flush ...')
 
-                    url = options.host + options.endpoints['batch']
+                    batches = self._get_batches()
+                    if len(batches) > 0:
 
-                    self.flushing_thread = FlushThread(self,
-                        url, batches, self.pool_size)
+                        self.flushing_thread = FlushThread(self,
+                            url, batches)
 
-                    self.flushing_thread.start()
+                        self.flushing_thread.start()
 
-                    self.last_synced = datetime.datetime.now()
+                        flushing = True
 
-                    self.stats.flushes += 1
+                else:
+                    log('debug', 'The flushing thread is still active, cant flush right now')
+        else:
 
-                    flushing = True
+            # Flushes on this thread
+            log('debug', 'Starting synchronous flush ...')
+
+            batches = self._get_batches()
+            if len(batches) > 0:
+                for data in batches:
+                    request(self, url, data)
+                flushing = True
+
+            log('debug', 'Finished synchronous flush.')
+
+        if flushing:
+            self.last_flushed = datetime.datetime.now()
+            self.stats.flushes += 1
 
         return flushing
+
+    def _get_batches(self):
+
+        batches = []
+
+        while len(self.queue) > 0:
+            batch = []
+            for i in range(self.max_flush_size):
+                if len(self.queue) == 0:
+                    break
+                batch.append(self.queue.pop())
+
+            batches.append({
+                'batch':          batch,
+                'apiKey':         self.api_key
+            })
+
+        return batches

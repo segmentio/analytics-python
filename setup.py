@@ -2,13 +2,12 @@ from distutils.core import setup
 
 
 setup(
-    name='segmentio',
+    name='segment',
     version='0.0.1',
-    url='https://github.com/segmentio/segmentio-python',
-    packages=['segmentio'],
+    url='https://github.com/segmentio/segment-python',
+    packages=['segment'],
     license='MIT License',
     install_requires=[
-        'gevent',
         'requests'
     ],
     description='Official Segment.io Python Client',

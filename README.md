@@ -1,4 +1,4 @@
-﻿segmentio-python
+﻿segment-python
 =============
 
 [Segment.io](https://segment.io) is a segmentation-focused analytics platform. If you haven't yet,
@@ -31,10 +31,10 @@ python setup.py install
 You can create seperate Segmentio clients, but the easiest and recommended way is to use the static Segmentio singleton client.
 
 ```python
-import segmentio
+import segment
 
 api_key = live_api_key if is_production else test_api_key
-segmentio.init(api_key)
+segment.init(api_key)
 ```
 
 #### Identify a User
@@ -42,7 +42,7 @@ segmentio.init(api_key)
 Identifying a user ties all of their actions to an ID you recognize and records user traits you can segment by.
 
 ```python
-segmentio.identify('random_session_id', 'ilya@segment.io', {
+segment.identify('random_session_id', 'ilya@segment.io', {
     "Subscription Plan": "Free",
     "Friends": 30
 })
@@ -63,7 +63,7 @@ users by any trait you record. Once you record a trait, no need to send it again
 Whenever a user triggers an event on your site, you’ll want to track it so that you can analyze and segment by those events later.
 
 ```python
-segmentio.track('random_session_id', 'ilya@segment.io', 'Played a Song', {
+segment.track('random_session_id', 'ilya@segment.io', 'Played a Song', {
     "Artist": "The Beatles",
     "Song": "Eleanor Rigby"
 })
@@ -94,10 +94,10 @@ def on_success(data, response):
 def on_failure(data, error):
     print 'Failure', error
 
-segmentio.init('fakeid')
+segment.init('fakeid')
 
-segmentio.on_success(on_success)
-segmentio.on_failure(on_failure)
+segment.on_success(on_success)
+segment.on_failure(on_failure)
 ```
 
 #### Importing Historical Data

@@ -1,5 +1,5 @@
 
-host = 'https://api.segmentio.io'
+host = 'https://api.segment.io'
 
 endpoints = {
     'track': '/v2/track',
