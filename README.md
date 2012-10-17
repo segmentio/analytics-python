@@ -17,13 +17,13 @@ without worrying that it will make too many HTTP requests and slow down the syst
 This implementation is optionally batching and optionally asynchronous
 (uses another thread to periodically flush the queue).
 
-Feedback is very welcome!
+[Feedback is very welcome!](friends@segment.io)
 
 ## How to Use
 
 #### Install
 ```bash
-python setup.py install
+pip install segment
 ```
 
 #### Initialize the client
@@ -81,7 +81,7 @@ their actions to their identity. This makes it possible for you to run things li
 
 **properties** (dict) is a dictionary with items that describe the event in more detail. This argument is optional, but highly recommended—you’ll find these properties extremely useful later.
 
-### Advanced
+## Advanced
 
 #### Batching Behavior
 
@@ -239,6 +239,19 @@ python test.py
 ```
 
 #### License
+
+```
+WWWWWW||WWWWWW
+ W W W||W W W
+      ||
+    ( OO )__________
+     /  |           \
+    /o o|    MIT     \
+    \___/||_||__||_|| *
+         || ||  || ||
+        _||_|| _||_||
+       (__|__|(__|__|
+```
 
 (The MIT License)
 
