@@ -34,7 +34,7 @@ You can create seperate Segmentio clients, but the easiest and recommended way i
 import segment
 
 api_key = live_api_key if is_production else test_api_key
-segment.init(api_key)
+segment.initialize(api_key)
 ```
 
 #### Identify a User
@@ -94,7 +94,7 @@ def on_success(data, response):
 def on_failure(data, error):
     print 'Failure', error
 
-segment.init('fakeid')
+segment.initialize('fakeid')
 
 segment.on_success(on_success)
 segment.on_failure(on_failure)

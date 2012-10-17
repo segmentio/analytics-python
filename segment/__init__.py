@@ -13,6 +13,26 @@ from client import Client
 
 
 def initialize(api_key, **kwargs):
+    """Create a default instance of a Segment.io Client
+
+    :param str api_key: The Segment.io Live or Test API key
+
+    Kwargs:
+
+    :param logging.LOG_LEVEL log_level: The logging log level for the client
+    talks to. Use log_level=logging.DEBUG to troubleshoot
+    : param bool log: False to turn off logging completely, True by default
+    : param int flush_at: Specicies after how many messages the client will flush
+    to the server. Use flush_at=1 to disable batching
+    : param datetime.timedelta flush_after: Specifies after how much time
+    of no flushing that the server will flush. Used in conjunction with
+    the flush_at size policy
+    : param bool async: True to have the client flush to the server on another
+    thread, therefore not blocking code (this is the default). False to
+    enable blocking and making the request on the calling thread.
+
+    """
+
     default_client = Client(api_key=api_key, stats=stats, **kwargs)
     import sys
     this_module = sys.modules[__name__]

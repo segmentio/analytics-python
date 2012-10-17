@@ -87,12 +87,32 @@ class FlushThread(threading.Thread):
 
 
 class Client(object):
+    """The Client class is a batching asynchronous python wrapper over the
+    Segment.io API.
+
+    """
 
     def __init__(self, api_key=None,
                        log_level=logging.INFO, log=True,
-                       flush_at=10, max_flush_size=10, flush_after=datetime.timedelta(0, 10),
+                       flush_at=10, flush_after=datetime.timedelta(0, 10),
                        async=True, max_queue_size=100000,
                        stats=Statistics()):
+        """Create a new instance of a Segment.io Client
+
+        :param str api_key: The Segment.io Live or Test API key
+        :param logging.LOG_LEVEL log_level: The logging log level for the client
+        talks to. Use log_level=logging.DEBUG to troubleshoot
+        : param bool log: False to turn off logging completely, True by default
+        : param int flush_at: Specicies after how many messages the client will flush
+        to the server. Use flush_at=1 to disable batching
+        : param datetime.timedelta flush_after: Specifies after how much time
+        of no flushing that the server will flush. Used in conjunction with
+        the flush_at size policy
+        : param bool async: True to have the client flush to the server on another
+        thread, therefore not blocking code (this is the default). False to
+        enable blocking and making the request on the calling thread.
+
+        """
 
         self.api_key = api_key
 
@@ -109,7 +129,7 @@ class Client(object):
         self.async = async
 
         self.max_queue_size = max_queue_size
-        self.max_flush_size = max_flush_size
+        self.max_flush_size = 50
 
         self.flush_at = flush_at
         self.flush_after = flush_after
@@ -123,6 +143,11 @@ class Client(object):
         self.failure_callbacks = []
 
     def set_log_level(self, level):
+        """Sets the log level for Segment.io client
+
+        :param logging.LOG_LEVEL level: The level at which Segment.io log should talk at
+
+        """
         logger.setLevel(level)
 
     def _check_for_api_key(self):
@@ -148,7 +173,36 @@ class Client(object):
     def identify(self, session_id=None, user_id=None, traits={},
         context={}, timestamp=None):
 
-        """ Identify call """
+        """Identifying a user ties all of their actions to an ID
+        you recognize and records user traits you can segment by.
+
+        :param str session_id: Ta unique id associated with each user's session.
+        Most web frameworks provide a session id you can use here, but if you
+        don't have one (like if you're sending from a desktop app),
+        you can use null.
+
+        :param str user_id: is best as an email, but any unique ID will work.
+        This is how you recognize a signed-in user in your system. Note:
+        userId can be null if the user is not logged in, but then you must
+        provide a sessionId. By explicitly identifying a user, you tie all of
+        their actions to their identity. This makes it possible for you to
+        run things like segment-based email campaigns.
+
+        : param dict traits: a dictionary with keys like “Subscription Plan”
+        or “Favorite Genre”. You can segment your users by any trait you record.
+        Once you record a trait, no need to send it again, so the traits
+        argument is optional. Accepted value types are string, boolean, ints,
+        doubles, longs, and datetime.date.
+
+        : param dict context: An optional dictionary with additional information
+        thats related to the visit. Examples are userAgent, and IP address
+        of the visitor.
+
+        : param datetime.date timestamp: If this event happened in the past,
+        the timestamp   can be used to designate when the identification happened.
+        Careful with this one,  if it just happened, leave it None.
+
+        """
 
         self._check_for_api_key()
 
@@ -179,9 +233,37 @@ class Client(object):
             self.stats.identifies += 1
 
     def track(self, session_id=None, user_id=None, event=None, properties={},
-                context={}, timestamp=None):
+                timestamp=None):
 
-        """ Track call """
+        """Whenever a user triggers an event on your site, you’ll want to track it
+        so that you can analyze and segment by those events later.
+
+        :param str session_id: Ta unique id associated with each user's session.
+        Most web frameworks provide a session id you can use here, but if you
+        don't have one (like if you're sending from a desktop app),
+        you can use null.
+
+        :param str user_id: is best as an email, but any unique ID will work.
+        This is how you recognize a signed-in user in your system. Note:
+        userId can be null if the user is not logged in, but then you must
+        provide a sessionId. By explicitly identifying a user, you tie all of
+        their actions to their identity. This makes it possible for you to
+        run things like segment-based email campaigns.
+
+        : param str event: The event name you are tracking. It is recommended
+        that it is in human readable form. For example, "Bought T-Shirt"
+        or "Started an exercise"
+
+        : param dict properties: A dictionary with items that describe the event
+        in more detail. This argument is optional, but highly recommended —
+        you’ll find these properties extremely useful later. Accepted value
+        types are string, boolean, ints, doubles, longs, and datetime.date.
+
+        : param datetime.date timestamp: If this event happened in the past,
+        the timestamp   can be used to designate when the identification happened.
+        Careful with this one,  if it just happened, leave it None.
+
+        """
 
         self._check_for_api_key()
 
@@ -260,7 +342,7 @@ class Client(object):
         return self.flushing_thread is None or not self.flushing_thread.is_alive()
 
     def flush(self):
-        """ Flushes a batch to the server """
+        """ Forces a flush from the queue to the server """
 
         flushing = False
 
