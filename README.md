@@ -42,7 +42,7 @@ segment.initialize(api_key)
 Identifying a user ties all of their actions to an ID you recognize and records user traits you can segment by.
 
 ```python
-segmentio.identify('unique_session_id', 'ilya@segment.io', {
+segment.identify('unique_session_id', 'ilya@segment.io', {
     "Subscription Plan": "Free",
     "Friends": 30
 })
@@ -63,7 +63,7 @@ users by any trait you record. Once you record a trait, no need to send it again
 Whenever a user triggers an event on your site, you’ll want to track it so that you can analyze and segment by those events later.
 
 ```python
-segmentio.track('unique_session_id', 'ilya@segment.io', 'Played a Song', {
+segment.track('unique_session_id', 'ilya@segment.io', 'Played a Song', {
     "Artist": "The Beatles",
     "Song": "Eleanor Rigby"
 })
@@ -85,12 +85,14 @@ their actions to their identity. This makes it possible for you to run things li
 
 #### Turn Off Batching
 
-By default, the client will flush the first time it gets a message, and then either
-every 10 messages or if ten seconds passes without a flush.
+By default, the client will flush when:
+1) the first time it gets a message
+2) every 10 messages (control with ```flush_at```)
+3) if 10 seconds passes without a flush (control with the ```flush_after```)
 
-When debugging, or in short-lived programs, you might just want the request
-to happen right away. In this case, you can turn off batching by setting the
-flush_at argument to 1 (or flush at 1 message).
+When debugging or in short-lived programs, you might the client to make the
+request right away. In this case, you can turn off batching by setting the
+flush_at argument to 1.
 
 ```python
 segment.initialize('API_KEY', flush_at=1)
