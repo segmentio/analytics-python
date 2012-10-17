@@ -1,7 +1,7 @@
 
 import unittest
 
-from datetime import date, timedelta
+from datetime import datetime, timedelta
 
 from time import sleep, time
 
@@ -34,7 +34,7 @@ class SegmentioBasicTests(unittest.TestCase):
             'long': 200000000,
             'bool': True,
             'str': 'woo',
-            'date': date.today(),
+            'date': datetime.now(),
         }
 
         unsupported = {
@@ -123,7 +123,7 @@ class SegmentioBasicTests(unittest.TestCase):
         }
 
         segment.identify('random_session_id', 'ilya@segment.io', traits,
-            context=context, timestamp=date.today())
+            context=context, timestamp=datetime.now())
 
         self.assertTrue(segment.stats.identifies == last_identifies + 1)
 
@@ -145,7 +145,7 @@ class SegmentioBasicTests(unittest.TestCase):
         }
 
         segment.track('random_session_id', 'ilya@segment.io', 'Played a Song',
-            properties, timestamp=date.today())
+            properties, timestamp=datetime.now())
 
         self.assertTrue(segment.stats.tracks == last_tracks + 1)
 
@@ -167,7 +167,7 @@ class SegmentioBasicTests(unittest.TestCase):
         }
 
         segment.track('random_session_id', 'ilya@segment.io', 'Played a Song',
-            properties, timestamp=date.today())
+            properties, timestamp=datetime.today())
 
         self.assertTrue(segment.stats.tracks == last_tracks + 1)
         self.assertTrue(segment.stats.successful == last_successful + 1)

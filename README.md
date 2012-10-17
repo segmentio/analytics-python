@@ -81,6 +81,8 @@ their actions to their identity. This makes it possible for you to run things li
 
 **properties** (dict) is a dictionary with items that describe the event in more detail. This argument is optional, but highly recommended—you’ll find these properties extremely useful later.
 
+
+
 ## Advanced
 
 #### Batching Behavior
@@ -180,24 +182,28 @@ on_failure event callback.
 
 #### Importing Historical Data
 
-You can import previous data by using the Identify / Track override that
-accepts a timestamp. If you are tracking things that are happening now,
-we prefer that you leave the timestamp out and let our servers
-timestamp your requests.
+You can import historical data by adding the timestamp argument (of type
+datetime.datetime) to the identify / track calls. Note: if you are tracking
+things that are happening now, we prefer that you leave the timestamp out and
+let our servers timestamp your requests.
 
 Here's an example of someone importing from their server logs:
 
 ```python
 
-import iso8601
+import dateutil.parser
 
 import segment
 segment.initialize('API_KEY', async=False)
 
 for entry in log:
 
-    user_id = entry.user.id
-    timestamp = iso8601.parse_date(entry.timestamp)
+
+    user_id = entry.user.id # user@gmail.com
+
+    # now find some time in the past
+    timestamp_str = entry.timestamp; # 2010-05-08T23:41:54.000Z
+    timestamp = dateutil.parser.parse(timestamp_str) # a datetime.datetime object
 
     segment.track(user_id=user_id, timestamp=timestamp, event='Bought a shirt', properties={
         "color": "Blue",

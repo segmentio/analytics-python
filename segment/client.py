@@ -158,8 +158,8 @@ class Client(object):
         to_delete = []
         for key in d.iterkeys():
             val = d[key]
-            if not isinstance(val, (str, int, long, float, bool, datetime.date)):
-                log('warn', 'Dictionary values must be strings, integers, longs, floats, booleans, or dates. Dictioary key\'s "{0}" value {1} of type {2} is unsupported.'.format(key, val, type(val)))
+            if not isinstance(val, (str, int, long, float, bool, datetime.datetime)):
+                log('warn', 'Dictionary values must be strings, integers, longs, floats, booleans, or datetime. Dictioary key\'s "{0}" value {1} of type {2} is unsupported.'.format(key, val, type(val)))
                 to_delete.append(key)
         for key in to_delete:
             del d[key]
@@ -188,17 +188,17 @@ class Client(object):
         their actions to their identity. This makes it possible for you to
         run things like segment-based email campaigns.
 
-        : param dict traits: a dictionary with keys like “Subscription Plan”
-        or “Favorite Genre”. You can segment your users by any trait you record.
+        : param dict traits: a dictionary with keys like "Subscription Plan"
+        or "Favorite Genre". You can segment your users by any trait you record.
         Once you record a trait, no need to send it again, so the traits
         argument is optional. Accepted value types are string, boolean, ints,
-        doubles, longs, and datetime.date.
+        doubles, longs, and datetime.datetime.
 
         : param dict context: An optional dictionary with additional information
         thats related to the visit. Examples are userAgent, and IP address
         of the visitor.
 
-        : param datetime.date timestamp: If this event happened in the past,
+        : param datetime.datetime timestamp: If this event happened in the past,
         the timestamp   can be used to designate when the identification happened.
         Careful with this one,  if it just happened, leave it None.
 
@@ -215,8 +215,8 @@ class Client(object):
         if context is not None and not isinstance(context, dict):
             raise Exception('Context must be a dictionary.')
 
-        if timestamp is not None and not isinstance(timestamp, datetime.date):
-            raise Exception('Timestamp must be a datetime.date object.')
+        if timestamp is not None and not isinstance(timestamp, datetime.datetime):
+            raise Exception('Timestamp must be a datetime.datetime object.')
 
         self._clean(traits)
 
@@ -235,7 +235,7 @@ class Client(object):
     def track(self, session_id=None, user_id=None, event=None, properties={},
                 timestamp=None):
 
-        """Whenever a user triggers an event on your site, you’ll want to track it
+        """Whenever a user triggers an event on your site, you'll want to track it
         so that you can analyze and segment by those events later.
 
         :param str session_id: Ta unique id associated with each user's session.
@@ -255,11 +255,11 @@ class Client(object):
         or "Started an exercise"
 
         : param dict properties: A dictionary with items that describe the event
-        in more detail. This argument is optional, but highly recommended —
-        you’ll find these properties extremely useful later. Accepted value
-        types are string, boolean, ints, doubles, longs, and datetime.date.
+        in more detail. This argument is optional, but highly recommended -
+        you'll find these properties extremely useful later. Accepted value
+        types are string, boolean, ints, doubles, longs, and datetime.datetime.
 
-        : param datetime.date timestamp: If this event happened in the past,
+        : param datetime.datetime timestamp: If this event happened in the past,
         the timestamp   can be used to designate when the identification happened.
         Careful with this one,  if it just happened, leave it None.
 
@@ -276,8 +276,8 @@ class Client(object):
         if properties is not None and not isinstance(properties, dict):
             raise Exception('Context must be a dictionary.')
 
-        if timestamp is not None and not isinstance(timestamp, datetime.date):
-            raise Exception('Timestamp must be a datetime.date object.')
+        if timestamp is not None and not isinstance(timestamp, datetime.datetime):
+            raise Exception('Timestamp must be a datetime.datetime object.')
 
         self._clean(properties)
 
