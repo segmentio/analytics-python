@@ -237,7 +237,7 @@ eastern = timezone('US/Eastern')
 loc_dt = eastern.localize(datetime(2002, 10, 27, 6, 0, 0))
 ```
 
-Whatever your method, try to include the timezone information to timestamp or
+Whatever your method, please include the timezone information in your datetime objects or
 else your data may be in the incorrect time.
 ```python
 # checks that dt has a timezone
@@ -251,17 +251,17 @@ assert dt.tzinfo
 import dateutil.parser
 
 import segment
-segment.initialize('API_KEY', async=False)
+segment.initialize('fakeid', async=False)
 
 log = [
-    '2012-10-17T18:58:57.911Z ilya@segment.io /purchased/tshift'
+    '2012-10-17T18:58:57.911Z ilya@segment.io /purchased/tshirt'
 ]
 
 for entry in log:
 
-    (timestamp_str, user_id, url)
+    (timestamp_str, user_id, url) = entry.split(' ')
 
-    timestamp = dateutil.parser.parse(timestamp_str) # datetime.datetime object has a timezone
+    timestamp = dateutil.parser.parse(timestamp_str)  # datetime.datetime object has a timezone
 
     # have a timezone? check yo'self
     assert timestamp.tzinfo
@@ -272,6 +272,7 @@ for entry in log:
     })
 
 segment.flush()
+
 
 ```
 
