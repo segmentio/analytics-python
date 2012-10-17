@@ -221,7 +221,7 @@ in PDT, they are exactly -7:00 hours different). However, by default, Python
 doesn't  retain timezone information with the datetime object. This means that
 our code can only guess about what timezone you were referring to.
 
-If you have an ISO format timestamp string that contains this information, you
+If you have an ISO format timestamp string that contains timezone information, you
 can do the following:
 ```python
 >>> import dateutil.parser
@@ -229,12 +229,19 @@ can do the following:
 datetime.datetime(2012, 10, 17, 18, 58, 57, 911000, tzinfo=tzutc())
 ```
 
-Or if you are creating the datetimes not from a string, make sure to
+Or if you're not parsing a string, make sure to
 supply timezone information using [pytz](http://pytz.sourceforge.net/):
 ```python
 from pytz import timezone
 eastern = timezone('US/Eastern')
 loc_dt = eastern.localize(datetime(2002, 10, 27, 6, 0, 0))
+```
+
+Whatever your method, try to include the timezone information to timestamp or
+else your data may be in the incorrect time.
+```python
+# checks that dt has a timezone
+assert dt.tzinfo
 ```
 
 ##### Server Logs Example
