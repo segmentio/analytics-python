@@ -83,12 +83,15 @@ their actions to their identity. This makes it possible for you to run things li
 
 ### Advanced
 
-#### Turn Off Batching
+#### Batching Behavior
 
 By default, the client will flush when:
-1) the first time it gets a message
-2) every 10 messages (control with ```flush_at```)
-3) if 10 seconds passes without a flush (control with the ```flush_after```)
+
+1. the first time it gets a message
+1. every 10 messages (control with ```flush_at```)
+1. if 10 seconds passes without a flush (control with the ```flush_after```)
+
+#### Turn Off Batching
 
 When debugging or in short-lived programs, you might the client to make the
 request right away. In this case, you can turn off batching by setting the
