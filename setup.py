@@ -12,7 +12,7 @@ long_description = ('Segment.io (https://segment.io) is a segmentation-focused'
 
 setup(
     name='segment',
-    version='0.0.2',
+    version='0.0.3',
     url='https://github.com/segmentio/segment-python',
     author='Ilya Volodarsky',
     author_email='ilya@segment.io',
