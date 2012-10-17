@@ -22,7 +22,7 @@ setup(
     license='MIT License',
     install_requires=[
         'requests',
-        'dateutil'
+        'dateutils'
     ],
     description='Official Segment.io Python Client',
     long_description=long_description
