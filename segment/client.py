@@ -4,6 +4,7 @@ import threading
 import datetime
 import collections
 
+from dateutil.tz import tzutc
 import requests
 
 from stats import Statistics
@@ -219,8 +220,12 @@ class Client(object):
         if context is not None and not isinstance(context, dict):
             raise Exception('Context must be a dictionary.')
 
-        if timestamp is not None and not isinstance(timestamp, datetime.datetime):
+        if timestamp is None:
+            timestamp = datetime.datetime.utcnow().replace(tzinfo=tzutc())
+        elif not isinstance(timestamp, datetime.datetime):
             raise Exception('Timestamp must be a datetime.datetime object.')
+        else:
+            timestamp = guess_timezone(timestamp)
 
         self._clean(traits)
 
@@ -228,10 +233,8 @@ class Client(object):
                   'userId':      user_id,
                   'traits':      traits,
                   'context':     context,
+                  'timestamp':   timestamp.isoformat(),
                   'action':     'identify'}
-
-        if timestamp is not None:
-            action['timestamp'] = guess_timezone(timestamp).isoformat()
 
         if self._enqueue(action):
             self.stats.identifies += 1
@@ -281,8 +284,12 @@ class Client(object):
         if properties is not None and not isinstance(properties, dict):
             raise Exception('Context must be a dictionary.')
 
-        if timestamp is not None and not isinstance(timestamp, datetime.datetime):
+        if timestamp is None:
+            timestamp = datetime.datetime.utcnow().replace(tzinfo=tzutc())
+        elif not isinstance(timestamp, datetime.datetime):
             raise Exception('Timestamp must be a datetime.datetime object.')
+        else:
+            timestamp = guess_timezone(timestamp)
 
         self._clean(properties)
 
@@ -290,11 +297,8 @@ class Client(object):
                   'userId':       user_id,
                   'event':        event,
                   'properties':   properties,
-                  'timestamp':    timestamp,
+                  'timestamp':    timestamp.isoformat(),
                   'action':      'track'}
-
-        if timestamp is not None:
-            action['timestamp'] = guess_timezone(timestamp).isoformat()
 
         if self._enqueue(action):
             self.stats.tracks += 1
