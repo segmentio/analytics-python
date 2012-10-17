@@ -85,11 +85,11 @@ their actions to their identity. This makes it possible for you to run things li
 
 #### Batching Behavior
 
-By default, the client will flush when:
+By default, the client will flush:
 
 1. the first time it gets a message
 1. every 10 messages (control with ```flush_at```)
-1. if 10 seconds passes without a flush (control with the ```flush_after```)
+1. if 10 seconds passes without a flush (control with ```flush_after```)
 
 #### Turn Off Batching
 
@@ -171,8 +171,6 @@ def on_success(data, response):
 def on_failure(data, error):
     print 'Failure', error
 
-segment.initialize('API_KEY')
-
 segment.on_success(on_success)
 segment.on_failure(on_failure)
 ```
@@ -182,7 +180,6 @@ on_failure event callback.
 
 #### Importing Historical Data
 
-<<<<<<< HEAD
 You can import previous data by using the Identify / Track override that
 accepts a timestamp. If you are tracking things that are happening now,
 we prefer that you leave the timestamp out and let our servers
@@ -228,15 +225,12 @@ segment.initialize('API_KEY',
 ```
 
 
-**log_level** (logging.LOG_LEVEL): The logging log level for the client talks to. Use log_level=logging.DEBUG to troubleshoot.
-**log** (bool): False to turn off logging completely, True by default
-**flush_at** (int): Specicies after how many messages the client will flush to the server. Use flush_at=1 to disable batching
-**flush_after** (datetime.timedelta): Specifies after how much time of no flushing that the server will flush. Used in conjunction with the flush_at size policy
-**async** (bool): True to have the client flush to the server on another thread, therefore not blocking code (this is the default). False to enable blocking and making the request on the calling thread.
-**max_queue_size** (int): Maximum number of elements allowed in the queue. If this condition is ever reached, that means you're identifying / tracking faster than you can flush. If this happens, let us know!
-=======
-You can import previous data by using the Identify / Track override that accepts a timestamp on each Identify / Track. If you are calling Identify and Track as things happen in real time, we recommend that you leave the timestamp out and let our servers timestamp your requests.
->>>>>>> fe9ff0514553dd5f75dd165edb6ffb64240d9c29
+* **log_level** (logging.LOG_LEVEL): The logging log level for the client talks to. Use log_level=logging.DEBUG to troubleshoot.
+* **log** (bool): False to turn off logging completely, True by default
+* **flush_at** (int): Specicies after how many messages the client will flush to the server. Use flush_at=1 to disable batching
+* **flush_after** (datetime.timedelta): Specifies after how much time of no flushing that the server will flush. Used in conjunction with the flush_at size policy
+* **async** (bool): True to have the client flush to the server on another thread, therefore not blocking code (this is the default). False to enable blocking and making the request on the calling thread.
+* **max_queue_size** (int): Maximum number of elements allowed in the queue. If this condition is ever reached, that means you're identifying / tracking faster than you can flush. If this happens, let us know!
 
 #### Testing
 
