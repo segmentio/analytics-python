@@ -14,10 +14,10 @@ This client is non-blocking, and uses batching to efficiently record your events
 an HTTP request every time. This means that it is safe to use in your web server controllers, or in back-end services
 without worrying that it will make too many HTTP requests and slow down the system.
 
-This implementation uses another thread to periodically flush the queue. Gevent's Greenlets are used in
-combination with requests to guarentee efficient thread use.
+This implementation is optionally batching and optionally asynchronous
+(uses another thread to periodically flush the queue).
 
-Check out the source to see how the batching, and async HTTP requests are handled. Feedback is very welcome!
+Feedback is very welcome!
 
 ## How to Use
 
@@ -83,7 +83,79 @@ their actions to their identity. This makes it possible for you to run things li
 
 ### Advanced
 
+#### Turn Off Batching
+
+By default, the client will flush the first time it gets a message, and then either
+every 10 messages or if ten seconds passes without a flush.
+
+When debugging, or in short-lived programs, you might just want the request
+to happen right away. In this case, you can turn off batching by setting the
+flush_at argument to 1 (or flush at 1 message).
+
+```python
+segment.initialize('API_KEY', flush_at=1)
+```
+
+#### Turn Off Asynchronous Flushing
+
+By default, the client will create a new thread to flush the messages to the server.
+This is so the calling thread doesn't block, [as is important in server side
+environments](http://ivolo.me/batching-rest-apis/).
+
+If you're not running a server or writing performance sensitive code ,
+you might want to flush on the same thread that calls identify/track.
+
+In this case, you can disable asynchronous flushing like so:
+```python
+segment.initialize('API_KEY', async=False)
+```
+
+#### Calling Flush Before Program End
+
+If you're using the asynchronous flushing, it's a good idea to call
+```python
+segment.flush()
+```
+before your program ends. This prevents your program from turning off with
+items still in the queue.
+
+#### Logging
+
+Segment.io client uses the standard python logging module. By default, logging
+is enabled and set at the logging.INFO level. If you want it to talk more,
+
+```python
+import logging
+segment.initialize('API_KEY', log_level=logging.DEBUG)
+```
+
+If you hate logging with an undying passion, try this:
+
+```python
+segment.initialize('API_KEY', log=False)
+```
+
 #### Troubleshooting
+
+**Turn off Async / Batching**
+
+If you're having trouble sending messages to Segment.io, the first thing to try
+is to turn off asynchronous flushing and disable batching, like so:
+
+```python
+segment.initialize('API_KEY', async=False, flush_at=1)
+```
+
+Now the client will flush on every message, and every time you call identify or
+track.
+
+**Enable Debug Logging**
+
+```python
+segment.initialize('API_KEY', async=False, flush_at=1, log_level=logging.DEBUG)
+```
+
+**Success / Failure Events**
 
 Use events to receive successful or failed events.
 ```python
@@ -94,16 +166,68 @@ def on_success(data, response):
 def on_failure(data, error):
     print 'Failure', error
 
-segment.initialize('fakeid')
+segment.initialize('API_KEY')
 
 segment.on_success(on_success)
 segment.on_failure(on_failure)
 ```
 
+If there's an error, you should receive it as the second argument on the
+on_failure event callback.
+
 #### Importing Historical Data
 
-You can import previous data by using the Identify / Track override that accepts a timestamp. If you are tracking things that are
-happening now, we prefer that you leave the timestamp out and let our servers timestamp your requests.
+You can import previous data by using the Identify / Track override that
+accepts a timestamp. If you are tracking things that are happening now,
+we prefer that you leave the timestamp out and let our servers
+timestamp your requests.
+
+Here's an example of someone importing from their server logs:
+
+```python
+
+import iso8601
+
+import segment
+segment.initialize('API_KEY', async=False)
+
+for entry in log:
+
+    user_id = entry.user.id
+    timestamp = iso8601.parse_date(entry.timestamp)
+
+    segment.track(user_id=user_id, timestamp=timestamp, event='Bought a shirt', properties={
+        "color": "Blue",
+        "revenue": 17.90
+    })
+
+segment.flush()
+
+```
+
+#### Full Client Configuration
+
+If you hate defaults, than you'll love how configurable the Segment.io client is.
+Check out these gizmos:
+
+```python
+
+import segment
+segment.initialize('API_KEY',
+                    log_level=logging.INFO, log=True,
+                    flush_at=10, flush_after=datetime.timedelta(0, 10),
+                    async=True
+                    max_queue_size=100000)
+
+```
+
+
+**log_level** (logging.LOG_LEVEL): The logging log level for the client talks to. Use log_level=logging.DEBUG to troubleshoot.
+**log** (bool): False to turn off logging completely, True by default
+**flush_at** (int): Specicies after how many messages the client will flush to the server. Use flush_at=1 to disable batching
+**flush_after** (datetime.timedelta): Specifies after how much time of no flushing that the server will flush. Used in conjunction with the flush_at size policy
+**async** (bool): True to have the client flush to the server on another thread, therefore not blocking code (this is the default). False to enable blocking and making the request on the calling thread.
+**max_queue_size** (int): Maximum number of elements allowed in the queue. If this condition is ever reached, that means you're identifying / tracking faster than you can flush. If this happens, let us know!
 
 #### Testing
 
