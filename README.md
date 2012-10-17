@@ -117,7 +117,7 @@ segment.initialize('API_KEY', async=False)
 
 #### Calling Flush Before Program End
 
-If you're using the asynchronous flushing, it's a good idea to call
+If you're using the batching, it's a good idea to call
 ```python
 segment.flush()
 ```
