@@ -12,7 +12,7 @@ Documentation and more details at https://github.com/segmentio/segment-python
 
 setup(
     name='segment',
-    version='0.1.1',
+    version='0.1.2',
     url='https://github.com/segmentio/segment-python',
     author='Ilya Volodarsky',
     author_email='ilya@segment.io',
@@ -22,7 +22,7 @@ setup(
     license='MIT License',
     install_requires=[
         'requests',
-        'dateutils'
+        'python-dateutil'
     ],
     description='Official Segment.io Python Client',
     long_description=long_description
