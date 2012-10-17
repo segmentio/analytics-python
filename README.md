@@ -190,7 +190,10 @@ let our servers timestamp your requests.
 ##### Example
 
 ```python
-when = datetime.datetime(2538, 10, 17, 0, 0, 0, 0, tzinfo=pytz.utc)
+import datetime
+from dateutil.tz import tzutc
+
+when = datetime.datetime(2538, 10, 17, 0, 0, 0, 0, tzinfo=tzutc())
 segment.track(user_id=user_id, timestamp=when, event='Bought a game', properties={
         "game": "Duke Nukem Forever",
 })
@@ -198,7 +201,7 @@ segment.track(user_id=user_id, timestamp=when, event='Bought a game', properties
 
 ##### Python and Timezones
 
-Python's standard datetime object is broken in that it
+Python's standard datetime object is broken because it
 [loses timezone information](http://stackoverflow.com/questions/2331592/datetime-datetime-utcnow-why-no-tzinfo).
 
 ```python
