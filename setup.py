@@ -12,7 +12,7 @@ Documentation and more details at https://github.com/segmentio/segment-python
 
 setup(
     name='segment',
-    version='0.0.5',
+    version='0.1.0',
     url='https://github.com/segmentio/segment-python',
     author='Ilya Volodarsky',
     author_email='ilya@segment.io',
