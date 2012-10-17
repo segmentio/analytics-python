@@ -6,7 +6,7 @@ register for a project [here](https://segment.io).
 
 This is the official python client that wraps the [Segment.io REST API](https://segment.io/docs) .
 
-You can use this driver to identify and track your users' events into your Segment.io project.
+You can use this driver to identify your users and track their events into your Segment.io project.
 
 ## Design
 
@@ -28,7 +28,7 @@ python setup.py install
 
 #### Initialize the client
 
-You can create seperate Segmentio clients, but the easiest and recommended way is to use the static Segmentio singleton client.
+You can create separate Segmentio clients, but the easiest and recommended way is to use the static Segmentio singleton client.
 
 ```python
 import segment
@@ -42,7 +42,7 @@ segment.initialize(api_key)
 Identifying a user ties all of their actions to an ID you recognize and records user traits you can segment by.
 
 ```python
-segment.identify('random_session_id', 'ilya@segment.io', {
+segmentio.identify('unique_session_id', 'ilya@segment.io', {
     "Subscription Plan": "Free",
     "Friends": 30
 })
@@ -63,7 +63,7 @@ users by any trait you record. Once you record a trait, no need to send it again
 Whenever a user triggers an event on your site, you’ll want to track it so that you can analyze and segment by those events later.
 
 ```python
-segment.track('random_session_id', 'ilya@segment.io', 'Played a Song', {
+segmentio.track('unique_session_id', 'ilya@segment.io', 'Played a Song', {
     "Artist": "The Beatles",
     "Song": "Eleanor Rigby"
 })
@@ -177,6 +177,7 @@ on_failure event callback.
 
 #### Importing Historical Data
 
+<<<<<<< HEAD
 You can import previous data by using the Identify / Track override that
 accepts a timestamp. If you are tracking things that are happening now,
 we prefer that you leave the timestamp out and let our servers
@@ -228,6 +229,9 @@ segment.initialize('API_KEY',
 **flush_after** (datetime.timedelta): Specifies after how much time of no flushing that the server will flush. Used in conjunction with the flush_at size policy
 **async** (bool): True to have the client flush to the server on another thread, therefore not blocking code (this is the default). False to enable blocking and making the request on the calling thread.
 **max_queue_size** (int): Maximum number of elements allowed in the queue. If this condition is ever reached, that means you're identifying / tracking faster than you can flush. If this happens, let us know!
+=======
+You can import previous data by using the Identify / Track override that accepts a timestamp on each Identify / Track. If you are calling Identify and Track as things happen in real time, we recommend that you leave the timestamp out and let our servers timestamp your requests.
+>>>>>>> fe9ff0514553dd5f75dd165edb6ffb64240d9c29
 
 #### Testing
 
