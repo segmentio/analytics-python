@@ -8,7 +8,10 @@ from time import sleep, time
 import logging
 logging.basicConfig()
 
+from dateutil.tz import tzutc
+
 import segment
+import segment.utils
 
 
 def on_success(data, response):
@@ -26,6 +29,22 @@ class SegmentioBasicTests(unittest.TestCase):
 
         segment.on_success(on_success)
         segment.on_failure(on_failure)
+
+    def test_timezone_utils(self):
+
+        now = datetime.now()
+        utcnow = datetime.now(tz=tzutc())
+
+        self.assertTrue(segment.utils.is_naive(now))
+        self.assertFalse(segment.utils.is_naive(utcnow))
+
+        fixed = segment.utils.guess_timezone(now)
+
+        self.assertFalse(segment.utils.is_naive(fixed))
+
+        shouldnt_be_edited = segment.utils.guess_timezone(utcnow)
+
+        self.assertTrue(utcnow == shouldnt_be_edited)
 
     def test_clean(self):
         supported = {

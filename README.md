@@ -187,7 +187,54 @@ datetime.datetime) to the identify / track calls. Note: if you are tracking
 things that are happening now, we prefer that you leave the timestamp out and
 let our servers timestamp your requests.
 
-Here's an example of someone importing from their server logs:
+##### Example
+
+```python
+when = datetime.datetime(2538, 10, 17, 0, 0, 0, 0, tzinfo=pytz.utc)
+segment.track(user_id=user_id, timestamp=when, event='Bought a game', properties={
+        "game": "Duke Nukem Forever",
+})
+```
+
+##### Python and Timezones
+
+Python's standard datetime object is broken in that it
+[loses timezone information](http://stackoverflow.com/questions/2331592/datetime-datetime-utcnow-why-no-tzinfo).
+
+```python
+>>> import datetime
+>>> print datetime.datetime.now().isoformat()
+2012-10-17T11:51:17.351481
+>>> print datetime.datetime.utcnow().isoformat()
+2012-10-17T18:51:17.919517
+>>> print datetime.datetime.now().tzinfo
+None
+>>> print datetime.datetime.utcnow().tzinfo
+None
+````
+
+You'll notice that a utcnow() and a now() date are very different (since I'm
+in PDT, they are exactly -7:00 hours different). However, by default, Python
+doesn't  retain timezone information with the datetime object. This means that
+our code can only guess about what timezone you were referring to.
+
+If you have an ISO format timestamp string that contains this information, you
+can do the following:
+```python
+>>> import dateutil.parser
+>>> dateutil.parser.parse('2012-10-17T18:58:57.911Z')
+datetime.datetime(2012, 10, 17, 18, 58, 57, 911000, tzinfo=tzutc())
+```
+
+Or if you are creating the datetimes not from a string, make sure to
+supply timezone information using [pytz](http://pytz.sourceforge.net/):
+```python
+from pytz import timezone
+eastern = timezone('US/Eastern')
+loc_dt = eastern.localize(datetime(2002, 10, 27, 6, 0, 0))
+```
+
+##### Server Logs Example
 
 ```python
 
@@ -196,14 +243,18 @@ import dateutil.parser
 import segment
 segment.initialize('API_KEY', async=False)
 
+log = [
+    '2012-10-17T18:58:57.911Z ilya@segment.io /purchased/tshift'
+]
+
 for entry in log:
 
+    (timestamp_str, user_id, url)
 
-    user_id = entry.user.id # user@gmail.com
+    timestamp = dateutil.parser.parse(timestamp_str) # datetime.datetime object has a timezone
 
-    # now find some time in the past
-    timestamp_str = entry.timestamp; # 2010-05-08T23:41:54.000Z
-    timestamp = dateutil.parser.parse(timestamp_str) # a datetime.datetime object
+    # have a timezone? check yo'self
+    assert timestamp.tzinfo
 
     segment.track(user_id=user_id, timestamp=timestamp, event='Bought a shirt', properties={
         "color": "Blue",

@@ -21,7 +21,8 @@ setup(
     packages=['segment'],
     license='MIT License',
     install_requires=[
-        'requests'
+        'requests',
+        'dateutil'
     ],
     description='Official Segment.io Python Client',
     long_description=long_description

@@ -8,8 +8,11 @@ import requests
 
 from stats import Statistics
 from errors import ApiError, BatchError
+from utils import guess_timezone
 
 import options
+
+
 
 logging_enabled = True
 import logging
@@ -200,7 +203,8 @@ class Client(object):
 
         : param datetime.datetime timestamp: If this event happened in the past,
         the timestamp   can be used to designate when the identification happened.
-        Careful with this one,  if it just happened, leave it None.
+        Careful with this one,  if it just happened, leave it None. If you do
+        choose to provide a timestamp, make sure it has a timezone.
 
         """
 
@@ -227,7 +231,7 @@ class Client(object):
                   'action':     'identify'}
 
         if timestamp is not None:
-            action['timestamp'] = timestamp.isoformat()
+            action['timestamp'] = guess_timezone(timestamp).isoformat()
 
         if self._enqueue(action):
             self.stats.identifies += 1
@@ -261,7 +265,8 @@ class Client(object):
 
         : param datetime.datetime timestamp: If this event happened in the past,
         the timestamp   can be used to designate when the identification happened.
-        Careful with this one,  if it just happened, leave it None.
+        Careful with this one,  if it just happened, leave it None. If you do
+        choose to provide a timestamp, make sure it has a timezone.
 
         """
 
@@ -289,7 +294,7 @@ class Client(object):
                   'action':      'track'}
 
         if timestamp is not None:
-            action['timestamp'] = timestamp.isoformat()
+            action['timestamp'] = guess_timezone(timestamp).isoformat()
 
         if self._enqueue(action):
             self.stats.tracks += 1
