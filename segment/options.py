@@ -1,8 +1,7 @@
-
-host = 'https://api.segment.io'
+host = 'https://api2.segment.io'
 
 endpoints = {
-    'track': '/v2/track',
-    'identify': '/v2/identify',
-    'batch': '/v2/import'
+    'track': '/v1/track',
+    'identify': '/v1/identify',
+    'batch': '/v1/import'
 }
