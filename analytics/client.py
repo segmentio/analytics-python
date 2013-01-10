@@ -17,7 +17,7 @@ import options
 
 logging_enabled = True
 import logging
-logger = logging.getLogger('segment')
+logger = logging.getLogger('analytics')
 
 
 def log(level, *args):
@@ -98,12 +98,12 @@ class Client(object):
 
     def __init__(self, api_key=None,
                        log_level=logging.INFO, log=True,
-                       flush_at=10, flush_after=datetime.timedelta(0, 10),
-                       async=True, max_queue_size=100000,
+                       flush_at=20, flush_after=datetime.timedelta(0, 10),
+                       async=True, max_queue_size=10000,
                        stats=Statistics()):
-        """Create a new instance of a Segment.io Client
+        """Create a new instance of a analytics-python Client
 
-        :param str api_key: The Segment.io Live or Test API key
+        :param str api_key: The Segment.io API key
         :param logging.LOG_LEVEL log_level: The logging log level for the client
         talks to. Use log_level=logging.DEBUG to troubleshoot
         : param bool log: False to turn off logging completely, True by default
@@ -149,14 +149,14 @@ class Client(object):
     def set_log_level(self, level):
         """Sets the log level for Segment.io client
 
-        :param logging.LOG_LEVEL level: The level at which Segment.io log should talk at
+        :param logging.LOG_LEVEL level: The level at which analytics-python log should talk at
 
         """
         logger.setLevel(level)
 
     def _check_for_api_key(self):
         if not self.api_key:
-            raise Exception('Please set segmentio.api_key before calling identify or track.')
+            raise Exception('Please set analytics.api_key before calling identify or track.')
 
     def _clean(self, d):
         to_delete = []
@@ -177,33 +177,28 @@ class Client(object):
     def identify(self, session_id=None, user_id=None, traits={},
         context={}, timestamp=None):
 
-        """Identifying a user ties all of their actions to an ID
-        you recognize and records user traits you can segment by.
+        """Identifying a user ties all of their actions to an id, and
+        associates user traits to that id.
 
-        :param str session_id: Ta unique id associated with each user's session.
-        Most web frameworks provide a session id you can use here, but if you
-        don't have one (like if you're sending from a desktop app),
-        you can use null.
+        :param str session_id:  a unique id associated with an anonymous user
+        before they are logged in. If the user is logged in, you can use
+        null here.
 
-        :param str user_id: is best as an email, but any unique ID will work.
-        This is how you recognize a signed-in user in your system. Note:
-        userId can be null if the user is not logged in, but then you must
-        provide a sessionId. By explicitly identifying a user, you tie all of
-        their actions to their identity. This makes it possible for you to
-        run things like segment-based email campaigns.
+        :param str user_id: the user's id after they are logged in. It's the
+        same id as which you would recognize a signed-in user in your system.
+        Note: you must provide either a sessionId or a userId.
 
-        : param dict traits: a dictionary with keys like "Subscription Plan"
-        or "Favorite Genre". You can segment your users by any trait you record.
-        Once you record a trait, no need to send it again, so the traits
-        argument is optional. Accepted value types are string, boolean, ints,
-        doubles, longs, and datetime.datetime.
+        : param dict traits: a dictionary with keys like subscriptionPlan or
+        age. You only need to record a trait once, no need to send it again.
+        Accepted value types are string, boolean, ints,, longs, and
+        datetime.datetime.
 
         : param dict context: An optional dictionary with additional information
         thats related to the visit. Examples are userAgent, and IP address
         of the visitor.
 
         : param datetime.datetime timestamp: If this event happened in the past,
-        the timestamp   can be used to designate when the identification happened.
+        the timestamp  can be used to designate when the identification happened.
         Careful with this one,  if it just happened, leave it None. If you do
         choose to provide a timestamp, make sure it has a timezone.
 
@@ -212,7 +207,8 @@ class Client(object):
         self._check_for_api_key()
 
         if not session_id and not user_id:
-            raise Exception('Must supply either a session_id or a user_id (or both).')
+            raise Exception('Must supply either a session_id or a ' +
+                'user_id (or both).')
 
         if traits is not None and not isinstance(traits, dict):
             raise Exception('Traits must be a dictionary.')
@@ -234,7 +230,7 @@ class Client(object):
                   'traits':      traits,
                   'context':     context,
                   'timestamp':   timestamp.isoformat(),
-                  'action':     'identify'}
+                  'action':      'identify'}
 
         if self._enqueue(action):
             self.stats.identifies += 1
@@ -242,20 +238,15 @@ class Client(object):
     def track(self, session_id=None, user_id=None, event=None, properties={},
                 timestamp=None):
 
-        """Whenever a user triggers an event on your site, you'll want to track it
-        so that you can analyze and segment by those events later.
+        """Whenever a user triggers an event, you’ll want to track it.
 
-        :param str session_id: Ta unique id associated with each user's session.
-        Most web frameworks provide a session id you can use here, but if you
-        don't have one (like if you're sending from a desktop app),
-        you can use null.
+        :param str session_id:  a unique id associated with an anonymous user
+        before they are logged in. Even if the user is logged in, you can still
+        send us the sessionId or you can just use null.
 
-        :param str user_id: is best as an email, but any unique ID will work.
-        This is how you recognize a signed-in user in your system. Note:
-        userId can be null if the user is not logged in, but then you must
-        provide a sessionId. By explicitly identifying a user, you tie all of
-        their actions to their identity. This makes it possible for you to
-        run things like segment-based email campaigns.
+        :param str user_id:  the user's id after they are logged in. It's the
+        same id as which you would recognize a signed-in user in your system.
+        Note: you must provide either a sessionId or a userId.
 
         : param str event: The event name you are tracking. It is recommended
         that it is in human readable form. For example, "Bought T-Shirt"
@@ -298,7 +289,7 @@ class Client(object):
                   'event':        event,
                   'properties':   properties,
                   'timestamp':    timestamp.isoformat(),
-                  'action':      'track'}
+                  'action':       'track'}
 
         if self._enqueue(action):
             self.stats.tracks += 1
@@ -350,16 +341,16 @@ class Client(object):
     def _flush_thread_is_free(self):
         return self.flushing_thread is None or not self.flushing_thread.is_alive()
 
-    def flush(self):
+    def flush(self, async=None):
         """ Forces a flush from the queue to the server """
 
         flushing = False
 
         url = options.host + options.endpoints['batch']
 
-        if self.async:
-
-            # Flushes on another thread
+        # if the async parameter is provided, it pverrides the client's settings
+        if (async if async != None else self.async):
+            # We should asynchronously flush on another thread
 
             with self.flush_lock:
 
@@ -378,7 +369,8 @@ class Client(object):
                         flushing = True
 
                 else:
-                    log('debug', 'The flushing thread is still active, cant flush right now')
+                    log('debug', 'The flushing thread is still active, ' +
+                        'cant flush right now')
         else:
 
             # Flushes on this thread

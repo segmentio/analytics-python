@@ -1,29 +1,30 @@
-from distutils.core import setup
+from distutils.core import setup, find_packages
 
 long_description = '''
-Segment.io (https://segment.io) is a segmentation-focused analytics platform.
-If you haven\'t yet, register for a project at https://segment.io.
+Segment.io is the simplest way to integrate analytics into your application.
+One API allows you to turn on any other analytics service. No more learning
+new APIs, repeated code, and wasted development time.
 
-This is the official python client that wraps the Segment.io REST API (https://segment.io/docs).
+This is the official python client that wraps the Segment.io REST API (https://segment.io).
 
-Documentation and more details at https://github.com/segmentio/segment-python
+Documentation and more details at https://github.com/segmentio/analytics-python
 '''
 
 
 setup(
-    name='segment',
-    version='0.1.4',
-    url='https://github.com/segmentio/segment-python',
+    name='analytics-python',
+    version='0.2.1',
+    url='https://github.com/segmentio/analytics-python',
     author='Ilya Volodarsky',
     author_email='ilya@segment.io',
     maintainer='Segment.io',
     maintainer_email='friends@segment.io',
-    packages=['segment'],
+    packages=find_packages(),
     license='MIT License',
     install_requires=[
         'requests',
         'python-dateutil'
     ],
-    description='Official Segment.io Python Client',
+    description='The hassle-free way to integrate analytics into any python application.',
     long_description=long_description
 )

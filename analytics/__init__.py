@@ -12,10 +12,10 @@ stats = Statistics()
 from client import Client
 
 
-def initialize(api_key, **kwargs):
-    """Create a default instance of a Segment.io Client
+def init(api_key, **kwargs):
+    """Create a default instance of a analytics-python client
 
-    :param str api_key: The Segment.io Live or Test API key
+    :param str api_key: The Segment.io API Key
 
     Kwargs:
 
