@@ -1,7 +1,7 @@
-﻿analytics-node
+﻿analytics-python
 ==============
 
-analytics-node is a node.js client for [Segment.io](https://segment.io). It's the sister API of the popular [analytics.js](https://github.com/segmentio/analytics.js).
+analytics-python is a python client for [Segment.io](https://segment.io). It's the sister API of the popular [analytics.js](https://github.com/segmentio/analytics.js).
 
 ### Python Analytics Made Simple
 
