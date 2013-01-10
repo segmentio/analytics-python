@@ -56,10 +56,10 @@ analytics.identify(session_id='ajsk2jdj29fj298', user_id='ilya@segment.io', {
 })
 ```
 
-**sessionId** (string) is a unique id associated with an anonymous user **before** they are logged in. Even if the user
-is logged in, you can still send us the **sessionId** or you can just use `null`.
+**session_id** (string) is a unique id associated with an anonymous user **before** they are logged in. Even if the user
+is logged in, you can still send us the **session_id** or you can just use `null`.
 
-**userId** (string) is the user's id **after** they are logged in. It's the same id as which you would recognize a signed-in user in your system. Note: you must provide either a `sessionId` or a `userId`.
+**user_id** (string) is the user's id **after** they are logged in. It's the same id as which you would recognize a signed-in user in your system. Note: you must provide either a `session_id` or a `user_id`.
 
 **traits** (dict) is a dictionary with keys like `subscriptionPlan` or `favoriteGenre`. This argument is optional, but highly recommended—you’ll find these properties extremely useful later.
 
@@ -78,10 +78,10 @@ analytics.track(session_id='skdj2jj2dj2j3i5', user_id='calvin@segment.io', event
 ```
 
 
-**sessionId** (string) is a unique id associated with an anonymous user **before** they are logged in. Even if the user
-is logged in, you can still send us the **sessionId** or you can just use `null`.
+**session_id** (string) is a unique id associated with an anonymous user **before** they are logged in. Even if the user
+is logged in, you can still send us the **session_id** or you can just use `null`.
 
-**userId** (string) is the user's id **after** they are logged in. It's the same id as which you would recognize a signed-in user in your system. Note: you must provide either a `sessionId` or a `userId`.
+**user_id** (string) is the user's id **after** they are logged in. It's the same id as which you would recognize a signed-in user in your system. Note: you must provide either a `session_id` or a `user_id`.
 
 **event** (string) describes what this user just did. It's a human readable description like "Played a Song", "Printed a Report" or "Updated Status".
 
