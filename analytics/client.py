@@ -96,14 +96,14 @@ class Client(object):
 
     """
 
-    def __init__(self, api_key=None,
+    def __init__(self, secret=None,
                        log_level=logging.INFO, log=True,
                        flush_at=20, flush_after=datetime.timedelta(0, 10),
                        async=True, max_queue_size=10000,
                        stats=Statistics()):
         """Create a new instance of a analytics-python Client
 
-        :param str api_key: The Segment.io API key
+        :param str secret: The Segment.io API key
         :param logging.LOG_LEVEL log_level: The logging log level for the client
         talks to. Use log_level=logging.DEBUG to troubleshoot
         : param bool log: False to turn off logging completely, True by default
@@ -118,7 +118,7 @@ class Client(object):
 
         """
 
-        self.api_key = api_key
+        self.secret = secret
 
         self.queue = collections.deque()
         self.last_flushed = None
@@ -154,16 +154,19 @@ class Client(object):
         """
         logger.setLevel(level)
 
-    def _check_for_api_key(self):
-        if not self.api_key:
-            raise Exception('Please set analytics.api_key before calling identify or track.')
+    def _check_for_secret(self):
+        if not self.secret:
+            raise Exception('Please set analytics.secret before calling identify or track.')
 
     def _clean(self, d):
         to_delete = []
         for key in d.iterkeys():
             val = d[key]
             if not isinstance(val, (str, int, long, float, bool, datetime.datetime)):
-                log('warn', 'Dictionary values must be strings, integers, longs, floats, booleans, or datetime. Dictioary key\'s "{0}" value {1} of type {2} is unsupported.'.format(key, val, type(val)))
+                log('warn', 'Dictionary values must be strings, integers, ' +
+                    'longs, floats, booleans, or datetime. Dictioary key\'s ' +
+                    '"{0}" value {1} of type {2} is unsupported.'.format(
+                        key, val, type(val)))
                 to_delete.append(key)
         for key in to_delete:
             del d[key]
@@ -204,7 +207,7 @@ class Client(object):
 
         """
 
-        self._check_for_api_key()
+        self._check_for_secret()
 
         if not session_id and not user_id:
             raise Exception('Must supply either a session_id or a ' +
@@ -264,7 +267,7 @@ class Client(object):
 
         """
 
-        self._check_for_api_key()
+        self._check_for_secret()
 
         if not session_id and not user_id:
             raise Exception('Must supply either a session_id or a user_id (or both).')
@@ -348,8 +351,11 @@ class Client(object):
 
         url = options.host + options.endpoints['batch']
 
-        # if the async parameter is provided, it pverrides the client's settings
-        if (async if async != None else self.async):
+        # if the async parameter is provided, it overrides the client's settings
+        if async == None:
+            async = self.async
+
+        if async:
             # We should asynchronously flush on another thread
 
             with self.flush_lock:
@@ -403,7 +409,7 @@ class Client(object):
 
             batches.append({
                 'batch':          batch,
-                'apiKey':         self.api_key
+                'secret':         self.secret
             })
 
         return batches

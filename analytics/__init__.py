@@ -12,10 +12,10 @@ stats = Statistics()
 from client import Client
 
 
-def init(api_key, **kwargs):
+def init(secret, **kwargs):
     """Create a default instance of a analytics-python client
 
-    :param str api_key: The Segment.io API Key
+    :param str secret: The Segment.io API Key
 
     Kwargs:
 
@@ -33,7 +33,7 @@ def init(api_key, **kwargs):
 
     """
 
-    default_client = Client(api_key=api_key, stats=stats, **kwargs)
+    default_client = Client(secret=secret, stats=stats, **kwargs)
     import sys
     this_module = sys.modules[__name__]
 

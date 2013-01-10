@@ -9,7 +9,7 @@ analytics-python is a python client for [Segment.io](https://segment.io). It's t
 
 ```python
 import analytics
-analytics.init(api_key)
+analytics.init('MY_API_SECRET')
 analytics.track(user_id='ilya@segment.io', event='Played a Song')
 ```
 
@@ -42,7 +42,7 @@ You can create separate analytics-python clients, but the easiest and recommende
 
 ```python
 import analytics
-analytics.init(api_key)
+analytics.init('MY_API_SECRET')
 ```
 
 #### Identify a User
@@ -107,7 +107,7 @@ request right away. In this case, you can turn off batching by setting the
 flush_at argument to 1.
 
 ```python
-analytics.init('API_KEY', flush_at=1)
+analytics.init('secret', flush_at=1)
 ```
 
 
@@ -122,7 +122,7 @@ you might want to flush on the same thread that calls identify/track.
 
 In this case, you can disable asynchronous flushing like so:
 ```python
-analytics.init('API_KEY', async=False)
+analytics.init('secret', async=False)
 ```
 
 #### Calling Flush Before Program End
@@ -141,13 +141,13 @@ is enabled and set at the logging.INFO level. If you want it to talk more,
 
 ```python
 import logging
-analytics.init('API_KEY', log_level=logging.DEBUG)
+analytics.init('secret', log_level=logging.DEBUG)
 ```
 
 If you hate logging with an undying passion, try this:
 
 ```python
-analytics.init('API_KEY', log=False)
+analytics.init('secret', log=False)
 ```
 
 #### Troubleshooting
@@ -158,7 +158,7 @@ If you're having trouble sending messages to Segment.io, the first thing to try
 is to turn off asynchronous flushing and disable batching, like so:
 
 ```python
-analytics.init('API_KEY', async=False, flush_at=1)
+analytics.init('secret', async=False, flush_at=1)
 ```
 
 Now the client will flush on every message, and every time you call identify or
@@ -167,7 +167,7 @@ track.
 **Enable Debug Logging**
 
 ```python
-analytics.init('API_KEY', async=False, flush_at=1, log_level=logging.DEBUG)
+analytics.init('secret', async=False, flush_at=1, log_level=logging.DEBUG)
 ```
 
 **Success / Failure Events**
@@ -292,7 +292,7 @@ Check out these gizmos:
 ```python
 
 import analytics
-analytics.init('API_KEY',
+analytics.init('secret',
                     log_level=logging.INFO, log=True,
                     flush_at=20, flush_after=datetime.timedelta(0, 10),
                     async=True
