@@ -33,12 +33,12 @@ without worrying that it will make too many HTTP requests and slow down the prog
 
 #### Install
 ```bash
-pip install segment
+pip install analytics-python
 ```
 
 #### Initialize the client
 
-You can create separate Segmentio clients, but the easiest and recommended way is to use the static Segmentio singleton client.
+You can create separate analytics-python clients, but the easiest and recommended way is to use the static analytics-python singleton client.
 
 ```python
 import analytics
