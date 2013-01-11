@@ -1,7 +1,7 @@
 ﻿analytics-python
 ==============
 
-analytics-python is a python client for [Segment.io](https://segment.io). If you're using multiple languages, check out our clients for [client-side javascript](https://github.com/segmentio/analytics.js) and [analytics-node](https://github.com/segmentio/analytics-node).
+analytics-python is a python client for [Segment.io](https://segment.io). If you're using multiple languages, check out our clients for [client-side javascript](https://github.com/segmentio/analytics.js) and [node](https://github.com/segmentio/analytics-node).
 
 ### Python Analytics Made Simple
 
