@@ -26,8 +26,8 @@ More on integrations [here](#integrations).
 ### High Performance
 
 This client uses an internal queue to efficiently send your events in aggregate, rather than making an HTTP
-request every time. This means that it is safe to use in your high scale web server controllers, or in your backend services
-without worrying that it will make too many HTTP requests and slow down the program. You no longer need to use a message queue to have analytics.
+request every time. It is also non-blocking and asynchronous, meaning it makes batch requests on another thread. This allows your code to call `analytics.track` or `analytics.identify` without incurring a large performance cost. Because of this, analytics-python is safe to use in your high scale web server controllers, or in your backend services
+without worrying that it will make too many HTTP requests and slow down the program. You also no longer need to use a message queue to have analytics.
 
 [Feedback is very welcome!](mailto:friends@segment.io)
 
@@ -42,7 +42,7 @@ pip install analytics-python
 
 #### Initialize the client
 
-You can create separate analytics-python clients, but the easiest and recommended way is to use the static analytics-python singleton client.
+You can create separate analytics-python clients, but the easiest and recommended way is to just use the module:
 
 ```python
 import analytics
