@@ -1,4 +1,4 @@
-from distutils.core import setup, find_packages
+from distutils.core import setup
 
 long_description = '''
 Segment.io is the simplest way to integrate analytics into your application.
@@ -13,13 +13,13 @@ Documentation and more details at https://github.com/segmentio/analytics-python
 
 setup(
     name='analytics-python',
-    version='0.2.2',
+    version='0.2.3',
     url='https://github.com/segmentio/analytics-python',
     author='Ilya Volodarsky',
     author_email='ilya@segment.io',
     maintainer='Segment.io',
     maintainer_email='friends@segment.io',
-    packages=find_packages(),
+    packages=['analytics'],
     license='MIT License',
     install_requires=[
         'requests',

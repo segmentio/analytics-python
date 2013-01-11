@@ -37,20 +37,18 @@ def package_response(client, data, response):
     elif response.status_code == 400:
         content = response.text
         try:
-            errors = []
-            for error in json.loads(content):
-                code = None
-                message = None
+            error = json.loads(content)
 
-                if 'code' in error:
-                    code = error['code']
+            code = None
+            message = None
 
-                if 'message' in error:
-                    message = error['message']
+            if 'code' in error:
+                code = error['code']
 
-                errors.append(ApiError(code, message))
+            if 'message' in error:
+                message = error['message']
 
-            client._on_failed_flush(data, BatchError(errors))
+            client._on_failed_flush(data, ApiError(code, message))
 
         except Exception:
             client._on_failed_flush(data, ApiError('Bad Request', content))
@@ -103,7 +101,7 @@ class Client(object):
                        stats=Statistics()):
         """Create a new instance of a analytics-python Client
 
-        :param str secret: The Segment.io API key
+        :param str secret: The Segment.io API secret
         :param logging.LOG_LEVEL log_level: The logging log level for the client
         talks to. Use log_level=logging.DEBUG to troubleshoot
         : param bool log: False to turn off logging completely, True by default
@@ -147,7 +145,7 @@ class Client(object):
         self.failure_callbacks = []
 
     def set_log_level(self, level):
-        """Sets the log level for Segment.io client
+        """Sets the log level for analytics-python
 
         :param logging.LOG_LEVEL level: The level at which analytics-python log should talk at
 
@@ -241,7 +239,7 @@ class Client(object):
     def track(self, session_id=None, user_id=None, event=None, properties={},
                 timestamp=None):
 
-        """Whenever a user triggers an event, you’ll want to track it.
+        """Whenever a user triggers an event, you'll want to track it.
 
         :param str session_id:  a unique id associated with an anonymous user
         before they are logged in. Even if the user is logged in, you can still

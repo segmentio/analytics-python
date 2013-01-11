@@ -4,7 +4,7 @@ import sys
 try:
     import requests
 except ImportError:
-    print >>sys.stderr, 'The Segment.io library requires that you have a Python "requests" library installed. Try running "pip install requests"'
+    print >>sys.stderr, 'analytics-node requires that you have a Python "requests" library installed. Try running "pip install requests"'
 
 from stats import Statistics
 stats = Statistics()
@@ -15,7 +15,7 @@ from client import Client
 def init(secret, **kwargs):
     """Create a default instance of a analytics-python client
 
-    :param str secret: The Segment.io API Key
+    :param str secret: The Segment.io API Secret
 
     Kwargs:
 

@@ -1,11 +1,15 @@
 ﻿analytics-python
 ==============
 
-analytics-python is a python client for [Segment.io](https://segment.io). It's the sister API of the popular [analytics.js](https://github.com/segmentio/analytics.js).
+analytics-python is a python client for [Segment.io](https://segment.io). If you're using multiple languages, check out our clients for [client-side javascript](https://github.com/segmentio/analytics.js) and [analytics-node](https://github.com/segmentio/analytics-node).
 
 ### Python Analytics Made Simple
 
-[Segment.io](https://segment.io) is the simplest way to integrate analytics into your python application. One API allows you to turn on any other analytics service. No more learning new APIs, repeated code, and wasted development time.
+[Segment.io](https://segment.io) is the cleanest, simplest API for recording analytics data.
+
+Setting up a new analytics solution can be a real pain. The APIs from each analytics provider are slightly different in odd ways, code gets messy, and developers waste a bunch of time fiddling with long-abandoned client libraries. We want to save you that pain and give you an clean, efficient, extensible analytics setup.
+
+[Segment.io](https://segment.io) wraps all those APIs in one beautiful, simple API. Then we route your analytics data wherever you want, whether it's Google Analytics, Mixpanel, Customer io, Chartbeat, or any of our other integrations. After you set up Segment.io you can swap or add analytics providers at any time with a single click. You won't need to touch code or push to production. You'll save valuable development time so that you can focus on what really matters: your product.
 
 ```python
 import analytics
@@ -15,9 +19,9 @@ analytics.track(user_id='ilya@segment.io', event='Played a Song')
 
 and turn on integrations with just one click at [Segment.io](https://segment.io).
 
-![](http://img62.imageshack.us/img62/892/logosls.png)
+![](http://i.imgur.com/YnBWI.png)
 
-... and many more.
+More on integrations [here](#integrations).
 
 ### High Performance
 
@@ -25,11 +29,11 @@ This client uses an internal queue to efficiently send your events in aggregate,
 request every time. This means that it is safe to use in your high scale web server controllers, or in your backend services
 without worrying that it will make too many HTTP requests and slow down the program. You no longer need to use a message queue to have analytics.
 
-### Feedback
-
 [Feedback is very welcome!](mailto:friends@segment.io)
 
-## How to Use
+## Quick-start
+
+If you haven't yet, get an API secret [here](https://segment.io).
 
 #### Install
 ```bash
@@ -89,6 +93,23 @@ is logged in, you can still send us the **session_id** or you can just use `null
 
 **timestamp** (datetime, optional) is a datetime object representing when the identify took place. If the event just happened, leave it `None` and we'll use the server's time. If you are importing data from the past, make sure you provide this argument.
 
+That's it, just two functions!
+
+## Integrations
+
+There are two main modes of analytics integration: client-side and server-side. You can use just one, or both.
+
+#### Client-side vs. Server-side
+
+* **Client-side analytics** - (via [analytics.js](https://github.com/segmentio/analytics.js)) works by loading in other integrations
+in the browser.
+
+* **Server-side analytics** - (via [analytics-node](https://github.com/segmentio/analytics-node), [analytics-python](https://github.com/segmentio/analytics-python) and other server-side libraries) works
+by sending the analytics request to [Segment.io](https://segment.io). Our servers then route the message to your desired integrations.
+
+Some analytics services have REST APIs while others only support client-side integrations.
+
+You can learn which integrations are supported server-side vs. client-side on your [project's integrations]((https://segment.io) page.
 
 ## Advanced
 
@@ -259,7 +280,7 @@ assert dt.tzinfo
 import dateutil.parser
 
 import analytics
-analytics.init('fakeid', async=False)
+analytics.init('MY_API_SECRET', async=False)
 
 log = [
     '2012-10-17T18:58:57.911Z ilya@segment.io /purchased/tshirt'
@@ -292,7 +313,7 @@ Check out these gizmos:
 ```python
 
 import analytics
-analytics.init('secret',
+analytics.init('MY_API_SECRET',
                     log_level=logging.INFO, log=True,
                     flush_at=20, flush_after=datetime.timedelta(0, 10),
                     async=True

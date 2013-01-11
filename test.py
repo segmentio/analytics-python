@@ -13,6 +13,7 @@ from dateutil.tz import tzutc
 import analytics
 import analytics.utils
 
+secret = 'testsecret'
 
 def on_success(data, response):
     print 'Success', response
@@ -25,7 +26,7 @@ def on_failure(data, error):
 class AnalyticsBasicTests(unittest.TestCase):
 
     def setUp(self):
-        analytics.init('fakeid', log_level=logging.DEBUG)
+        analytics.init(secret, log_level=logging.DEBUG)
 
         analytics.on_success(on_success)
         analytics.on_failure(on_failure)
