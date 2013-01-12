@@ -236,11 +236,13 @@ class Client(object):
                   'timestamp':   timestamp.isoformat(),
                   'action':      'identify'}
 
+        context['library'] = 'analytics-python'
+
         if self._enqueue(action):
             self.stats.identifies += 1
 
     def track(self, session_id=None, user_id=None, event=None, properties={},
-                timestamp=None):
+                context={}, timestamp=None):
 
         """Whenever a user triggers an event, you'll want to track it.
 
@@ -261,6 +263,10 @@ class Client(object):
         you'll find these properties extremely useful later. Accepted value
         types are string, boolean, ints, doubles, longs, and datetime.datetime.
 
+        : param dict context: An optional dictionary with additional information
+        thats related to the visit. Examples are userAgent, and IP address
+        of the visitor.
+
         : param datetime.datetime timestamp: If this event happened in the past,
         the timestamp   can be used to designate when the identification happened.
         Careful with this one,  if it just happened, leave it None. If you do
@@ -279,6 +285,9 @@ class Client(object):
         if properties is not None and not isinstance(properties, dict):
             raise Exception('Context must be a dictionary.')
 
+        if context is not None and not isinstance(context, dict):
+            raise Exception('Context must be a dictionary.')
+
         if timestamp is None:
             timestamp = datetime.datetime.utcnow().replace(tzinfo=tzutc())
         elif not isinstance(timestamp, datetime.datetime):
@@ -291,9 +300,12 @@ class Client(object):
         action = {'sessionId':    session_id,
                   'userId':       user_id,
                   'event':        event,
+                  'context':      context,
                   'properties':   properties,
                   'timestamp':    timestamp.isoformat(),
                   'action':       'track'}
+
+        context['library'] = 'analytics-python'
 
         if self._enqueue(action):
             self.stats.tracks += 1
