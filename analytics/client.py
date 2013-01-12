@@ -37,16 +37,19 @@ def package_response(client, data, response):
     elif response.status_code == 400:
         content = response.text
         try:
-            error = json.loads(content)
+            body = json.loads(content)
 
-            code = None
-            message = None
+            code = 'bad_request'
+            message = 'Bad request'
 
-            if 'code' in error:
-                code = error['code']
+            if 'error' in body:
+                error = body.error
 
-            if 'message' in error:
-                message = error['message']
+                if 'code' in error:
+                    code = error['code']
+
+                if 'message' in error:
+                    message = error['message']
 
             client._on_failed_flush(data, ApiError(code, message))
 
