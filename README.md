@@ -54,7 +54,7 @@ analytics.init('MY_API_SECRET')
 Whenever a user triggers an event, you’ll want to track it.
 
 ```python
-analytics.identify(session_id='ajsk2jdj29fj298', user_id='ilya@segment.io', {
+analytics.identify(session_id='ajsk2jdj29fj298', user_id='ilya@segment.io', traits={
     "subscriptionPlan": "Free",
     "friends": 30
 })
