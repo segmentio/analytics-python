@@ -178,19 +178,14 @@ class Client(object):
     def on_failure(self, callback):
         self.failure_callbacks.append(callback)
 
-    def identify(self, session_id=None, user_id=None, traits={},
+    def identify(self, user_id=None, traits={},
         context={}, timestamp=None):
 
         """Identifying a user ties all of their actions to an id, and
         associates user traits to that id.
 
-        :param str session_id:  a unique id associated with an anonymous user
-        before they are logged in. If the user is logged in, you can use
-        null here.
-
         :param str user_id: the user's id after they are logged in. It's the
         same id as which you would recognize a signed-in user in your system.
-        Note: you must provide either a sessionId or a userId.
 
         : param dict traits: a dictionary with keys like subscriptionPlan or
         age. You only need to record a trait once, no need to send it again.
@@ -210,9 +205,8 @@ class Client(object):
 
         self._check_for_secret()
 
-        if not session_id and not user_id:
-            raise Exception('Must supply either a session_id or a ' +
-                'user_id (or both).')
+        if not user_id:
+            raise Exception('Must supply a user_id.')
 
         if traits is not None and not isinstance(traits, dict):
             raise Exception('Traits must be a dictionary.')
@@ -229,8 +223,7 @@ class Client(object):
 
         self._clean(traits)
 
-        action = {'sessionId':   session_id,
-                  'userId':      user_id,
+        action = {'userId':      user_id,
                   'traits':      traits,
                   'context':     context,
                   'timestamp':   timestamp.isoformat(),
@@ -241,18 +234,13 @@ class Client(object):
         if self._enqueue(action):
             self.stats.identifies += 1
 
-    def track(self, session_id=None, user_id=None, event=None, properties={},
+    def track(self, user_id=None, event=None, properties={},
                 context={}, timestamp=None):
 
         """Whenever a user triggers an event, you'll want to track it.
 
-        :param str session_id:  a unique id associated with an anonymous user
-        before they are logged in. Even if the user is logged in, you can still
-        send us the sessionId or you can just use null.
-
         :param str user_id:  the user's id after they are logged in. It's the
         same id as which you would recognize a signed-in user in your system.
-        Note: you must provide either a sessionId or a userId.
 
         : param str event: The event name you are tracking. It is recommended
         that it is in human readable form. For example, "Bought T-Shirt"
@@ -276,8 +264,8 @@ class Client(object):
 
         self._check_for_secret()
 
-        if not session_id and not user_id:
-            raise Exception('Must supply either a session_id or a user_id (or both).')
+        if not user_id:
+            raise Exception('Must supply a user_id.')
 
         if not event:
             raise Exception('Event is a required argument as a non-empty string.')
@@ -297,8 +285,7 @@ class Client(object):
 
         self._clean(properties)
 
-        action = {'sessionId':    session_id,
-                  'userId':       user_id,
+        action = {'userId':       user_id,
                   'event':        event,
                   'context':      context,
                   'properties':   properties,

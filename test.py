@@ -78,7 +78,7 @@ class AnalyticsBasicTests(unittest.TestCase):
         last_successful = analytics.stats.successful
         last_flushes = analytics.stats.flushes
 
-        analytics.identify('random_session_id', 'ilya@analytics.io', {
+        analytics.identify('ilya@analytics.io', {
             "Subscription Plan": "Free",
             "Friends": 30
         })
@@ -106,7 +106,7 @@ class AnalyticsBasicTests(unittest.TestCase):
         last_tracks = analytics.stats.tracks
         last_successful = analytics.stats.successful
 
-        analytics.track('random_session_id', 'ilya@analytics.io', 'Played a Song', {
+        analytics.track('ilya@analytics.io', 'Played a Song', {
             "Artist": "The Beatles",
             "Song": "Eleanor Rigby"
         })
@@ -144,7 +144,7 @@ class AnalyticsBasicTests(unittest.TestCase):
             "language": "en-us"
         }
 
-        analytics.identify('random_session_id', 'ilya@analytics.io', traits,
+        analytics.identify('ilya@analytics.io', traits,
             context=context, timestamp=datetime.now())
 
         self.assertTrue(analytics.stats.identifies == last_identifies + 1)
@@ -166,7 +166,7 @@ class AnalyticsBasicTests(unittest.TestCase):
             "Song": "Eleanor Rigby"
         }
 
-        analytics.track('random_session_id', 'ilya@analytics.io', 'Played a Song',
+        analytics.track('ilya@analytics.io', 'Played a Song',
             properties, timestamp=datetime.now())
 
         self.assertTrue(analytics.stats.tracks == last_tracks + 1)
@@ -188,7 +188,7 @@ class AnalyticsBasicTests(unittest.TestCase):
             "Song": "Eleanor Rigby"
         }
 
-        analytics.track('random_session_id', 'ilya@analytics.io', 'Played a Song',
+        analytics.track('ilya@analytics.io', 'Played a Song',
             properties, timestamp=datetime.today())
 
         self.assertTrue(analytics.stats.tracks == last_tracks + 1)
@@ -200,7 +200,7 @@ class AnalyticsBasicTests(unittest.TestCase):
         analytics.default_client.flush_at = 1
 
         # add something so we have a reason to flush
-        analytics.track('random_session_id', 'ilya@analytics.io', 'Played a Song', {
+        analytics.track('ilya@analytics.io', 'Played a Song', {
             "Artist": "The Beatles",
             "Song": "Eleanor Rigby"
         })
@@ -215,7 +215,7 @@ class AnalyticsBasicTests(unittest.TestCase):
         # set the time policy to 1 second from now
         analytics.default_client.flush_after = timedelta(seconds=1)
 
-        analytics.track('random_session_id', 'ilya@analytics.io', 'Played a Song', {
+        analytics.track('ilya@analytics.io', 'Played a Song', {
             "Artist": "The Beatles",
             "Song": "Eleanor Rigby"
         })
@@ -227,7 +227,7 @@ class AnalyticsBasicTests(unittest.TestCase):
         sleep(1.2)
 
         # submit another track to trigger the policy
-        analytics.track('random_session_id', 'ilya@analytics.io', 'Played a Song', {
+        analytics.track('ilya@analytics.io', 'Played a Song', {
             "Artist": "The Beatles",
             "Song": "Eleanor Rigby"
         })
@@ -246,7 +246,7 @@ class AnalyticsBasicTests(unittest.TestCase):
         analytics.default_client.set_log_level(logging.WARN)
 
         for i in range(to_send):
-            analytics.track('random_session_id', 'ilya@analytics.io', 'Played a Song', {
+            analytics.track('ilya@analytics.io', 'Played a Song', {
                 "Artist": "The Beatles",
                 "Song": "Eleanor Rigby"
             })
