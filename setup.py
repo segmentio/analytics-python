@@ -13,7 +13,7 @@ Documentation and more details at https://github.com/segmentio/analytics-python
 
 setup(
     name='analytics-python',
-    version='0.2.6',
+    version='0.2.7',
     url='https://github.com/segmentio/analytics-python',
     author='Ilya Volodarsky',
     author_email='ilya@segment.io',

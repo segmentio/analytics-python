@@ -63,6 +63,7 @@ def request(client, url, data):
 
     log('debug', 'Sending request to Segment.io ...')
     try:
+
         response = requests.post(url, data=json.dumps(data),
             headers={'content-type': 'application/json'})
 
@@ -163,7 +164,7 @@ class Client(object):
         to_delete = []
         for key in d.iterkeys():
             val = d[key]
-            if not isinstance(val, (str, int, long, float, bool, datetime.datetime)):
+            if not isinstance(val, (str, unicode, int, long, float, bool, datetime.datetime)):
                 log('warn', 'Dictionary values must be strings, integers, ' +
                     'longs, floats, booleans, or datetime. Dictioary key\'s ' +
                     '"{0}" value {1} of type {2} is unsupported.'.format(
