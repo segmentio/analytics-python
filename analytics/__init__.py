@@ -4,7 +4,7 @@ import sys
 try:
     import requests
 except ImportError:
-    print >>sys.stderr, 'analytics-node requires that you have a Python "requests" library installed. Try running "pip install requests"'
+    print >>sys.stderr, 'analytics-python requires that you have a Python "requests" library installed. Try running "pip install requests"'
 
 from stats import Statistics
 stats = Statistics()
