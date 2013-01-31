@@ -326,6 +326,8 @@ class Client(object):
 
             submitted = True
 
+            log('debug', 'Enqueued ' + action['action'] + '.')
+
         else:
             log('warn', 'analytics-python queue is full')
 
