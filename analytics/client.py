@@ -8,11 +8,10 @@ from dateutil.tz import tzutc
 import requests
 
 from stats import Statistics
-from errors import ApiError, BatchError
+from errors import ApiError
 from utils import guess_timezone
 
 import options
-
 
 
 logging_enabled = True
@@ -65,29 +64,32 @@ def request(client, url, data):
     try:
 
         response = requests.post(url, data=json.dumps(data),
-            headers={'content-type': 'application/json'})
+            headers={'content-type': 'application/json'}, timeout=client.timeout)
 
         log('debug', 'Finished Segment.io request.')
 
         package_response(client, data, response)
 
+        return response.status_code == 200
+
     except requests.ConnectionError as e:
         package_exception(client, data, e)
+    except requests.Timeout as e:
+        package_exception(client, data, e)
+
+    return False
 
 
 class FlushThread(threading.Thread):
 
-    def __init__(self, client, url, batches):
+    def __init__(self, client):
         threading.Thread.__init__(self)
         self.client = client
-        self.url = url
-        self.batches = batches
 
     def run(self):
         log('debug', 'Flushing thread running ...')
 
-        for data in self.batches:
-            request(self.client, self.url, data)
+        self.client._sync_flush()
 
         log('debug', 'Flushing thread done.')
 
@@ -102,7 +104,8 @@ class Client(object):
                        log_level=logging.INFO, log=True,
                        flush_at=20, flush_after=datetime.timedelta(0, 10),
                        async=True, max_queue_size=10000,
-                       stats=Statistics()):
+                       stats=Statistics(),
+                       timeout=10):
         """Create a new instance of a analytics-python Client
 
         :param str secret: The Segment.io API secret
@@ -117,6 +120,7 @@ class Client(object):
         : param bool async: True to have the client flush to the server on another
         thread, therefore not blocking code (this is the default). False to
         enable blocking and making the request on the calling thread.
+        : param float timeout: Number of seconds before timing out request to Segment.io
 
         """
 
@@ -139,6 +143,8 @@ class Client(object):
 
         self.flush_at = flush_at
         self.flush_after = flush_after
+
+        self.timeout = timeout
 
         self.stats = stats
 
@@ -321,7 +327,7 @@ class Client(object):
             submitted = True
 
         else:
-            log('warn', 'Segment.io queue is full')
+            log('warn', 'analytics-python queue is full')
 
         if self._should_flush():
             self.flush()
@@ -350,8 +356,6 @@ class Client(object):
 
         flushing = False
 
-        url = options.host + options.endpoints['batch']
-
         # if the async parameter is provided, it overrides the client's settings
         if async == None:
             async = self.async
@@ -363,33 +367,21 @@ class Client(object):
 
                 if self._flush_thread_is_free():
 
-                    log('debug', 'Attempting asynchronous flush ...')
+                    log('debug', 'Initiating asynchronous flush ..')
 
-                    batches = self._get_batches()
-                    if len(batches) > 0:
+                    self.flushing_thread = FlushThread(self)
+                    self.flushing_thread.start()
 
-                        self.flushing_thread = FlushThread(self,
-                            url, batches)
-
-                        self.flushing_thread.start()
-
-                        flushing = True
+                    flushing = True
 
                 else:
-                    log('debug', 'The flushing thread is still active, ' +
-                        'cant flush right now')
+                    log('debug', 'The flushing thread is still active.')
         else:
 
             # Flushes on this thread
-            log('debug', 'Starting synchronous flush ...')
-
-            batches = self._get_batches()
-            if len(batches) > 0:
-                for data in batches:
-                    request(self, url, data)
-                flushing = True
-
-            log('debug', 'Finished synchronous flush.')
+            log('debug', 'Initiating synchronous flush ..')
+            self._sync_flush()
+            flushing = True
 
         if flushing:
             self.last_flushed = datetime.datetime.now()
@@ -397,20 +389,30 @@ class Client(object):
 
         return flushing
 
-    def _get_batches(self):
+    def _sync_flush(self):
 
-        batches = []
+        log('debug', 'Starting flush ..')
+
+        successful = 0
+        failed = 0
+
+        url = options.host + options.endpoints['batch']
 
         while len(self.queue) > 0:
+
             batch = []
             for i in range(self.max_flush_size):
                 if len(self.queue) == 0:
                     break
+
                 batch.append(self.queue.pop())
 
-            batches.append({
-                'batch':          batch,
-                'secret':         self.secret
-            })
+            payload = {'batch': batch, 'secret': self.secret}
 
-        return batches
+            if request(self, url, payload):
+                successful += len(batch)
+            else:
+                failed += len(batch)
+
+        log('debug', 'Successfully flushed ' + str(successful) + ' items [' +
+            str(failed) + ' failed].')

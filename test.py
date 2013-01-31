@@ -45,7 +45,7 @@ class AnalyticsBasicTests(unittest.TestCase):
 
         shouldnt_be_edited = analytics.utils.guess_timezone(utcnow)
 
-        self.assertTrue(utcnow == shouldnt_be_edited)
+        self.assertEqual(utcnow, shouldnt_be_edited)
 
     def test_clean(self):
         supported = {
@@ -67,7 +67,7 @@ class AnalyticsBasicTests(unittest.TestCase):
 
         analytics.default_client._clean(combined)
 
-        self.assertTrue(combined == supported)
+        self.assertEqual(combined, supported)
 
     def test_async_basic_identify(self):
         # flush after every message
@@ -83,20 +83,20 @@ class AnalyticsBasicTests(unittest.TestCase):
             "Friends": 30
         })
 
-        self.assertTrue(analytics.stats.identifies == last_identifies + 1)
+        self.assertEqual(analytics.stats.identifies, last_identifies + 1)
 
         # this should flush because we set the flush_at to 1
-        self.assertTrue(analytics.stats.flushes == last_flushes + 1)
+        self.assertEqual(analytics.stats.flushes, last_flushes + 1)
 
         # this should do nothing, as the async thread is currently active
         analytics.flush()
 
         # we should see no more flushes here
-        self.assertTrue(analytics.stats.flushes == last_flushes + 1)
+        self.assertEqual(analytics.stats.flushes, last_flushes + 1)
 
         sleep(1)
 
-        self.assertTrue(analytics.stats.successful == last_successful + 1)
+        self.assertEqual(analytics.stats.successful, last_successful + 1)
 
     def test_async_basic_track(self):
 
@@ -111,13 +111,13 @@ class AnalyticsBasicTests(unittest.TestCase):
             "Song": "Eleanor Rigby"
         })
 
-        self.assertTrue(analytics.stats.tracks == last_tracks + 1)
+        self.assertEqual(analytics.stats.tracks, last_tracks + 1)
 
         analytics.flush()
 
         sleep(1)
 
-        self.assertTrue(analytics.stats.successful == last_successful + 1)
+        self.assertEqual(analytics.stats.successful, last_successful + 1)
 
     def test_async_full_identify(self):
 
@@ -147,11 +147,11 @@ class AnalyticsBasicTests(unittest.TestCase):
         analytics.identify('ilya@analytics.io', traits,
             context=context, timestamp=datetime.now())
 
-        self.assertTrue(analytics.stats.identifies == last_identifies + 1)
+        self.assertEqual(analytics.stats.identifies, last_identifies + 1)
 
         sleep(1)
 
-        self.assertTrue(analytics.stats.successful == last_successful + 1)
+        self.assertEqual(analytics.stats.successful, last_successful + 1)
 
     def test_async_full_track(self):
 
@@ -169,11 +169,11 @@ class AnalyticsBasicTests(unittest.TestCase):
         analytics.track('ilya@analytics.io', 'Played a Song',
             properties, timestamp=datetime.now())
 
-        self.assertTrue(analytics.stats.tracks == last_tracks + 1)
+        self.assertEqual(analytics.stats.tracks, last_tracks + 1)
 
         sleep(1)
 
-        self.assertTrue(analytics.stats.successful == last_successful + 1)
+        self.assertEqual(analytics.stats.successful, last_successful + 1)
 
     def test_blocking_flush(self):
 
@@ -191,8 +191,8 @@ class AnalyticsBasicTests(unittest.TestCase):
         analytics.track('ilya@analytics.io', 'Played a Song',
             properties, timestamp=datetime.today())
 
-        self.assertTrue(analytics.stats.tracks == last_tracks + 1)
-        self.assertTrue(analytics.stats.successful == last_successful + 1)
+        self.assertEqual(analytics.stats.tracks, last_tracks + 1)
+        self.assertEqual(analytics.stats.successful, last_successful + 1)
 
     def test_time_policy(self):
 
@@ -221,7 +221,7 @@ class AnalyticsBasicTests(unittest.TestCase):
         })
 
         # that shouldn't of triggered a flush
-        self.assertTrue(analytics.stats.flushes == last_flushes)
+        self.assertEqual(analytics.stats.flushes, last_flushes)
 
         # sleep past the time-flush policy
         sleep(1.2)
@@ -232,7 +232,7 @@ class AnalyticsBasicTests(unittest.TestCase):
             "Song": "Eleanor Rigby"
         })
 
-        self.assertTrue(analytics.stats.flushes == last_flushes + 1)
+        self.assertEqual(analytics.stats.flushes, last_flushes + 1)
 
     def test_performance(self):
 
@@ -243,7 +243,7 @@ class AnalyticsBasicTests(unittest.TestCase):
         analytics.default_client.async = True
         analytics.default_client.flush_at = 200
         analytics.default_client.max_flush_size = 50
-        analytics.default_client.set_log_level(logging.WARN)
+        analytics.default_client.set_log_level(logging.DEBUG)
 
         for i in range(to_send):
             analytics.track('ilya@analytics.io', 'Played a Song', {
