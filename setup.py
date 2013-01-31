@@ -1,3 +1,4 @@
+from analytics import VERSION
 from distutils.core import setup
 
 long_description = '''
@@ -13,7 +14,7 @@ Documentation and more details at https://github.com/segmentio/analytics-python
 
 setup(
     name='analytics-python',
-    version='0.3.1',
+    version=VERSION,
     url='https://github.com/segmentio/analytics-python',
     author='Ilya Volodarsky',
     author_email='ilya@segment.io',
