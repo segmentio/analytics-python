@@ -33,9 +33,12 @@ def init(secret, **kwargs):
 
     """
 
-    default_client = Client(secret=secret, stats=stats, **kwargs)
     import sys
     this_module = sys.modules[__name__]
+    if hasattr(this_module, 'default_client'):
+        return
+
+    default_client = Client(secret=secret, stats=stats, **kwargs)
 
     setattr(this_module, 'default_client', default_client)
 
