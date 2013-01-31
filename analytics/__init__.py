@@ -1,17 +1,29 @@
 
-VERSION = '0.3.2'
+VERSION = '0.3.3'
 
 import sys
 
 try:
     import requests
 except ImportError:
-    print >>sys.stderr, 'analytics-node requires that you have a Python "requests" library installed. Try running "pip install requests"'
+    print >>sys.stderr, 'analytics-python requires that you have a Python "requests" library installed. Try running "pip install requests"'
+
+import sys
+this_module = sys.modules[__name__]
 
 from stats import Statistics
 stats = Statistics()
 
 from client import Client
+
+methods = ['identify', 'track', 'flush', 'on_success', 'on_failure']
+
+
+def uninitialized(*args, **kwargs):
+    print >>sys.stderr, 'Please call analytics.init(secret) before calling analytics methods.'
+
+for method in methods:
+    setattr(this_module, method, uninitialized)
 
 
 def init(secret, **kwargs):
@@ -35,8 +47,7 @@ def init(secret, **kwargs):
 
     """
 
-    import sys
-    this_module = sys.modules[__name__]
+    # if we have already initialized, no-op
     if hasattr(this_module, 'default_client'):
         return
 
@@ -51,6 +62,5 @@ def init(secret, **kwargs):
 
         setattr(this_module, method, proxy_to_default_client)
 
-    methods = ['identify', 'track', 'flush', 'on_success', 'on_failure']
     for method in methods:
         proxy(method)
