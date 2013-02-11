@@ -105,7 +105,8 @@ class Client(object):
                        flush_at=20, flush_after=datetime.timedelta(0, 10),
                        async=True, max_queue_size=10000,
                        stats=Statistics(),
-                       timeout=10):
+                       timeout=10,
+                       send=True):
         """Create a new instance of a analytics-python Client
 
         :param str secret: The Segment.io API secret
@@ -121,7 +122,7 @@ class Client(object):
         thread, therefore not blocking code (this is the default). False to
         enable blocking and making the request on the calling thread.
         : param float timeout: Number of seconds before timing out request to Segment.io
-
+        : param bool send: True to send requests, False to not send. False to turn analytics off (for testing).
         """
 
         self.secret = secret
@@ -150,6 +151,8 @@ class Client(object):
 
         self.flush_lock = threading.Lock()
         self.flushing_thread = None
+
+        self.send = send
 
         self.success_callbacks = []
         self.failure_callbacks = []
@@ -316,6 +319,10 @@ class Client(object):
         return full or stale
 
     def _enqueue(self, action):
+
+        # if we've disabled sending, just return False
+        if not self.send:
+            return False
 
         submitted = False
 
