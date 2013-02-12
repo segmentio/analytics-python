@@ -2,22 +2,11 @@
 VERSION = '0.3.5'
 
 import sys
-
-try:
-    import requests
-except ImportError:
-    print >>sys.stderr, 'analytics-python requires that you have a Python "requests" library installed. Try running "pip install requests"'
-
-import sys
 this_module = sys.modules[__name__]
 
 from stats import Statistics
 stats = Statistics()
-
-from client import Client
-
 methods = ['identify', 'track', 'flush', 'on_success', 'on_failure']
-
 
 def uninitialized(*args, **kwargs):
     print >>sys.stderr, 'Please call analytics.init(secret) before calling analytics methods.'
@@ -46,6 +35,7 @@ def init(secret, **kwargs):
     enable blocking and making the request on the calling thread.
 
     """
+    from client import Client
 
     # if we have already initialized, no-op
     if hasattr(this_module, 'default_client'):
