@@ -19,14 +19,14 @@ import logging
 logger = logging.getLogger('analytics')
 
 
-def log(level, *args):
+def log(level, *args, **kwargs):
     if logging_enabled:
         method = getattr(logger, level)
-        method(*args)
+        method(*args, **kwargs)
 
 
 def package_exception(client, data, e):
-    log('warn', 'Segment.io request error', e)
+    log('warn', 'Segment.io request error', exc_info=True)
     client._on_failed_flush(data, e)
 
 
@@ -173,12 +173,15 @@ class Client(object):
         to_delete = []
         for key in d.iterkeys():
             val = d[key]
-            if not isinstance(val, (str, unicode, int, long, float, numbers.Number, bool, datetime.datetime)):
-                log('warn', 'Dictionary values must be strings, integers, ' +
-                    'longs, floats, booleans, or datetime. Dictioary key\'s ' +
-                    '"{0}" value {1} of type {2} is unsupported.'.format(
-                        key, val, type(val)))
-                to_delete.append(key)
+            if not isinstance(val, (str, unicode, int, long, float, bool, numbers.Number, datetime.datetime)):
+                try:
+                    # coerce values to unicode
+                    d[key] = unicode(d[key])
+                except TypeError, e:
+                    log('warn', 'Dictionary values must be serializeable to JSON ' +
+                        '"{0}" value {1} of type {2} is unsupported.'.format(
+                            key, d[key], type(d[key])))
+                    to_delete.append(key)
         for key in to_delete:
             del d[key]
 
@@ -423,5 +426,4 @@ class Client(object):
             else:
                 failed += len(batch)
 
-        log('debug', 'Successfully flushed ' + str(successful) + ' items [' +
-            str(failed) + ' failed].')
+        log('debug', 'Successfully flushed {0} items [{1} failed].'.format(str(successful), str(failed)))

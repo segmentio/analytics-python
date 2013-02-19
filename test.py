@@ -3,6 +3,7 @@ import unittest
 from datetime import datetime, timedelta
 
 from time import sleep, time
+from decimal import *
 
 import logging
 logging.basicConfig()
@@ -47,26 +48,31 @@ class AnalyticsBasicTests(unittest.TestCase):
         self.assertEqual(utcnow, shouldnt_be_edited)
 
     def test_clean(self):
-        supported = {
+
+        simple = {
             'integer': 1,
             'float': 2.0,
             'long': 200000000,
             'bool': True,
             'str': 'woo',
+            'unicode': u'woo',
+            'decimal': Decimal('0.142857'),
             'date': datetime.now(),
         }
 
-        unsupported = {
-            'exception': Exception(),
+        complicated = {
+            'exception': Exception('This should show up'),
             'timedelta': timedelta(microseconds=20),
             'list': [1, 2, 3]
         }
 
-        combined = dict(supported.items() + unsupported.items())
+        combined = dict(simple.items() + complicated.items())
+
+        pre_clean_keys = combined.keys()
 
         analytics.default_client._clean(combined)
 
-        self.assertEqual(combined, supported)
+        self.assertEqual(combined.keys(), pre_clean_keys)
 
     def test_async_basic_identify(self):
         # flush after every message
