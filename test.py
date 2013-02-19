@@ -120,7 +120,7 @@ class AnalyticsBasicTests(unittest.TestCase):
 
         analytics.flush()
 
-        sleep(1)
+        sleep(2)
 
         self.assertEqual(analytics.stats.successful, last_successful + 1)
 
@@ -154,7 +154,7 @@ class AnalyticsBasicTests(unittest.TestCase):
 
         self.assertEqual(analytics.stats.identifies, last_identifies + 1)
 
-        sleep(1)
+        sleep(2)
 
         self.assertEqual(analytics.stats.successful, last_successful + 1)
 
