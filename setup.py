@@ -9,7 +9,7 @@ except ImportError:
 
 # Don't import stripe module here, since deps may not be installed
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'analytics'))
-import version
+from version import VERSION
 
 long_description = '''
 Segment.io is the simplest way to integrate analytics into your application.
@@ -23,7 +23,7 @@ Documentation and more details at https://github.com/segmentio/analytics-python
 
 setup(
     name='analytics-python',
-    version=version,
+    version=VERSION,
     url='https://github.com/segmentio/analytics-python',
     author='Ilya Volodarsky',
     author_email='ilya@segment.io',
