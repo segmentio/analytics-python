@@ -171,12 +171,13 @@ class Client(object):
     def _clean(self, d):
         to_delete = []
         for key in d.iterkeys():
-            val = d[key]
-            if not isinstance(val, (str, unicode, int, long, float, bool, datetime.datetime)):
-                log('warn', 'Dictionary values must be strings, integers, ' +
-                    'longs, floats, booleans, or datetime. Dictioary key\'s ' +
+            try:
+                # coerce values to unicode
+                d[key] = unicode(d[key])
+            except TypeError, e:
+                log('warn', 'Dictionary values must be serializeable to JSON ' +
                     '"{0}" value {1} of type {2} is unsupported.'.format(
-                        key, val, type(val)))
+                        key, d[key], type(d[key])))
                 to_delete.append(key)
         for key in to_delete:
             del d[key]
@@ -422,5 +423,4 @@ class Client(object):
             else:
                 failed += len(batch)
 
-        log('debug', 'Successfully flushed ' + str(successful) + ' items [' +
-            str(failed) + ' failed].')
+        log('debug', 'Successfully flushed {0} items [{1} failed].'.format(str(successful), str(failed) ))
