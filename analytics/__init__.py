@@ -1,5 +1,8 @@
 
-VERSION = '0.3.5'
+import version
+
+VERSION = version.VERSION
+__version__ = VERSION
 
 import sys
 

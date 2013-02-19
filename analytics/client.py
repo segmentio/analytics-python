@@ -3,6 +3,7 @@ import json
 import threading
 import datetime
 import collections
+import numbers
 
 from dateutil.tz import tzutc
 import requests
@@ -173,7 +174,7 @@ class Client(object):
         to_delete = []
         for key in d.iterkeys():
             val = d[key]
-            if not isinstance(val, (str, unicode, int, long, float, bool, datetime.datetime)):
+            if not isinstance(val, (str, unicode, int, long, float, numbers.Number, bool, datetime.datetime)):
                 log('warn', 'Dictionary values must be strings, integers, ' +
                     'longs, floats, booleans, or datetime. Dictioary key\'s ' +
                     '"{0}" value {1} of type {2} is unsupported.'.format(

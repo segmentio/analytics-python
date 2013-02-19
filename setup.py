@@ -1,5 +1,15 @@
-from analytics import VERSION
-from distutils.core import setup
+
+import os
+import sys
+
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
+
+# Don't import stripe module here, since deps may not be installed
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'analytics'))
+import version
 
 long_description = '''
 Segment.io is the simplest way to integrate analytics into your application.
@@ -11,10 +21,9 @@ This is the official python client that wraps the Segment.io REST API (https://s
 Documentation and more details at https://github.com/segmentio/analytics-python
 '''
 
-
 setup(
     name='analytics-python',
-    version=VERSION,
+    version=version,
     url='https://github.com/segmentio/analytics-python',
     author='Ilya Volodarsky',
     author_email='ilya@segment.io',
