@@ -18,14 +18,14 @@ import logging
 logger = logging.getLogger('analytics')
 
 
-def log(level, *args):
+def log(level, *args, **kwargs):
     if logging_enabled:
         method = getattr(logger, level)
-        method(*args)
+        method(*args, **kwargs)
 
 
 def package_exception(client, data, e):
-    log('warn', 'Segment.io request error', e)
+    log('warn', 'Segment.io request error', exc_info=True)
     client._on_failed_flush(data, e)
 
 
