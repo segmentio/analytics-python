@@ -173,7 +173,9 @@ class Client(object):
         to_delete = []
         for key in d.iterkeys():
             val = d[key]
-            if not isinstance(val, (str, unicode, int, long, float, bool, numbers.Number, datetime.datetime)):
+            if isinstance(val, (dict)):
+                self._clean(val)
+            elif not isinstance(val, (str, unicode, int, long, float, bool, numbers.Number, datetime.datetime)):
                 try:
                     # coerce values to unicode
                     d[key] = unicode(d[key])
@@ -191,8 +193,7 @@ class Client(object):
     def on_failure(self, callback):
         self.failure_callbacks.append(callback)
 
-    def identify(self, user_id=None, traits={},
-        context={}, timestamp=None):
+    def identify(self, user_id=None, traits={}, context={}, timestamp=None):
 
         """Identifying a user ties all of their actions to an id, and
         associates user traits to that id.
