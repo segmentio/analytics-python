@@ -2,6 +2,7 @@ import unittest
 
 from datetime import datetime, timedelta
 
+from random import randint
 from time import sleep, time
 from decimal import *
 
@@ -14,6 +15,7 @@ import analytics
 import analytics.utils
 
 secret = 'testsecret'
+
 
 def on_success(data, response):
     print 'Success', response
@@ -179,6 +181,29 @@ class AnalyticsBasicTests(unittest.TestCase):
         sleep(1)
 
         self.assertEqual(analytics.stats.successful, last_successful + 1)
+
+    def test_alias(self):
+
+        session_id = str(randint(1000000, 99999999))
+        user_id = 'bob+'+session_id + '@gmail.com'
+
+        analytics.default_client.flush_at = 1
+        analytics.default_client.async = False
+
+        last_aliases = analytics.stats.aliases
+        last_successful = analytics.stats.successful
+
+        analytics.identify(session_id, traits={'AnonymousTrait': 'Who am I?'})
+        analytics.track(session_id, 'Anonymous Event')
+
+        # alias the user
+        analytics.alias(session_id, user_id)
+
+        analytics.identify(user_id, traits={'IdentifiedTrait': 'A Hunk'})
+        analytics.track(user_id, 'Identified Event')
+
+        self.assertEqual(analytics.stats.aliases, last_aliases + 1)
+        self.assertEqual(analytics.stats.successful, last_successful + 5)
 
     def test_blocking_flush(self):
 

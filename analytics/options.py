@@ -1,5 +1,6 @@
 
-host = 'https://api.segment.io'
+#host = 'https://api.segment.io'
+host = 'http://localhost:7001'
 
 endpoints = {
     'track': '/v1/track',

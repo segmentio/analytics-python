@@ -9,7 +9,7 @@ this_module = sys.modules[__name__]
 
 from stats import Statistics
 stats = Statistics()
-methods = ['identify', 'track', 'flush', 'on_success', 'on_failure']
+methods = ['identify', 'track', 'alias', 'flush', 'on_success', 'on_failure']
 
 def uninitialized(*args, **kwargs):
     print >>sys.stderr, 'Please call analytics.init(secret) before calling analytics methods.'

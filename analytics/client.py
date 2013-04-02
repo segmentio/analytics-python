@@ -311,6 +311,54 @@ class Client(object):
         if self._enqueue(action):
             self.stats.tracks += 1
 
+    def alias(self, from_id, to_id, context={}, timestamp=None):
+
+        """Aliases an anonymous user into an identified user
+
+        :param str from_id: the anonymous user's id before they are logged in
+
+        : param str to_id: the identified user's id after they're logged in
+
+        : param dict context: An optional dictionary with additional information
+        thats related to the visit. Examples are userAgent, and IP address
+        of the visitor.
+
+        : param datetime.datetime timestamp: If this event happened in the past,
+        the timestamp   can be used to designate when the identification happened.
+        Careful with this one,  if it just happened, leave it None. If you do
+        choose to provide a timestamp, make sure it has a timezone.
+
+        """
+
+        self._check_for_secret()
+
+        if not from_id:
+            raise Exception('Must supply a from_id.')
+
+        if not to_id:
+            raise Exception('Must supply a to_id.')
+
+        if context is not None and not isinstance(context, dict):
+            raise Exception('Context must be a dictionary.')
+
+        if timestamp is None:
+            timestamp = datetime.datetime.utcnow().replace(tzinfo=tzutc())
+        elif not isinstance(timestamp, datetime.datetime):
+            raise Exception('Timestamp must be a datetime.datetime object.')
+        else:
+            timestamp = guess_timezone(timestamp)
+
+        action = {'from':         from_id,
+                  'to':           to_id,
+                  'context':      context,
+                  'timestamp':    timestamp.isoformat(),
+                  'action':       'alias'}
+
+        context['library'] = 'analytics-python'
+
+        if self._enqueue(action):
+            self.stats.aliases += 1
+
     def _should_flush(self):
         """ Determine whether we should sync """
 

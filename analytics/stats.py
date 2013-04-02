@@ -10,6 +10,8 @@ class Statistics(object):
         self.identifies = 0
         # The number of tracks submitted
         self.tracks = 0
+        # The number of aliases
+        self.aliases = 0
 
         # The number of actions to be successful
         self.successful = 0
