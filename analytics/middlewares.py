@@ -29,4 +29,7 @@ class AnalyticsJSInjector(object):
 
                 yield line
 
+            if hasattr(app_iter, 'close'):
+                app_iter.close()
+
         return injected_iter()
