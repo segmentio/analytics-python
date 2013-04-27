@@ -1,6 +1,6 @@
 #coding: utf-8
 
-class AnalyticsJSIntector(object):
+class AnalyticsJSInjector(object):
     """Inject analytics.js snippet on <head>"""
     def __init__(self, app, js_token):
         self.app = app
