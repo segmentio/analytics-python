@@ -41,22 +41,22 @@ class ContentModifier(object):
         modified_iter = self.response_modifier(app_iter)
 
         if hasattr(app_iter, 'close'):
-            modified_iter.close = lambda: app_iter.close()
-        return self._iter_closer(modified_iter)
+            def closing_iter():
+                for line in modified_iter:
+                    yield line
+
+                if hasattr(app_iter, 'close'):
+                    app_iter.close()
+
+            return closing_iter()
+
+        return modified_iter
 
     def _start_response(self, original_start_response):
         def start_response(status, headers, exc_info=None):
             status, headers, exc_info = self.header_modifier(status, headers, exc_info)
             original_start_response(status, headers, exc_info)
         return start_response
-
-    @staticmethod
-    def _iter_closer(modified_iter):
-        for line in modified_iter:
-            yield line
-
-        if hasattr(modified_iter, 'close'):
-            modified_iter.close()
 
 
 class AnalyticsJSInjector(ContentModifier):
@@ -76,7 +76,7 @@ class AnalyticsJSInjector(ContentModifier):
         """Should be implemented by descendants"""
         snippet_injected = False
         for line in app_iter:
-            if not snippet_injected and u'var analytics=analytics||[];analytics.load=function(e)' in line.lower():
+            if not snippet_injected and 'var analytics=analytics||[];analytics.load=function(e)' in line.lower():
                 # Detected already existing snippet. Stop trying to inject another.
                 snippet_injected = True
 
