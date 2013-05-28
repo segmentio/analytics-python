@@ -1,6 +1,6 @@
 import json
 import threading
-import datetime
+from datetime import datetime, timedelta
 import collections
 import numbers
 
@@ -31,6 +31,7 @@ def package_exception(client, data, e):
 
 
 def package_response(client, data, response):
+    # TODO: reduce the complexity (mccabe)
     if response.status_code == 200:
         client._on_successful_flush(data, response)
     elif response.status_code == 400:
@@ -55,7 +56,8 @@ def package_response(client, data, response):
         except Exception:
             client._on_failed_flush(data, ApiError('Bad Request', content))
     else:
-        client._on_failed_flush(data, ApiError(response.status_code, response.text))
+        client._on_failed_flush(data,
+                                ApiError(response.status_code, response.text))
 
 
 def request(client, url, data):
@@ -63,8 +65,10 @@ def request(client, url, data):
     log('debug', 'Sending request to Segment.io ...')
     try:
 
-        response = requests.post(url, data=json.dumps(data),
-            headers={'content-type': 'application/json'}, timeout=client.timeout)
+        response = requests.post(url,
+                                 data=json.dumps(data),
+                                 headers={'content-type': 'application/json'},
+                                 timeout=client.timeout)
 
         log('debug', 'Finished Segment.io request.')
 
@@ -100,29 +104,28 @@ class Client(object):
 
     """
 
-    def __init__(self, secret=None,
-                       log_level=logging.INFO, log=True,
-                       flush_at=20, flush_after=datetime.timedelta(0, 10),
-                       async=True, max_queue_size=10000,
-                       stats=Statistics(),
-                       timeout=10,
-                       send=True):
+    def __init__(self, secret=None, log_level=logging.INFO, log=True,
+                 flush_at=20, flush_after=timedelta(0, 10),
+                 async=True, max_queue_size=10000, stats=Statistics(),
+                 timeout=10, send=True):
         """Create a new instance of a analytics-python Client
 
         :param str secret: The Segment.io API secret
-        :param logging.LOG_LEVEL log_level: The logging log level for the client
-        talks to. Use log_level=logging.DEBUG to troubleshoot
+        :param logging.LOG_LEVEL log_level: The logging log level for the
+        client talks to. Use log_level=logging.DEBUG to troubleshoot
         : param bool log: False to turn off logging completely, True by default
-        : param int flush_at: Specicies after how many messages the client will flush
-        to the server. Use flush_at=1 to disable batching
+        : param int flush_at: Specicies after how many messages the client will
+        flush to the server. Use flush_at=1 to disable batching
         : param datetime.timedelta flush_after: Specifies after how much time
         of no flushing that the server will flush. Used in conjunction with
         the flush_at size policy
-        : param bool async: True to have the client flush to the server on another
-        thread, therefore not blocking code (this is the default). False to
-        enable blocking and making the request on the calling thread.
-        : param float timeout: Number of seconds before timing out request to Segment.io
-        : param bool send: True to send requests, False to not send. False to turn analytics off (for testing).
+        : param bool async: True to have the client flush to the server on
+        another thread, therefore not blocking code (this is the default).
+        False to enable blocking and making the request on the calling thread.
+        : param float timeout: Number of seconds before timing out request to
+        Segment.io
+        : param bool send: True to send requests, False to not send. False to
+        turn analytics off (for testing).
         """
 
         self.secret = secret
@@ -131,6 +134,7 @@ class Client(object):
         self.last_flushed = None
 
         if not log:
+            # TODO: logging_enabled is assigned, but not used
             logging_enabled = False
             # effectively disables the logger
             logger.setLevel(logging.CRITICAL)
@@ -160,29 +164,35 @@ class Client(object):
     def set_log_level(self, level):
         """Sets the log level for analytics-python
 
-        :param logging.LOG_LEVEL level: The level at which analytics-python log should talk at
-
+        :param logging.LOG_LEVEL level: The level at which analytics-python log
+        should talk at
         """
         logger.setLevel(level)
 
     def _check_for_secret(self):
         if not self.secret:
-            raise Exception('Please set analytics.secret before calling identify or track.')
+            raise Exception('Please set analytics.secret before calling ' +
+                            'identify or track.')
 
     def _clean(self, d):
+        # TODO: reduce the complexity (mccabe)
         to_delete = []
         for key in d.iterkeys():
             val = d[key]
             if isinstance(val, (dict)):
                 self._clean(val)
-            elif not isinstance(val, (str, unicode, int, long, float, bool, numbers.Number, datetime.datetime)):
+            elif isinstance(val, (list, tuple, set)):
+                self._clean(val)
+            elif not isinstance(val, (str, unicode, int, long, float, bool,
+                                      numbers.Number, datetime)):
                 try:
                     # coerce values to unicode
                     d[key] = unicode(d[key])
-                except TypeError, e:
-                    log('warn', 'Dictionary values must be serializeable to JSON ' +
-                        '"{0}" value {1} of type {2} is unsupported.'.format(
-                            key, d[key], type(d[key])))
+                except TypeError, e:  # TODO: e is assigned, but unused
+                    log('warn', 'Dictionary values must be serializeable to ' +
+                                'JSON "{0}" value {1} of type {2} is ' +
+                                'unsupported.'.
+                                format(key, d[key], type(d[key])))
                     to_delete.append(key)
         for key in to_delete:
             del d[key]
@@ -194,7 +204,7 @@ class Client(object):
         self.failure_callbacks.append(callback)
 
     def identify(self, user_id=None, traits={}, context={}, timestamp=None):
-
+        # TODO: reduce the complexity (mccabe)
         """Identifying a user ties all of their actions to an id, and
         associates user traits to that id.
 
@@ -206,15 +216,14 @@ class Client(object):
         Accepted value types are string, boolean, ints,, longs, and
         datetime.datetime.
 
-        : param dict context: An optional dictionary with additional information
-        thats related to the visit. Examples are userAgent, and IP address
-        of the visitor.
+        : param dict context: An optional dictionary with additional
+        information thats related to the visit. Examples are userAgent, and IP
+        address of the visitor.
 
-        : param datetime.datetime timestamp: If this event happened in the past,
-        the timestamp  can be used to designate when the identification happened.
-        Careful with this one,  if it just happened, leave it None. If you do
-        choose to provide a timestamp, make sure it has a timezone.
-
+        : param datetime.datetime timestamp: If this event happened in the
+        past, the timestamp  can be used to designate when the identification
+        happened.  Careful with this one,  if it just happened, leave it None.
+        If you do choose to provide a timestamp, make sure it has a timezone.
         """
 
         self._check_for_secret()
@@ -229,9 +238,9 @@ class Client(object):
             raise Exception('Context must be a dictionary.')
 
         if timestamp is None:
-            timestamp = datetime.datetime.utcnow().replace(tzinfo=tzutc())
-        elif not isinstance(timestamp, datetime.datetime):
-            raise Exception('Timestamp must be a datetime.datetime object.')
+            timestamp = datetime.utcnow().replace(tzinfo=tzutc())
+        elif not isinstance(timestamp, datetime):
+            raise Exception('Timestamp must be a datetime object.')
         else:
             timestamp = guess_timezone(timestamp)
 
@@ -248,31 +257,31 @@ class Client(object):
         if self._enqueue(action):
             self.stats.identifies += 1
 
-    def track(self, user_id=None, event=None, properties={},
-                context={}, timestamp=None):
-
+    def track(self, user_id=None, event=None, properties={}, context={},
+              timestamp=None):
+        # TODO: reduce the complexity (mccabe)
         """Whenever a user triggers an event, you'll want to track it.
 
         :param str user_id:  the user's id after they are logged in. It's the
         same id as which you would recognize a signed-in user in your system.
 
-        : param str event: The event name you are tracking. It is recommended
+        :param str event: The event name you are tracking. It is recommended
         that it is in human readable form. For example, "Bought T-Shirt"
         or "Started an exercise"
 
-        : param dict properties: A dictionary with items that describe the event
-        in more detail. This argument is optional, but highly recommended -
-        you'll find these properties extremely useful later. Accepted value
+        :param dict properties: A dictionary with items that describe the
+        event in more detail. This argument is optional, but highly recommended
+        - you'll find these properties extremely useful later. Accepted value
         types are string, boolean, ints, doubles, longs, and datetime.datetime.
 
-        : param dict context: An optional dictionary with additional information
+        :param dict context: An optional dictionary with additional information
         thats related to the visit. Examples are userAgent, and IP address
         of the visitor.
 
-        : param datetime.datetime timestamp: If this event happened in the past,
-        the timestamp   can be used to designate when the identification happened.
-        Careful with this one,  if it just happened, leave it None. If you do
-        choose to provide a timestamp, make sure it has a timezone.
+        :param datetime.datetime timestamp: If this event happened in the past,
+        the timestamp   can be used to designate when the identification
+        happened.  Careful with this one,  if it just happened, leave it None.
+        If you do choose to provide a timestamp, make sure it has a timezone.
 
         """
 
@@ -282,7 +291,8 @@ class Client(object):
             raise Exception('Must supply a user_id.')
 
         if not event:
-            raise Exception('Event is a required argument as a non-empty string.')
+            raise Exception('Event is a required argument as a non-empty ' +
+                            'string.')
 
         if properties is not None and not isinstance(properties, dict):
             raise Exception('Context must be a dictionary.')
@@ -291,8 +301,8 @@ class Client(object):
             raise Exception('Context must be a dictionary.')
 
         if timestamp is None:
-            timestamp = datetime.datetime.utcnow().replace(tzinfo=tzutc())
-        elif not isinstance(timestamp, datetime.datetime):
+            timestamp = datetime.utcnow().replace(tzinfo=tzutc())
+        elif not isinstance(timestamp, datetime):
             raise Exception('Timestamp must be a datetime.datetime object.')
         else:
             timestamp = guess_timezone(timestamp)
@@ -312,22 +322,21 @@ class Client(object):
             self.stats.tracks += 1
 
     def alias(self, from_id, to_id, context={}, timestamp=None):
-
+        # TODO: reduce the complexity (mccabe)
         """Aliases an anonymous user into an identified user
 
         :param str from_id: the anonymous user's id before they are logged in
 
-        : param str to_id: the identified user's id after they're logged in
+        :param str to_id: the identified user's id after they're logged in
 
-        : param dict context: An optional dictionary with additional information
+        :param dict context: An optional dictionary with additional information
         thats related to the visit. Examples are userAgent, and IP address
         of the visitor.
 
-        : param datetime.datetime timestamp: If this event happened in the past,
-        the timestamp   can be used to designate when the identification happened.
-        Careful with this one,  if it just happened, leave it None. If you do
-        choose to provide a timestamp, make sure it has a timezone.
-
+        :param datetime.datetime timestamp: If this event happened in the past,
+        the timestamp   can be used to designate when the identification
+        happened.  Careful with this one,  if it just happened, leave it None.
+        If you do choose to provide a timestamp, make sure it has a timezone.
         """
 
         self._check_for_secret()
@@ -342,8 +351,8 @@ class Client(object):
             raise Exception('Context must be a dictionary.')
 
         if timestamp is None:
-            timestamp = datetime.datetime.utcnow().replace(tzinfo=tzutc())
-        elif not isinstance(timestamp, datetime.datetime):
+            timestamp = datetime.utcnow().replace(tzinfo=tzutc())
+        elif not isinstance(timestamp, datetime):
             raise Exception('Timestamp must be a datetime.datetime object.')
         else:
             timestamp = guess_timezone(timestamp)
@@ -366,7 +375,7 @@ class Client(object):
         stale = self.last_flushed is None
 
         if not stale:
-            stale = datetime.datetime.now() - self.last_flushed > self.flush_after
+            stale = datetime.now() - self.last_flushed > self.flush_after
 
         return full or stale
 
@@ -410,20 +419,20 @@ class Client(object):
                     callback(data, error)
 
     def _flush_thread_is_free(self):
-        return self.flushing_thread is None or not self.flushing_thread.is_alive()
+        return self.flushing_thread is None \
+            or not self.flushing_thread.is_alive()
 
     def flush(self, async=None):
         """ Forces a flush from the queue to the server """
 
         flushing = False
 
-        # if the async parameter is provided, it overrides the client's settings
-        if async == None:
+        # if the async arg is provided, it overrides the client's settings
+        if async is None:
             async = self.async
 
         if async:
             # We should asynchronously flush on another thread
-
             with self.flush_lock:
 
                 if self._flush_thread_is_free():
@@ -445,7 +454,7 @@ class Client(object):
             flushing = True
 
         if flushing:
-            self.last_flushed = datetime.datetime.now()
+            self.last_flushed = datetime.now()
             self.stats.flushes += 1
 
         return flushing
@@ -475,4 +484,5 @@ class Client(object):
             else:
                 failed += len(batch)
 
-        log('debug', 'Successfully flushed {0} items [{1} failed].'.format(str(successful), str(failed)))
+        log('debug', 'Successfully flushed {0} items [{1} failed].'.
+                     format(str(successful), str(failed)))
