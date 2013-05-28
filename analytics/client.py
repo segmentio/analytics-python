@@ -1,8 +1,9 @@
-import json
-import threading
-from datetime import datetime, timedelta
 import collections
+from datetime import datetime, timedelta
+import json
+import logging
 import numbers
+import threading
 
 from dateutil.tz import tzutc
 import requests
@@ -15,7 +16,6 @@ import options
 
 
 logging_enabled = True
-import logging
 logger = logging.getLogger('analytics')
 
 
@@ -174,28 +174,33 @@ class Client(object):
             raise Exception('Please set analytics.secret before calling ' +
                             'identify or track.')
 
-    def _clean(self, d):
-        # TODO: reduce the complexity (mccabe)
-        to_delete = []
-        for key in d.iterkeys():
-            val = d[key]
-            if isinstance(val, (dict)):
-                self._clean(val)
-            elif isinstance(val, (list, tuple, set)):
-                self._clean(val)
-            elif not isinstance(val, (str, unicode, int, long, float, bool,
-                                      numbers.Number, datetime)):
-                try:
-                    # coerce values to unicode
-                    d[key] = unicode(d[key])
-                except TypeError, e:  # TODO: e is assigned, but unused
-                    log('warn', 'Dictionary values must be serializeable to ' +
-                                'JSON "{0}" value {1} of type {2} is ' +
-                                'unsupported.'.
-                                format(key, d[key], type(d[key])))
-                    to_delete.append(key)
-        for key in to_delete:
-            del d[key]
+    def _coerce_unicode(self, cmplx):
+        return unicode(cmplx)
+
+    def _clean_list(self, l):
+        return [self._clean(item) for item in l]
+
+    def _clean_dict(self, d):
+        data = {}
+        for k, v in d.iteritems():
+            try:
+                data[k] = self._clean(v)
+            except TypeError:
+                log('warn', 'Dictionary values must be serializeable to ' +
+                            'JSON "%s" value %s of type %s is unsupported.'
+                            % (k, v, type(v)))
+        return data
+
+    def _clean(self, item):
+        if isinstance(item, (str, unicode, int, long, float, bool,
+                             numbers.Number, datetime)):
+            return item
+        elif isinstance(item, (set, list, tuple)):
+            return self._clean_list(item)
+        elif isinstance(item, dict):
+            return self._clean_dict(item)
+        else:
+            return self._coerce_unicode(item)
 
     def on_success(self, callback):
         self.success_callbacks.append(callback)
@@ -244,10 +249,10 @@ class Client(object):
         else:
             timestamp = guess_timezone(timestamp)
 
-        self._clean(traits)
+        cleaned_traits = self._clean(traits)
 
         action = {'userId':      user_id,
-                  'traits':      traits,
+                  'traits':      cleaned_traits,
                   'context':     context,
                   'timestamp':   timestamp.isoformat(),
                   'action':      'identify'}
@@ -307,12 +312,12 @@ class Client(object):
         else:
             timestamp = guess_timezone(timestamp)
 
-        self._clean(properties)
+        cleaned_properties = self._clean(properties)
 
         action = {'userId':       user_id,
                   'event':        event,
                   'context':      context,
-                  'properties':   properties,
+                  'properties':   cleaned_properties,
                   'timestamp':    timestamp.isoformat(),
                   'action':       'track'}
 
