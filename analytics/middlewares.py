@@ -80,11 +80,10 @@ class AnalyticsJSInjector(ContentModifier):
                 # Detected already existing snippet. Stop trying to inject another.
                 snippet_injected = True
 
-            if not snippet_injected and '</head>' in line.lower(): # Add to HEAD
-                if '<head>' in line: # Try to add to HEAD start...
-                    line = line.replace('<head>', '<head>' + self.js_snippet)
-                else: # HEAD start is in other chunk. Add to the bottom instead
-                    line = line.replace('</head>', self.js_snippet + '</head>')
+            if not snippet_injected and '<head>' in line.lower(): # Add to HEAD start
+                line = line.replace('<HEAD>', '<head>').replace('<Head>', '<head>') # Clean the tag, if needed
+                line = line.replace('<head>', '<head>' + self.js_snippet)
+                snippet_injected = True
 
             yield line
 
