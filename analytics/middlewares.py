@@ -75,13 +75,17 @@ class AnalyticsJSInjector(ContentModifier):
     def response_modifier(self, app_iter):
         """Should be implemented by descendants"""
         snippet_injected = False
+        html_detected = False
         for line in app_iter:
             if not snippet_injected:
-                if 'var analytics=analytics||[];analytics.load=function(e)' in line.lower():
+                if 'html>' in line.lower():
+                    html_detected = True
+
+                if html_detected and 'var analytics=analytics||[];analytics.load=function(e)' in line.lower():
                     # Detected already existing snippet. Stop trying to inject another.
                     snippet_injected = True
 
-                elif '<head>' in line.lower(): # Add to HEAD start
+                elif html_detected and '<head>' in line.lower(): # Add to HEAD start
                     line = line.replace('<HEAD>', '<head>').replace('<Head>', '<head>') # Clean the tag, if needed
                     line = line.replace('<head>', '<head>' + self.js_snippet)
                     snippet_injected = True
