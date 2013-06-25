@@ -203,13 +203,22 @@ class Client(object):
             return self._coerce_unicode(item)
 
     def on_success(self, callback):
+        """
+        Assign a callback to fire after a successful flush
+
+        :param func callback: A callback that will be fired on a flush success
+        """
         self.success_callbacks.append(callback)
 
     def on_failure(self, callback):
+        """
+        Assign a callback to fire after a failed flush
+
+        :param func callback: A callback that will be fired on a failed flush
+        """
         self.failure_callbacks.append(callback)
 
     def identify(self, user_id=None, traits={}, context={}, timestamp=None):
-        # TODO: reduce the complexity (mccabe)
         """Identifying a user ties all of their actions to an id, and
         associates user traits to that id.
 
@@ -264,7 +273,6 @@ class Client(object):
 
     def track(self, user_id=None, event=None, properties={}, context={},
               timestamp=None):
-        # TODO: reduce the complexity (mccabe)
         """Whenever a user triggers an event, you'll want to track it.
 
         :param str user_id:  the user's id after they are logged in. It's the
@@ -327,7 +335,6 @@ class Client(object):
             self.stats.tracks += 1
 
     def alias(self, from_id, to_id, context={}, timestamp=None):
-        # TODO: reduce the complexity (mccabe)
         """Aliases an anonymous user into an identified user
 
         :param str from_id: the anonymous user's id before they are logged in
@@ -428,7 +435,10 @@ class Client(object):
             or not self.flushing_thread.is_alive()
 
     def flush(self, async=None):
-        """ Forces a flush from the queue to the server """
+        """ Forces a flush from the internal queue to the server
+
+        :param bool async: True to block until all messages have been flushed
+        """
 
         flushing = False
 

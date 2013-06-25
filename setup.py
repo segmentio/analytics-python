@@ -7,7 +7,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
-# Don't import stripe module here, since deps may not be installed
+# Don't import analytics-python module here, since deps may not be installed
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'analytics'))
 from version import VERSION
 
