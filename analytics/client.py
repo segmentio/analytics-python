@@ -10,7 +10,7 @@ import requests
 
 from stats import Statistics
 from errors import ApiError
-from utils import guess_timezone
+from utils import guess_timezone, DatetimeSerializer
 
 import options
 
@@ -66,7 +66,7 @@ def request(client, url, data):
     try:
 
         response = requests.post(url,
-                                 data=json.dumps(data),
+                                 data=json.dumps(data, cls=DatetimeSerializer),
                                  headers={'content-type': 'application/json'},
                                  timeout=client.timeout)
 
