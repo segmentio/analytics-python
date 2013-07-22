@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 import unittest
+import json
 
 from datetime import datetime, timedelta
 
@@ -78,6 +79,15 @@ class AnalyticsBasicTests(unittest.TestCase):
         analytics.default_client._clean(combined)
 
         self.assertEqual(combined.keys(), pre_clean_keys)
+        
+    def test_datetime_serialization(self):
+        
+        data = {
+            'created': datetime(2012, 3, 4, 5, 6, 7, 891011),
+        }
+        result = json.dumps(data, cls=analytics.utils.DatetimeSerializer)
+        
+        self.assertEqual(result, '{"created": "2012-03-04T05:06:07.891011"}')
 
     def test_async_basic_identify(self):
         # flush after every message
