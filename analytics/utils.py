@@ -1,4 +1,4 @@
-
+import json
 from datetime import datetime
 from dateutil.tz import tzlocal, tzutc
 
@@ -24,3 +24,10 @@ def guess_timezone(dt):
             return dt.replace(tzinfo=tzutc())
 
     return dt
+
+class DatetimeSerializer(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+
+        return json.JSONEncoder.default(self, obj)
