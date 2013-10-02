@@ -421,14 +421,14 @@ class Client(object):
             for item in data['batch']:
                 self.stats.successful += 1
                 for callback in self.success_callbacks:
-                    callback(data, response)
+                    callback(item, response)
 
     def _on_failed_flush(self, data, error):
         if 'batch' in data:
             for item in data['batch']:
                 self.stats.failed += 1
                 for callback in self.failure_callbacks:
-                    callback(data, error)
+                    callback(item, error)
 
     def _flush_thread_is_free(self):
         return self.flushing_thread is None \
