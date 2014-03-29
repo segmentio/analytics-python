@@ -6,7 +6,7 @@ __version__ = VERSION
 import sys
 this_module = sys.modules[__name__]
 
-from stats import Statistics
+from analytics.stats import Statistics
 stats = Statistics()
 
 
