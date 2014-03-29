@@ -5,7 +5,7 @@ python:
   - "3.2"
   - "3.3"
 install:
-  - "pip install analytics-python"
+  - pip install analytics-python
   - python -c "import analytics"
 matrix:
   fast_finish: true
