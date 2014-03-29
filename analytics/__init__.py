@@ -1,5 +1,4 @@
-
-import version
+import analytics.version
 
 VERSION = version.VERSION
 __version__ = VERSION
