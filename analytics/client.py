@@ -12,7 +12,7 @@ from analytics.stats import Statistics
 from analytics.errors import ApiError
 from analytics.utils import guess_timezone, DatetimeSerializer
 
-import analytics.options
+import analytics.options as options
 
 
 logging_enabled = True
