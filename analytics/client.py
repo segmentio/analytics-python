@@ -8,11 +8,11 @@ import threading
 from dateutil.tz import tzutc
 import requests
 
-from stats import Statistics
-from errors import ApiError
-from utils import guess_timezone, DatetimeSerializer
+from analytics.stats import Statistics
+from analytics.errors import ApiError
+from analytics.utils import guess_timezone, DatetimeSerializer
 
-import options
+import analytics.options
 
 
 logging_enabled = True
