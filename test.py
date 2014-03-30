@@ -22,11 +22,11 @@ secret = 'testsecret'
 
 
 def on_success(data, response):
-    print 'Success', response
+    print('Success', response)
 
 
 def on_failure(data, error):
-    print 'Failure', error
+    print('Failure', error)
 
 
 class AnalyticsBasicTests(unittest.TestCase):
@@ -294,7 +294,7 @@ class AnalyticsBasicTests(unittest.TestCase):
                 "Song": "Eleanor Rigby"
             })
 
-        print 'Finished submitting into the queue'
+        print('Finished submitting into the queue')
 
         start = time()
         while analytics.stats.successful < target:
