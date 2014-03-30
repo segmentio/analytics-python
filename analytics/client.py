@@ -28,7 +28,7 @@ def log(level, *args, **kwargs):
 
 
 def package_exception(client, data, e):
-    log('warn', 'Segment.io request error', exc_info=True)
+    log('warning', 'Segment.io request error', exc_info=True)
     client._on_failed_flush(data, e)
 
 
