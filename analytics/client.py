@@ -194,7 +194,7 @@ class Client(object):
         return data
 
     def _clean(self, item):
-        if isinstance(item, (str, six.text_type, int, long, float, bool,
+        if isinstance(item, (str, six.text_type, int, six.integer_types, float, bool,
                              numbers.Number, datetime)):
             return item
         elif isinstance(item, (set, list, tuple)):
