@@ -179,6 +179,8 @@ class Client(object):
     def _coerce_unicode(self, cmplx):
         try:
             item = cmplx.decode("utf-8", "strict")
+        except AttributeError as exception:
+            item = exception.args.decode("utf-8", "strict")
         except:
             raise
         return item
