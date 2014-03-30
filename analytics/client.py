@@ -180,7 +180,7 @@ class Client(object):
         try:
             item = cmplx.decode("utf-8", "strict")
         except AttributeError as exception:
-            item = ":".join(exception.args)
+            item = ":".join(exception)
             item.decode("utf-8", "strict")
         except:
             raise
