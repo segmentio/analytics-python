@@ -30,7 +30,7 @@ def init(secret, **kwargs):
     enable blocking and making the request on the calling thread.
 
     """
-    from client import Client
+    from analytics.client import Client
 
     # if we have already initialized, no-op
     if hasattr(this_module, 'default_client'):
