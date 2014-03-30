@@ -195,7 +195,7 @@ class Client(object):
             try:
                 data[k] = self._clean(v)
             except TypeError:
-                log('warn', 'Dictionary values must be serializeable to ' +
+                log('warning', 'Dictionary values must be serializeable to ' +
                             'JSON "%s" value %s of type %s is unsupported.'
                             % (k, v, type(v)))
         return data
