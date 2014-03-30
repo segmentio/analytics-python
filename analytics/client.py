@@ -177,7 +177,11 @@ class Client(object):
                             'identify or track.')
 
     def _coerce_unicode(self, cmplx):
-        return cmplx.decode("utf-8", "strict")
+        try:
+            item = cmplx.decode("utf-8", "strict")
+        except:
+            raise
+        return item
 
     def _clean_list(self, l):
         return [self._clean(item) for item in l]
