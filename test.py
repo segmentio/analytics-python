@@ -74,7 +74,8 @@ class AnalyticsBasicTests(unittest.TestCase):
             'list': [1, 2, 3]
         }
 
-        combined = dict(simple.items() + complicated.items())
+        combined = dict(simple.items())
+        combined.update(complicated.items())
 
         pre_clean_keys = combined.keys()
 
