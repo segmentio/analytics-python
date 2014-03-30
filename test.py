@@ -4,6 +4,8 @@
 import unittest
 import json
 
+import six
+
 from datetime import datetime, timedelta
 
 from random import randint
@@ -22,11 +24,11 @@ secret = 'testsecret'
 
 
 def on_success(data, response):
-    print 'Success', response
+    print('Success', response)
 
 
 def on_failure(data, error):
-    print 'Failure', error
+    print('Failure', error)
 
 
 class AnalyticsBasicTests(unittest.TestCase):
@@ -61,7 +63,7 @@ class AnalyticsBasicTests(unittest.TestCase):
             'long': 200000000,
             'bool': True,
             'str': 'woo',
-            'unicode': u'woo',
+            'unicode': six.u('woo'),
             'decimal': Decimal('0.142857'),
             'date': datetime.now(),
         }
@@ -72,7 +74,8 @@ class AnalyticsBasicTests(unittest.TestCase):
             'list': [1, 2, 3]
         }
 
-        combined = dict(simple.items() + complicated.items())
+        combined = dict(simple.items())
+        combined.update(complicated.items())
 
         pre_clean_keys = combined.keys()
 
@@ -294,7 +297,7 @@ class AnalyticsBasicTests(unittest.TestCase):
                 "Song": "Eleanor Rigby"
             })
 
-        print 'Finished submitting into the queue'
+        print('Finished submitting into the queue')
 
         start = time()
         while analytics.stats.successful < target:

@@ -5,14 +5,16 @@ import logging
 import numbers
 import threading
 
+import six
+
 from dateutil.tz import tzutc
 import requests
 
-from stats import Statistics
-from errors import ApiError
-from utils import guess_timezone, DatetimeSerializer
+from analytics.stats import Statistics
+from analytics.errors import ApiError
+from analytics.utils import guess_timezone, DatetimeSerializer
 
-import options
+import analytics.options as options
 
 
 logging_enabled = True
@@ -26,7 +28,7 @@ def log(level, *args, **kwargs):
 
 
 def package_exception(client, data, e):
-    log('warn', 'Segment.io request error', exc_info=True)
+    log('warning', 'Segment.io request error', exc_info=True)
     client._on_failed_flush(data, e)
 
 
@@ -175,24 +177,31 @@ class Client(object):
                             'identify or track.')
 
     def _coerce_unicode(self, cmplx):
-        return unicode(cmplx)
+        try:
+            item = cmplx.decode("utf-8", "strict")
+        except AttributeError as exception:
+            item = ":".join(exception)
+            item.decode("utf-8", "strict")
+        except:
+            raise
+        return item
 
     def _clean_list(self, l):
         return [self._clean(item) for item in l]
 
     def _clean_dict(self, d):
         data = {}
-        for k, v in d.iteritems():
+        for k, v in six.iteritems(d):
             try:
                 data[k] = self._clean(v)
             except TypeError:
-                log('warn', 'Dictionary values must be serializeable to ' +
+                log('warning', 'Dictionary values must be serializeable to ' +
                             'JSON "%s" value %s of type %s is unsupported.'
                             % (k, v, type(v)))
         return data
 
     def _clean(self, item):
-        if isinstance(item, (str, unicode, int, long, float, bool,
+        if isinstance(item, (str, six.text_type, int, six.integer_types, float, bool,
                              numbers.Number, datetime)):
             return item
         elif isinstance(item, (set, list, tuple)):

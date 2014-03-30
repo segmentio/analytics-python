@@ -1,5 +1,4 @@
-
-import version
+import analytics.version
 
 VERSION = version.VERSION
 __version__ = VERSION
@@ -7,7 +6,7 @@ __version__ = VERSION
 import sys
 this_module = sys.modules[__name__]
 
-from stats import Statistics
+from analytics.stats import Statistics
 stats = Statistics()
 
 
@@ -31,7 +30,7 @@ def init(secret, **kwargs):
     enable blocking and making the request on the calling thread.
 
     """
-    from client import Client
+    from analytics.client import Client
 
     # if we have already initialized, no-op
     if hasattr(this_module, 'default_client'):
