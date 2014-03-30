@@ -4,6 +4,8 @@
 import unittest
 import json
 
+import six
+
 from datetime import datetime, timedelta
 
 from random import randint
@@ -61,7 +63,7 @@ class AnalyticsBasicTests(unittest.TestCase):
             'long': 200000000,
             'bool': True,
             'str': 'woo',
-            'unicode': u'woo',
+            'unicode': six.u('woo'),
             'decimal': Decimal('0.142857'),
             'date': datetime.now(),
         }
