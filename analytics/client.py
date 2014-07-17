@@ -184,7 +184,7 @@ class Client(object):
         data = {}
         for k, v in d.iteritems():
             try:
-                data[k] = self._clean(v)
+                data[k] = self._clean(v) if v is not None else None
             except TypeError:
                 log('warn', 'Dictionary values must be serializeable to ' +
                             'JSON "%s" value %s of type %s is unsupported.'
