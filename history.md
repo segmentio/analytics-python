@@ -1,13 +1,28 @@
-0.4.4 / November 21, 2013
-------------------
-* add < python 2.7 compatibility by removing `delta.total_seconds`
 
-0.4.3 / November 13, 2013
-------------------
-* added datetime serialization fix (alexlouden)
+1.0.0 / 2014-09-05
+==================
 
-0.4.2 / June 26, 2013
-------------------
-* Added history.d change log
-* Merging https://github.com/segmentio/analytics-python/pull/14 to add support for lists and PEP8 fixes. Thanks https://github.com/dfee!
-* Fixing #12, adding static public API to analytics.__init__
+ * updating to spec 1.0
+ * adding python3 support
+ * moving to analytics.write_key API
+ * moving consumer to a separate thread
+ * adding request retries
+ * making analytics.flush() syncrhonous
+ * adding full travis tests
+
+0.4.4 / 2013-11-21
+==================
+
+ * add < python 2.7 compatibility by removing `delta.total_seconds`
+
+0.4.3 / 2013-11-13
+==================
+
+ * added datetime serialization fix (alexlouden)
+
+0.4.2 / 2013-06-26
+==================
+
+ * Added history.d change log
+ * Merging https://github.com/segmentio/analytics-python/pull/14 to add support for lists and PEP8 fixes. Thanks https://github.com/dfee!
+  * Fixing #12, adding static public API to analytics.__init__
