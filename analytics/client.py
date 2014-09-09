@@ -2,12 +2,12 @@ from datetime import datetime
 from uuid import uuid4
 import logging
 import numbers
-import six
 
 from dateutil.tz import tzutc
+from six import string_types
 
-from analytics.consumer import Consumer
 from analytics.utils import guess_timezone, clean
+from analytics.consumer import Consumer
 from analytics.version import VERSION
 
 try:
@@ -16,7 +16,7 @@ except:
     import Queue as queue
 
 
-ID_TYPES = (str, six.text_type, int, six.integer_types, float, numbers.Number)
+ID_TYPES = (numbers.Number, string_types)
 
 
 class Client(object):
@@ -25,7 +25,7 @@ class Client(object):
 
     def __init__(self, write_key=None, debug=False, max_queue_size=10000,
                  send=True, on_error=None):
-        require('write_key', write_key, str)
+        require('write_key', write_key, string_types)
 
         self.queue = queue.Queue(max_queue_size)
         self.consumer = Consumer(self.queue, write_key, on_error=on_error)
@@ -61,7 +61,7 @@ class Client(object):
 
         require('user_id or anonymous_id', user_id or anonymous_id, ID_TYPES)
         require('properties', properties, dict)
-        require('event', event, str)
+        require('event', event, string_types)
 
         msg = {
             'integrations': integrations,
@@ -117,9 +117,9 @@ class Client(object):
         require('properties', properties, dict)
 
         if name:
-            require('name', name, str)
+            require('name', name, string_types)
         if category:
-            require('category', category, str)
+            require('category', category, string_types)
 
         msg = {
             'integrations': integrations,
@@ -141,9 +141,9 @@ class Client(object):
         require('properties', properties, dict)
 
         if name:
-            require('name', name, str)
+            require('name', name, string_types)
         if category:
-            require('category', category, str)
+            require('category', category, string_types)
 
         msg = {
             'integrations': integrations,
@@ -166,9 +166,9 @@ class Client(object):
             timestamp = datetime.utcnow().replace(tzinfo=tzutc())
 
         require('integrations', msg['integrations'], dict)
+        require('type', msg['type'], string_types)
         require('timestamp', timestamp, datetime)
         require('context', msg['context'], dict)
-        require('type', msg['type'], str)
 
         # add common
         timestamp = guess_timezone(timestamp)
