@@ -1,4 +1,10 @@
 
+1.0.1 / 2014-09-08
+==================
+
+ * fixing unicode handling, for write_key and events
+ * adding six to requirements.txt and install scripts
+
 1.0.0 / 2014-09-05
 ==================
 
