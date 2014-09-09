@@ -33,8 +33,9 @@ setup(
     packages=['analytics', 'analytics.test'],
     license='MIT License',
     install_requires=[
+        'python-dateutil',
         'requests',
-        'python-dateutil'
+        'six'
     ],
     description='The hassle-free way to integrate analytics into any python application.',
     long_description=long_description

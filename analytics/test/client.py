@@ -1,6 +1,7 @@
 from datetime import datetime
 import unittest
 import time
+import six
 
 from analytics.version import VERSION
 from analytics.client import Client
@@ -229,3 +230,11 @@ class TestClient(unittest.TestCase):
         client.track('userId', 'event')
         client.flush()
         self.assertTrue(self.failed)
+
+    def test_unicode(self):
+        client = Client(six.u('unicode_key'))
+
+    def test_numeric_user_id(self):
+        self.client.track(1234, 'python event')
+        self.client.flush()
+        self.assertFalse(self.failed)

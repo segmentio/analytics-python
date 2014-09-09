@@ -32,8 +32,8 @@ def guess_timezone(dt):
     return dt
 
 def clean(item):
-    if isinstance(item, (str, six.text_type, int, six.integer_types, float,
-                         bool, numbers.Number, datetime, type(None))):
+    if isinstance(item, (six.string_types, bool, numbers.Number, datetime,
+                         type(None))):
         return item
     elif isinstance(item, (set, list, tuple)):
         return _clean_list(item)
