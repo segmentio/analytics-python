@@ -232,9 +232,12 @@ class TestClient(unittest.TestCase):
         self.assertTrue(self.failed)
 
     def test_unicode(self):
-        client = Client(six.u('unicode_key'))
+        Client(six.u('unicode_key'))
 
     def test_numeric_user_id(self):
         self.client.track(1234, 'python event')
         self.client.flush()
         self.assertFalse(self.failed)
+
+    def test_debug(self):
+        Client('bad_key', debug=True)

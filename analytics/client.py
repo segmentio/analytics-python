@@ -35,7 +35,7 @@ class Client(object):
         self.send = send
 
         if debug:
-            self.log.setLevel('debug')
+            self.log.setLevel('DEBUG')
 
         self.consumer.start()
 
