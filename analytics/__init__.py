@@ -8,7 +8,7 @@ __version__ = VERSION
 write_key = None
 on_error = None
 debug = False
-send=True
+send = True
 
 default_client = None
 
