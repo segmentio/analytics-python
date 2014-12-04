@@ -3,11 +3,11 @@
 
 [![Build Status](https://travis-ci.org/segmentio/analytics-python.svg?branch=master)](https://travis-ci.org/segmentio/analytics-python)
 
-analytics-python is a python client for [Segment.io](https://segment.io)
+analytics-python is a python client for [Segment](https://segment.com)
 
 ## Documentation
 
-Documentation is available at [https://segment.io/libraries/python](https://segment.io/libraries/python).
+Documentation is available at [https://segment.com/libraries/python](https://segment.com/libraries/python).
 
 ## License
 
@@ -26,7 +26,7 @@ WWWWWW||WWWWWW
 
 (The MIT License)
 
-Copyright (c) 2013 Segment.io Inc. <friends@segment.io>
+Copyright (c) 2013 Segment Inc. <friends@segment.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
