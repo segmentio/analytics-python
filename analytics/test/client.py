@@ -221,7 +221,9 @@ class TestClient(unittest.TestCase):
         client.consumer.pause()
         time.sleep(5.1) # allow time for consumer to exit
 
-        client.identify('userId')
+        for i in range(10):
+          client.identify('userId')
+
         success, msg = client.identify('userId')
         self.assertFalse(success)
 
