@@ -37,7 +37,9 @@ class Client(object):
         if debug:
             self.log.setLevel('DEBUG')
 
-        self.consumer.start()
+        # if we've disabled sending, just don't start the consumer
+        if send:
+            self.consumer.start()
 
     def identify(self, user_id=None, traits={}, context={}, timestamp=None,
                  anonymous_id=None, integrations={}):
@@ -180,10 +182,6 @@ class Client(object):
         }
 
         clean(msg)
-
-        # if we've disabled sending, just return False
-        if not self.send:
-            return False, msg
 
         if self.queue.full():
             self.log.warn('analytics-python queue is full')
