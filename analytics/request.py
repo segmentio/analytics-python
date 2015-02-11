@@ -1,4 +1,5 @@
 from datetime import datetime
+from dateutil.tz import tzutc
 import logging
 import json
 
@@ -10,6 +11,7 @@ def post(write_key, **kwargs):
     """Post the `kwargs` to the API"""
     log = logging.getLogger('segment')
     body = kwargs
+    body["sentAt"] = datetime.utcnow().replace(tzinfo=tzutc()).isoformat()
     url = 'https://api.segment.io/v1/batch'
     auth = HTTPBasicAuth(write_key, '')
     data = json.dumps(body, cls=DatetimeSerializer)
