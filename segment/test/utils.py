@@ -5,7 +5,7 @@ import unittest
 from dateutil.tz import tzutc
 import six
 
-from analytics import utils
+from segment import utils
 
 
 class TestUtils(unittest.TestCase):

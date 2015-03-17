@@ -1,6 +1,6 @@
 
-from analytics.version import VERSION
-from analytics.client import Client
+from segment.version import VERSION
+from segment.client import Client
 
 __version__ = VERSION
 
@@ -42,7 +42,7 @@ def flush():
     _proxy('flush')
 
 def _proxy(method, *args, **kwargs):
-    """Create an analytics client if one doesn't exist and send to it."""
+    """Create a segment client if one doesn't exist and send to it."""
     global default_client
     if not default_client:
         default_client = Client(write_key, debug=debug, on_error=on_error,
