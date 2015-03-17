@@ -8,7 +8,7 @@ except ImportError:
     from distutils.core import setup
 
 # Don't import analytics-python module here, since deps may not be installed
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'analytics'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'segment'))
 from version import VERSION
 
 long_description = '''
@@ -29,8 +29,8 @@ setup(
     author_email='friends@segment.com',
     maintainer='Segment',
     maintainer_email='friends@segment.com',
-    test_suite='analytics.test.all',
-    packages=['analytics', 'analytics.test'],
+    test_suite='segment.test.all',
+    packages=['segment', 'segment.test'],
     license='MIT License',
     install_requires=[
         'python-dateutil',
