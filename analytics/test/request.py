@@ -15,15 +15,8 @@ class TestRequests(unittest.TestCase):
         }])
         self.assertEqual(res.status_code, 200)
 
-    def test_invalid_write_key(self):
-        self.assertRaises(Exception,  post, 'invalid', batch=[{
-            'userId': 'userId',
-            'event': 'python event',
-            'type': 'track'
-        }])
-
     def test_invalid_request_error(self):
-        self.assertRaises(Exception, post, 'testsecret', batch='invalid')
+        self.assertRaises(Exception, post, 'testsecret', '[{]')
 
     def test_datetime_serialization(self):
         data = { 'created': datetime(2012, 3, 4, 5, 6, 7, 891011) }
