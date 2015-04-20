@@ -227,11 +227,11 @@ class TestClient(unittest.TestCase):
         success, msg = client.identify('userId')
         self.assertFalse(success)
 
-    def test_fail(self):
+    def test_success_on_invalid_write_key(self):
         client = Client('bad_key', on_error=self.fail)
         client.track('userId', 'event')
         client.flush()
-        self.assertTrue(self.failed)
+        self.assertFalse(self.failed)
 
     def test_unicode(self):
         Client(six.u('unicode_key'))
