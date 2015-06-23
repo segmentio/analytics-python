@@ -26,7 +26,7 @@ def guess_timezone(dt):
             # so we are in the local timezone
             return dt.replace(tzinfo=tzlocal())
         else:
-            # at this point, the best we can do (I htink) is guess UTC
+            # at this point, the best we can do is guess UTC
             return dt.replace(tzinfo=tzutc())
 
     return dt
@@ -57,7 +57,7 @@ def _clean_dict(dict_):
                         % (k, v, type(v)))
     return data
 
-def _coerce_unicode(self, cmplx):
+def _coerce_unicode(cmplx):
     try:
         item = cmplx.decode("utf-8", "strict")
     except AttributeError as exception:
