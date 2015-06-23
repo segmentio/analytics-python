@@ -48,3 +48,11 @@ class TestUtils(unittest.TestCase):
 
         utils.clean(combined)
         self.assertEqual(combined.keys(), pre_clean_keys)
+
+    def test_bytes(self):
+        if six.PY3:
+            item = bytes(10)
+        else:
+            item = bytearray(10)
+
+        utils.clean(item)
