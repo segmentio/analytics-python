@@ -4,7 +4,9 @@ import logging
 import json
 
 from requests.auth import HTTPBasicAuth
-import requests
+from requests import sessions
+
+_session = sessions.Session()
 
 
 def post(write_key, **kwargs):
@@ -17,7 +19,7 @@ def post(write_key, **kwargs):
     data = json.dumps(body, cls=DatetimeSerializer)
     headers = { 'content-type': 'application/json' }
     log.debug('making request: %s', data)
-    res = requests.post(url, data=data, auth=auth, headers=headers, timeout=15)
+    res = _session.post(url, data=data, auth=auth, headers=headers, timeout=15)
 
     if res.status_code == 200:
         log.debug('data uploaded successfully')
