@@ -181,7 +181,8 @@ class Client(object):
             'version': VERSION
         }
 
-        clean(msg)
+        msg = clean(msg)
+        self.log.debug('queueing: %s', msg)
 
         if self.queue.full():
             self.log.warn('analytics-python queue is full')
@@ -197,7 +198,6 @@ class Client(object):
         size = queue.qsize()
         queue.join()
         self.log.debug('successfully flushed {0} items.'.format(size))
-
 
     def join(self):
         """Ends the consumer thread once the queue is empty. Blocks execution until finished"""

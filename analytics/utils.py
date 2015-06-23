@@ -5,6 +5,8 @@ import numbers
 
 import six
 
+log = logging.getLogger('segment')
+
 
 def is_naive(dt):
     """Determines if a given datetime.datetime is naive."""
@@ -51,7 +53,6 @@ def _clean_dict(dict_):
         try:
             data[k] = clean(v)
         except TypeError:
-            log = logging.getLogger('segment')
             log.warning('Dictionary values must be serializeable to ' +
                         'JSON "%s" value %s of type %s is unsupported.'
                         % (k, v, type(v)))
@@ -63,6 +64,8 @@ def _coerce_unicode(cmplx):
     except AttributeError as exception:
         item = ":".join(exception)
         item.decode("utf-8", "strict")
+        log.warning('Error decoding: %s', item)
+        return None
     except:
         raise
     return item

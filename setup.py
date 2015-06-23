@@ -12,11 +12,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'analytics'))
 from version import VERSION
 
 long_description = '''
-Segment.io is the simplest way to integrate analytics into your application.
+Segment is the simplest way to integrate analytics into your application.
 One API allows you to turn on any other analytics service. No more learning
 new APIs, repeated code, and wasted development time.
 
-This is the official python client that wraps the Segment.io REST API (https://segment.io).
+This is the official python client that wraps the Segment REST API (https://segment.com).
 
 Documentation and more details at https://github.com/segmentio/analytics-python
 '''
