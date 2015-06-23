@@ -2,4 +2,7 @@
 test:
 	python setup.py test
 
-.PHONY: test
+dist:
+	python setup.py sdist bdist_wheel upload
+
+.PHONY: test dist

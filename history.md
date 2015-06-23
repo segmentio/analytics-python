@@ -1,4 +1,19 @@
 
+1.1.0 / 2015-06-23
+==================
+
+  * Adding fixes for handling invalid json types
+  * Fixing byte/bytearray handling
+  * Adding `logging.DEBUG` fix for `setLevel`
+  * Support HTTP keep-alive using a Session connection pool
+  * Suppport universal wheels
+  * adding .sentAt
+  * make it really testable
+  * fixing overflow test
+  * removing .io's
+  * Update README.md
+  * spacing
+
 1.0.3 / 2014-09-30
 ==================
 
