@@ -35,7 +35,7 @@ class Client(object):
         self.send = send
 
         if debug:
-            self.log.setLevel('DEBUG')
+            self.log.setLevel(logging.DEBUG)
 
         # if we've disabled sending, just don't start the consumer
         if send:
