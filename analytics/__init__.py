@@ -41,6 +41,10 @@ def flush():
     """Tell the client to flush."""
     _proxy('flush')
 
+def join():
+    """Block program until the client clears the queue"""
+    _proxy('join')
+
 def _proxy(method, *args, **kwargs):
     """Create an analytics client if one doesn't exist and send to it."""
     global default_client
