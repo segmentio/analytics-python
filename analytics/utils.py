@@ -53,9 +53,11 @@ def _clean_dict(dict_):
         try:
             data[k] = clean(v)
         except TypeError:
-            log.warning('Dictionary values must be serializeable to ' +
-                        'JSON "%s" value %s of type %s is unsupported.'
-                        % (k, v, type(v)))
+            log.warning(
+                'Dictionary values must be serializeable to '
+                'JSON "%s" value %s of type %s is unsupported.',
+                k, v, type(v),
+            )
     return data
 
 def _coerce_unicode(cmplx):
