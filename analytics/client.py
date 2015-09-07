@@ -189,7 +189,7 @@ class Client(object):
             return False, msg
 
         self.queue.put(msg)
-        self.log.debug('enqueued ' + msg['type'] + '.')
+        self.log.debug('enqueued %s.', msg['type'])
         return True, msg
 
     def flush(self):
@@ -197,7 +197,7 @@ class Client(object):
         queue = self.queue
         size = queue.qsize()
         queue.join()
-        self.log.debug('successfully flushed {0} items.'.format(size))
+        self.log.debug('successfully flushed %s items.', size)
 
     def join(self):
         """Ends the consumer thread once the queue is empty. Blocks execution until finished"""
