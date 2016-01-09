@@ -1,5 +1,6 @@
 from dateutil.tz import tzlocal, tzutc
 from datetime import datetime
+from decimal import Decimal
 import logging
 import numbers
 
@@ -34,7 +35,9 @@ def guess_timezone(dt):
     return dt
 
 def clean(item):
-    if isinstance(item, (six.string_types, bool, numbers.Number, datetime,
+    if isinstance(item, Decimal):
+        return float(item)
+    elif isinstance(item, (six.string_types, bool, numbers.Number, datetime,
                          type(None))):
         return item
     elif isinstance(item, (set, list, tuple)):
