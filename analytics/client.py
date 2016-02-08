@@ -41,8 +41,11 @@ class Client(object):
         if send:
             self.consumer.start()
 
-    def identify(self, user_id=None, traits={}, context={}, timestamp=None,
-                 anonymous_id=None, integrations={}):
+    def identify(self, user_id=None, traits=None, context=None, timestamp=None,
+                 anonymous_id=None, integrations=None):
+        traits = traits or {}
+        context = context or {}
+        integrations = integrations or {}
         require('user_id or anonymous_id', user_id or anonymous_id, ID_TYPES)
         require('traits', traits, dict)
 
@@ -58,9 +61,11 @@ class Client(object):
 
         return self._enqueue(msg)
 
-    def track(self, user_id=None, event=None, properties={}, context={},
-              timestamp=None, anonymous_id=None, integrations={}):
-
+    def track(self, user_id=None, event=None, properties=None, context=None,
+              timestamp=None, anonymous_id=None, integrations=None):
+        properties = properties or {}
+        context = context or {}
+        integrations = integrations or {}
         require('user_id or anonymous_id', user_id or anonymous_id, ID_TYPES)
         require('properties', properties, dict)
         require('event', event, string_types)
@@ -78,8 +83,10 @@ class Client(object):
 
         return self._enqueue(msg)
 
-    def alias(self, previous_id=None, user_id=None, context={}, timestamp=None,
-              integrations={}):
+    def alias(self, previous_id=None, user_id=None, context=None,
+              timestamp=None, integrations=None):
+        context = context or {}
+        integrations = integrations or {}
         require('previous_id', previous_id, ID_TYPES)
         require('user_id', user_id, ID_TYPES)
 
@@ -94,8 +101,11 @@ class Client(object):
 
         return self._enqueue(msg)
 
-    def group(self, user_id=None, group_id=None, traits={}, context={},
-              timestamp=None, anonymous_id=None, integrations={}):
+    def group(self, user_id=None, group_id=None, traits=None, context=None,
+              timestamp=None, anonymous_id=None, integrations=None):
+        traits = traits or {}
+        context = context or {}
+        integrations = integrations or {}
         require('user_id or anonymous_id', user_id or anonymous_id, ID_TYPES)
         require('group_id', group_id, ID_TYPES)
         require('traits', traits, dict)
@@ -113,8 +123,12 @@ class Client(object):
 
         return self._enqueue(msg)
 
-    def page(self, user_id=None, category=None, name=None, properties={},
-             context={}, timestamp=None, anonymous_id=None, integrations={}):
+    def page(self, user_id=None, category=None, name=None, properties=None,
+             context=None, timestamp=None, anonymous_id=None,
+             integrations=None):
+        properties = properties or {}
+        context = context or {}
+        integrations = integrations or {}
         require('user_id or anonymous_id', user_id or anonymous_id, ID_TYPES)
         require('properties', properties, dict)
 
@@ -137,8 +151,12 @@ class Client(object):
 
         return self._enqueue(msg)
 
-    def screen(self, user_id=None, category=None, name=None, properties={},
-               context={}, timestamp=None, anonymous_id=None, integrations={}):
+    def screen(self, user_id=None, category=None, name=None, properties=None,
+               context=None, timestamp=None, anonymous_id=None,
+               integrations=None):
+        properties = properties or {}
+        context = context or {}
+        integrations = integrations or {}
         require('user_id or anonymous_id', user_id or anonymous_id, ID_TYPES)
         require('properties', properties, dict)
 
@@ -203,7 +221,6 @@ class Client(object):
         """Ends the consumer thread once the queue is empty. Blocks execution until finished"""
         self.consumer.pause()
         self.consumer.join()
-
 
 
 def require(name, field, data_type):
