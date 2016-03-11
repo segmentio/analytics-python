@@ -21,6 +21,16 @@ This is the official python client that wraps the Segment REST API (https://segm
 Documentation and more details at https://github.com/segmentio/analytics-python
 '''
 
+install_requires = [
+    "requests>=2.7,<2.8",
+    "six>=1.5"
+]
+
+if sys.version_info <= (3,0):
+    install_requires.append('python-dateutil>=1,<2')
+else:
+    install_requires.append('python-dateutil>2')
+
 setup(
     name='analytics-python',
     version=VERSION,
@@ -32,11 +42,7 @@ setup(
     test_suite='analytics.test.all',
     packages=['analytics', 'analytics.test'],
     license='MIT License',
-    install_requires=[
-        'python-dateutil',
-        'requests',
-        'six'
-    ],
+    install_requires=install_requires,
     description='The hassle-free way to integrate analytics into any python application.',
     long_description=long_description,
     classifiers=[
