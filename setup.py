@@ -26,10 +26,10 @@ install_requires = [
     "six>=1.5"
 ]
 
-if sys.version_info <= (3,0):
-    install_requires.append('python-dateutil>=1,<2')
-else:
-    install_requires.append('python-dateutil>2')
+extras_require={
+    ':python_version<="3.0"': ['python-dateutil>=1,<2'],
+    ':python_version>"3.0"': ['python-dateutil>2']
+}
 
 setup(
     name='analytics-python',
@@ -43,6 +43,7 @@ setup(
     packages=['analytics', 'analytics.test'],
     license='MIT License',
     install_requires=install_requires,
+    extras_require=extras_require,
     description='The hassle-free way to integrate analytics into any python application.',
     long_description=long_description,
     classifiers=[
