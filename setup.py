@@ -27,8 +27,8 @@ install_requires = [
 ]
 
 extras_require={
-    ':python_version<="3.0"': ['python-dateutil>=1,<2'],
-    ':python_version>"3.0"': ['python-dateutil>2']
+    ':python_version in "2.6, 2.7"': ['python-dateutil>=1,<2'],
+    ':python_version in "3.2, 3.3, 3.4, 3.5"': ['python-dateutil>2']
 }
 
 setup(
