@@ -1,4 +1,10 @@
 
+1.2.2 / 2016-03-17
+==================
+
+  * Fix environment markers definition
+  * Use proper way for defining conditional dependencies
+
 1.2.1 / 2016-03-11
 ==================
   
