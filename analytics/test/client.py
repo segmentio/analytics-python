@@ -208,23 +208,25 @@ class TestClient(unittest.TestCase):
 
     def test_flush(self):
         client = self.client
-        # send a few more requests than a single batch will allow
-        for i in range(60):
+        # set up the consumer with more requests than a single batch will allow
+        for i in range(1000):
             success, msg = client.identify('userId', { 'trait': 'value' })
-
-        self.assertFalse(client.queue.empty())
+        # We can't reliably assert that the queue is non-empty here; that's
+        # a race condition. We do our best to load it up though.
         client.flush()
+        # Make sure that the client queue is empty after flushing
         self.assertTrue(client.queue.empty())
 
     def test_overflow(self):
         client = Client('testsecret', max_queue_size=1)
         client.consumer.pause()
-        time.sleep(5.1) # allow time for consumer to exit
+        time.sleep(1.0) # allow time for consumer to exit
 
         for i in range(10):
           client.identify('userId')
 
         success, msg = client.identify('userId')
+        # Make sure we are informed that the queue is at capacity
         self.assertFalse(success)
 
     def test_success_on_invalid_write_key(self):
