@@ -22,12 +22,15 @@ class Consumer(Thread):
         self.write_key = write_key
         self.on_error = on_error
         self.queue = queue
+        # It's important to set running in the constructor: if we are asked to
+        # pause immediately after construction, we might set running to True in
+        # run() *after* we set it to False in pause... and keep running forever.
+        self.running = True
         self.retries = 3
 
     def run(self):
         """Runs the consumer."""
         self.log.debug('consumer is running...')
-        self.running = True
         while self.running:
             self.upload()
 

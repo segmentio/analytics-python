@@ -219,8 +219,8 @@ class TestClient(unittest.TestCase):
 
     def test_overflow(self):
         client = Client('testsecret', max_queue_size=1)
-        client.consumer.pause()
-        time.sleep(1.0) # allow time for consumer to exit
+        # Ensure consumer thread is no longer uploading
+        client.join()
 
         for i in range(10):
           client.identify('userId')

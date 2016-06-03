@@ -210,13 +210,13 @@ class Client(object):
         msg = clean(msg)
         self.log.debug('queueing: %s', msg)
 
-        if self.queue.full():
+        try:
+            self.queue.put(msg, block=False)
+            self.log.debug('enqueued %s.', msg['type'])
+            return True, msg
+        except queue.Full:
             self.log.warn('analytics-python queue is full')
             return False, msg
-
-        self.queue.put(msg)
-        self.log.debug('enqueued %s.', msg['type'])
-        return True, msg
 
     def flush(self):
         """Forces a flush from the internal queue to the server"""
