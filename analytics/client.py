@@ -38,7 +38,8 @@ class Client(object):
         # On program exit, allow the consumer thread to exit cleanly.
         # This prevents exceptions and a messy shutdown when the interpreter is
         # destroyed before the daemon thread finishes execution. However, it
-        # is *not* the same as flushing the queue! To guarantee all
+        # is *not* the same as flushing the queue! To guarantee all messages
+        # have been delivered, you'll still need to call flush().
         atexit.register(self.join)
 
         if debug:

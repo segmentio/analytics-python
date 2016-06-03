@@ -16,7 +16,8 @@ class Consumer(Thread):
     def __init__(self, queue, write_key, upload_size=100, on_error=None):
         """Create a consumer thread."""
         Thread.__init__(self)
-        self.daemon = True # set as a daemon so the program can exit
+        # Make consumer a daemon thread so that it doesn't block program exit
+        self.daemon = True
         self.upload_size = upload_size
         self.write_key = write_key
         self.on_error = on_error
