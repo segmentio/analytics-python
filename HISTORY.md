@@ -1,4 +1,12 @@
 
+1.2.4 / 2016-06-06
+==================
+
+  * Fix race conditions in overflow and flush tests
+  * Join daemon thread on interpreter exit to prevetn valueerrors
+  * Capitalize HISTORY.md (#76)
+  * Quick fix for Decimal to send as a float
+
 1.2.3 / 2016-03-23
 ==================
 
