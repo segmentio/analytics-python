@@ -1,9 +1,13 @@
-from threading import Thread
 import logging
+from threading import Thread
 
 from analytics.version import VERSION
 from analytics.request import post
 
+try:
+    from queue import Empty
+except:
+    from Queue import Empty
 
 class Consumer(Thread):
     """Consumes the messages from the client's queue."""
@@ -12,18 +16,21 @@ class Consumer(Thread):
     def __init__(self, queue, write_key, upload_size=100, on_error=None):
         """Create a consumer thread."""
         Thread.__init__(self)
-        self.daemon = True # set as a daemon so the program can exit
+        # Make consumer a daemon thread so that it doesn't block program exit
+        self.daemon = True
         self.upload_size = upload_size
         self.write_key = write_key
         self.on_error = on_error
         self.queue = queue
+        # It's important to set running in the constructor: if we are asked to
+        # pause immediately after construction, we might set running to True in
+        # run() *after* we set it to False in pause... and keep running forever.
+        self.running = True
         self.retries = 3
 
     def run(self):
         """Runs the consumer."""
         self.log.debug('consumer is running...')
-
-        self.running = True
         while self.running:
             self.upload()
 
@@ -49,36 +56,24 @@ class Consumer(Thread):
             if self.on_error:
                 self.on_error(e, batch)
         finally:
-            # cleanup
+            # mark items as acknowledged from queue
             for item in batch:
                 self.queue.task_done()
-
             return success
 
     def next(self):
         """Return the next batch of items to upload."""
         queue = self.queue
         items = []
-        item = self.next_item()
-        if item is None:
-            return items
 
-        items.append(item)
-        while len(items) < self.upload_size and not queue.empty():
-            item = self.next_item()
-            if item:
+        while len(items) < self.upload_size or self.queue.empty():
+            try:
+                item = queue.get(block=True, timeout=0.5)
                 items.append(item)
+            except Empty:
+                break
 
         return items
-
-    def next_item(self):
-        """Get a single item from the queue."""
-        queue = self.queue
-        try:
-            item = queue.get(block=True, timeout=5)
-            return item
-        except Exception:
-            return None
 
     def request(self, batch, attempt=0):
         """Attempt to upload the batch and retry before raising an error """

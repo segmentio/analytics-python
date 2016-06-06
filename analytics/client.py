@@ -2,6 +2,7 @@ from datetime import datetime
 from uuid import uuid4
 import logging
 import numbers
+import atexit
 
 from dateutil.tz import tzutc
 from six import string_types
@@ -33,6 +34,13 @@ class Client(object):
         self.on_error = on_error
         self.debug = debug
         self.send = send
+
+        # On program exit, allow the consumer thread to exit cleanly.
+        # This prevents exceptions and a messy shutdown when the interpreter is
+        # destroyed before the daemon thread finishes execution. However, it
+        # is *not* the same as flushing the queue! To guarantee all messages
+        # have been delivered, you'll still need to call flush().
+        atexit.register(self.join)
 
         if debug:
             self.log.setLevel(logging.DEBUG)
@@ -202,20 +210,21 @@ class Client(object):
         msg = clean(msg)
         self.log.debug('queueing: %s', msg)
 
-        if self.queue.full():
+        try:
+            self.queue.put(msg, block=False)
+            self.log.debug('enqueued %s.', msg['type'])
+            return True, msg
+        except queue.Full:
             self.log.warn('analytics-python queue is full')
             return False, msg
-
-        self.queue.put(msg)
-        self.log.debug('enqueued %s.', msg['type'])
-        return True, msg
 
     def flush(self):
         """Forces a flush from the internal queue to the server"""
         queue = self.queue
         size = queue.qsize()
         queue.join()
-        self.log.debug('successfully flushed %s items.', size)
+        # Note that this message may not be precise, because of threading.
+        self.log.debug('successfully flushed about %s items.', size)
 
     def join(self):
         """Ends the consumer thread once the queue is empty. Blocks execution until finished"""
