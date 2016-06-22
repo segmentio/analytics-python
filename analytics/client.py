@@ -35,18 +35,17 @@ class Client(object):
         self.debug = debug
         self.send = send
 
-        # On program exit, allow the consumer thread to exit cleanly.
-        # This prevents exceptions and a messy shutdown when the interpreter is
-        # destroyed before the daemon thread finishes execution. However, it
-        # is *not* the same as flushing the queue! To guarantee all messages
-        # have been delivered, you'll still need to call flush().
-        atexit.register(self.join)
-
         if debug:
             self.log.setLevel(logging.DEBUG)
 
         # if we've disabled sending, just don't start the consumer
         if send:
+            # On program exit, allow the consumer thread to exit cleanly.
+            # This prevents exceptions and a messy shutdown when the interpreter is
+            # destroyed before the daemon thread finishes execution. However, it
+            # is *not* the same as flushing the queue! To guarantee all messages
+            # have been delivered, you'll still need to call flush().
+            atexit.register(self.join)
             self.consumer.start()
 
     def identify(self, user_id=None, traits=None, context=None, timestamp=None,
