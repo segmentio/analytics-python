@@ -229,7 +229,11 @@ class Client(object):
     def join(self):
         """Ends the consumer thread once the queue is empty. Blocks execution until finished"""
         self.consumer.pause()
-        self.consumer.join()
+        try:
+            self.consumer.join()
+        except RuntimeError:
+            # consumer thread has not started
+            pass
 
 
 def require(name, field, data_type):
