@@ -1,3 +1,8 @@
+1.2.5 / 2016-07-02
+==================
+
+  * Fix outdated python-dateutil<2 requirement for python2 - dateutil > 2.1 runs is python2 compatible
+  * Fix a bug introduced in 1.2.4 where we could try to join a thread that was not yet started
 
 1.2.4 / 2016-06-06
 ==================
