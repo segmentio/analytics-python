@@ -5,7 +5,7 @@ try:
 except:
     from Queue import Queue
 
-from analytics.consumer import Consumer
+from ..consumer import Consumer
 
 
 class TestConsumer(unittest.TestCase):

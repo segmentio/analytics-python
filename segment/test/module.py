@@ -1,6 +1,6 @@
 import unittest
 
-import analytics
+import segment as analytics
 
 
 class TestModule(unittest.TestCase):

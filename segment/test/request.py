@@ -2,7 +2,7 @@ from datetime import datetime
 import unittest
 import json
 
-from analytics.request import post, DatetimeSerializer
+from ..request import post, DatetimeSerializer
 
 
 class TestRequests(unittest.TestCase):
