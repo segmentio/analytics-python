@@ -209,6 +209,10 @@ class Client(object):
         msg = clean(msg)
         self.log.debug('queueing: %s', msg)
 
+        # if send is False, return msg as if it was successfully queued
+        if not self.send:
+            return True, msg
+
         try:
             self.queue.put(msg, block=False)
             self.log.debug('enqueued %s.', msg['type'])
