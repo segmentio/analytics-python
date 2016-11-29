@@ -1,8 +1,8 @@
 import logging
 from threading import Thread
 
-from analytics.version import VERSION
-from analytics.request import post
+from .version import VERSION
+from .request import post
 
 try:
     from queue import Empty
