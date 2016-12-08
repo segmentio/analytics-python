@@ -1,3 +1,10 @@
+
+1.2.6 / 2016-12-07
+==================
+
+  * dont add messages to the queue if send is false
+  * drop py32 support
+
 1.2.5 / 2016-07-02
 ==================
 
