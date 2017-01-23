@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from dateutil.tz import tzutc
 import logging
 import json
@@ -47,7 +47,7 @@ class APIError(Exception):
 
 class DatetimeSerializer(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, datetime):
+        if isinstance(obj, (date, datetime)):
             return obj.isoformat()
 
         return json.JSONEncoder.default(self, obj)
