@@ -1,4 +1,9 @@
 
+1.2.7 / 2017-01-31
+==================
+
+  * [Fix](https://github.com/segmentio/analytics-python/pull/92): Correctly serialize date objects.
+
 1.2.6 / 2016-12-07
 ==================
 
@@ -32,7 +37,7 @@
 
 1.2.1 / 2016-03-11
 ==================
-  
+
   * fixing requirements.txt
 
 1.2.0 / 2016-03-11
