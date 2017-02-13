@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from decimal import Decimal
 import unittest
 
@@ -26,7 +26,8 @@ class TestUtils(unittest.TestCase):
         simple = {
             'decimal': Decimal('0.142857'),
             'unicode': six.u('woo'),
-            'date': datetime.now(),
+            'datetime': datetime.now(),
+            'date': date.today(),
             'long': 200000000,
             'integer': 1,
             'float': 2.0,

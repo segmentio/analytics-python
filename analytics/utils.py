@@ -1,5 +1,6 @@
 from dateutil.tz import tzlocal, tzutc
 from datetime import datetime
+from datetime import date
 from decimal import Decimal
 import logging
 import numbers
@@ -40,6 +41,8 @@ def clean(item):
     elif isinstance(item, (six.string_types, bool, numbers.Number, datetime,
                          type(None))):
         return item
+    elif isinstance(item, date):
+        return datetime.combine(item, datetime.min.time())
     elif isinstance(item, (set, list, tuple)):
         return _clean_list(item)
     elif isinstance(item, dict):
