@@ -63,3 +63,7 @@ class TestUtils(unittest.TestCase):
         # TODO: fixme, different behavior on python 2 and 3
         if 'fn' in cleaned:
             self.assertEqual(cleaned['fn'], None)
+
+    def test_remove_slash(self):
+        self.assertEqual('http://segment.io', utils.remove_slash('http://segment.io/'))
+        self.assertEqual('http://segment.io', utils.remove_slash('http://segment.io'))

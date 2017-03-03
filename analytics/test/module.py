@@ -17,6 +17,10 @@ class TestModule(unittest.TestCase):
         analytics.write_key = None
         self.assertRaises(Exception, analytics.track)
 
+    def test_no_host(self):
+        analytics.host = None
+        self.assertRaises(Exception, analytics.track)
+
     def test_track(self):
         analytics.track('userId', 'python module event')
         analytics.flush()

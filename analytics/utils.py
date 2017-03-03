@@ -34,6 +34,11 @@ def guess_timezone(dt):
 
     return dt
 
+def remove_slash(host):
+    if host.endswith('/'):
+         return host[:-1]
+    return host
+
 def clean(item):
     if isinstance(item, Decimal):
         return float(item)
