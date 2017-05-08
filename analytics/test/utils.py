@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 import unittest
 
@@ -48,6 +48,13 @@ class TestUtils(unittest.TestCase):
 
         utils.clean(combined)
         self.assertEqual(combined.keys(), pre_clean_keys)
+
+    def test_clean_with_dates(self):
+        dict_with_dates = {
+            'birthdate': date(1980, 1, 1),
+            'registration': datetime.utcnow(),
+        }
+        self.assertEqual(dict_with_dates, utils.clean(dict_with_dates))
 
     def test_bytes(self):
         if six.PY3:
