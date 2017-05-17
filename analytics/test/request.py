@@ -2,13 +2,14 @@ from datetime import datetime, date
 import unittest
 import json
 
+import analytics
 from analytics.request import post, DatetimeSerializer
 
 
 class TestRequests(unittest.TestCase):
 
     def test_valid_request(self):
-        res = post('testsecret', batch=[{
+        res = post('testsecret', analytics.endpoint, batch=[{
             'userId': 'userId',
             'event': 'python event',
             'type': 'track'

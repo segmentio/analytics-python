@@ -6,6 +6,7 @@ __version__ = VERSION
 
 """Settings."""
 write_key = None
+endpoint = 'https://api.segment.io/v1/batch'
 on_error = None
 debug = False
 send = True
@@ -50,7 +51,7 @@ def _proxy(method, *args, **kwargs):
     global default_client
     if not default_client:
         default_client = Client(write_key, debug=debug, on_error=on_error,
-                                send=send)
+                                send=send, endpoint=endpoint)
 
     fn = getattr(default_client, method)
     fn(*args, **kwargs)
