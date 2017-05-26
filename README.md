@@ -5,6 +5,8 @@ analytics-python
 
 analytics-python is a python client is a slightly modified version of [Segment's Python client library][segmentsdk]. The behavior of `polku-python` is identical to `segment-python` except that `polku-python` allows delivering the recorded events to a custom HTTP endpoint.
 
+[segmentsdk]: https://github.com/segmentio/analytics-python
+
 ## Documentation
 
 The documentation for Segment's Python SDK that this repository is based on is available at [https://segment.com/libraries/python](https://segment.com/libraries/python). You can use Segment's docs to get familiar with the API.
