@@ -1,7 +1,7 @@
 analytics-python
 ==============
 
-[![Build Status](https://travis-ci.org/findhotel/analytics-python.svg?branch=master)](https://travis-ci.org/findhotel/analytics-python)
+[![Build Status](https://travis-ci.org/FindHotel/analytics-python.svg?branch=master)](https://travis-ci.org/FindHotel/analytics-python)
 
 analytics-python is a python client is a slightly modified version of [Segment's Python client library][segmentsdk]. This fork of Segment's `analytics-python` is fully compliant with the original Segment's SDK API, but this fork allows delivering the recorded events to a custom HTTP endpoint.
 
