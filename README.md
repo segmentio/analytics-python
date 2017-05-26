@@ -1,13 +1,14 @@
-﻿analytics-python
+analytics-python
 ==============
 
-[![Build Status](https://travis-ci.org/segmentio/analytics-python.svg?branch=master)](https://travis-ci.org/segmentio/analytics-python)
+[![Build Status](https://travis-ci.org/findhotel/analytics-python.svg?branch=master)](https://travis-ci.org/findhotel/analytics-python)
 
-analytics-python is a python client for [Segment](https://segment.com)
+analytics-python is a python client is a slightly modified version of [Segment's Python client library][segmentsdk]. The behavior of `polku-python` is identical to `segment-python` except that `polku-python` allows delivering the recorded events to a custom HTTP endpoint.
 
 ## Documentation
 
-Documentation is available at [https://segment.com/libraries/python](https://segment.com/libraries/python).
+The documentation for Segment's Python SDK that this repository is based on is available at [https://segment.com/libraries/python](https://segment.com/libraries/python). You can use Segment's docs to get familiar with the API.
+
 
 ## License
 
