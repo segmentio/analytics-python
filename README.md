@@ -7,7 +7,22 @@ analytics-python is a python client is a slightly modified version of [Segment's
 
 [segmentsdk]: https://github.com/segmentio/analytics-python
 
-## Documentation
+## Usage
+
+```python
+import analytics
+
+# This key will be passed in the `x-api-key` header of every request
+analytics.write_key='AWS_API_GATEWAY_KEY'
+
+# The custom endpoint to where the events will be delivered to
+analytics.endpoint='https://polku.fih.io/dev/[hookname]'
+
+analytics.track('kljsdgs99', 'SignedUp', {'plan': 'Enterprise'})
+```
+
+
+## More information 
 
 The documentation for Segment's Python SDK that this repository is based on is available at [https://segment.com/libraries/python](https://segment.com/libraries/python). You can use Segment's docs to get familiar with the API.
 
