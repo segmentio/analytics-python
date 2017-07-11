@@ -66,7 +66,7 @@ class Consumer(Thread):
         queue = self.queue
         items = []
 
-        while len(items) < self.upload_size or self.queue.empty():
+        while len(items) < self.upload_size:
             try:
                 item = queue.get(block=True, timeout=0.5)
                 items.append(item)
