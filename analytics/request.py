@@ -9,17 +9,16 @@ from requests import sessions
 _session = sessions.Session()
 
 
-def post(write_key, **kwargs):
+def post(write_key, endpoint, **kwargs):
     """Post the `kwargs` to the API"""
     log = logging.getLogger('segment')
     body = kwargs
     body["sentAt"] = datetime.utcnow().replace(tzinfo=tzutc()).isoformat()
-    url = 'https://api.segment.io/v1/batch'
     auth = HTTPBasicAuth(write_key, '')
     data = json.dumps(body, cls=DatetimeSerializer)
-    headers = { 'content-type': 'application/json' }
+    headers = { 'content-type': 'application/json', 'x-api-key': write_key }
     log.debug('making request: %s', data)
-    res = _session.post(url, data=data, auth=auth, headers=headers, timeout=15)
+    res = _session.post(endpoint, data=data, auth=auth, headers=headers, timeout=15)
 
     if res.status_code == 200:
         log.debug('data uploaded successfully')

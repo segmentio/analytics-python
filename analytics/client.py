@@ -25,12 +25,14 @@ class Client(object):
     log = logging.getLogger('segment')
 
     def __init__(self, write_key=None, debug=False, max_queue_size=10000,
-                 send=True, on_error=None):
+                 send=True, on_error=None, endpoint=None):
         require('write_key', write_key, string_types)
 
         self.queue = queue.Queue(max_queue_size)
-        self.consumer = Consumer(self.queue, write_key, on_error=on_error)
+        self.consumer = Consumer(self.queue, write_key, endpoint=endpoint,
+                                 on_error=on_error)
         self.write_key = write_key
+        self.endpoint = endpoint
         self.on_error = on_error
         self.debug = debug
         self.send = send
@@ -49,7 +51,7 @@ class Client(object):
             self.consumer.start()
 
     def identify(self, user_id=None, traits=None, context=None, timestamp=None,
-                 anonymous_id=None, integrations=None):
+                 anonymous_id=None, integrations=None, message_id=None):
         traits = traits or {}
         context = context or {}
         integrations = integrations or {}
@@ -63,13 +65,15 @@ class Client(object):
             'context': context,
             'type': 'identify',
             'userId': user_id,
-            'traits': traits
+            'traits': traits,
+            'messageId': message_id
         }
 
         return self._enqueue(msg)
 
     def track(self, user_id=None, event=None, properties=None, context=None,
-              timestamp=None, anonymous_id=None, integrations=None):
+              timestamp=None, anonymous_id=None, integrations=None,
+              message_id=None):
         properties = properties or {}
         context = context or {}
         integrations = integrations or {}
@@ -85,13 +89,14 @@ class Client(object):
             'context': context,
             'userId': user_id,
             'type': 'track',
-            'event': event
+            'event': event,
+            'messageId': message_id
         }
 
         return self._enqueue(msg)
 
     def alias(self, previous_id=None, user_id=None, context=None,
-              timestamp=None, integrations=None):
+              timestamp=None, integrations=None, message_id=None):
         context = context or {}
         integrations = integrations or {}
         require('previous_id', previous_id, ID_TYPES)
@@ -103,13 +108,15 @@ class Client(object):
             'timestamp': timestamp,
             'context': context,
             'userId': user_id,
-            'type': 'alias'
+            'type': 'alias',
+            'messageId': message_id
         }
 
         return self._enqueue(msg)
 
     def group(self, user_id=None, group_id=None, traits=None, context=None,
-              timestamp=None, anonymous_id=None, integrations=None):
+              timestamp=None, anonymous_id=None, integrations=None,
+              message_id=None):
         traits = traits or {}
         context = context or {}
         integrations = integrations or {}
@@ -125,14 +132,15 @@ class Client(object):
             'context': context,
             'userId': user_id,
             'traits': traits,
-            'type': 'group'
+            'type': 'group',
+            'messageId': message_id
         }
 
         return self._enqueue(msg)
 
     def page(self, user_id=None, category=None, name=None, properties=None,
              context=None, timestamp=None, anonymous_id=None,
-             integrations=None):
+             integrations=None, message_id=None):
         properties = properties or {}
         context = context or {}
         integrations = integrations or {}
@@ -154,6 +162,7 @@ class Client(object):
             'userId': user_id,
             'type': 'page',
             'name': name,
+            'messageId': message_id
         }
 
         return self._enqueue(msg)
@@ -200,7 +209,7 @@ class Client(object):
         # add common
         timestamp = guess_timezone(timestamp)
         msg['timestamp'] = timestamp.isoformat()
-        msg['messageId'] = str(uuid4())
+        msg['messageId'] = msg.get('messageId') or str(uuid4())
         msg['context']['library'] = {
             'name': 'analytics-python',
             'version': VERSION

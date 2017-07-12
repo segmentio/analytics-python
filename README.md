@@ -1,13 +1,31 @@
-﻿analytics-python
+analytics-python
 ==============
 
-[![Build Status](https://travis-ci.org/segmentio/analytics-python.svg?branch=master)](https://travis-ci.org/segmentio/analytics-python)
+[![Build Status](https://travis-ci.org/FindHotel/analytics-python.svg?branch=master)](https://travis-ci.org/FindHotel/analytics-python)
 
-analytics-python is a python client for [Segment](https://segment.com)
+analytics-python is a python client is a slightly modified version of [Segment's Python client library][segmentsdk]. This fork of Segment's `analytics-python` is fully compliant with the original Segment's SDK API, but it allows delivering the recorded events to a custom HTTP endpoint.
 
-## Documentation
+[segmentsdk]: https://github.com/segmentio/analytics-python
 
-Documentation is available at [https://segment.com/libraries/python](https://segment.com/libraries/python).
+## Usage
+
+```python
+import analytics
+
+# This key will be passed in the `x-api-key` header of every request
+analytics.write_key='AWS_API_GATEWAY_KEY'
+
+# The custom endpoint to where the events will be delivered to
+analytics.endpoint='https://polku.fih.io/dev/[hookname]'
+
+analytics.track('kljsdgs99', 'SignedUp', {'plan': 'Enterprise'})
+```
+
+
+## More information 
+
+The documentation for Segment's Python SDK that this repository is based on is available at [https://segment.com/libraries/python](https://segment.com/libraries/python). You can use Segment's docs to get familiar with the API.
+
 
 ## License
 
