@@ -5,10 +5,13 @@ import json
 
 from requests.auth import HTTPBasicAuth
 from requests import sessions
+from retrying import retry
 
 _session = sessions.Session()
 
 
+@retry(wait_exponential_multiplier=500, wait_exponential_max=5000,
+       stop_max_delay=20000)
 def post(write_key, endpoint, **kwargs):
     """Post the `kwargs` to the API"""
     log = logging.getLogger('segment')
