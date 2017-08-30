@@ -29,7 +29,6 @@ class Consumer(Thread):
         # pause immediately after construction, we might set running to True in
         # run() *after* we set it to False in pause... and keep running forever.
         self.running = True
-        self.retries = 3
 
     def run(self):
         """Runs the consumer."""
@@ -79,10 +78,5 @@ class Consumer(Thread):
         return items
 
     def request(self, batch, attempt=0):
-        """Attempt to upload the batch and retry before raising an error """
-        try:
-            post(self.write_key, self.endpoint, batch=batch)
-        except:
-            if attempt > self.retries:
-                raise
-            self.request(batch, attempt+1)
+        """Attempt to upload the batch """
+        post(self.write_key, self.endpoint, batch=batch)
