@@ -6,7 +6,7 @@ import json
 from requests.auth import HTTPBasicAuth
 from requests import sessions
 
-from analytics.utils import remove_slash
+from analytics.utils import remove_trailing_slash
 
 _session = sessions.Session()
 
@@ -16,7 +16,7 @@ def post(write_key, host=None, **kwargs):
     log = logging.getLogger('segment')
     body = kwargs
     body["sentAt"] = datetime.utcnow().replace(tzinfo=tzutc()).isoformat()
-    url = remove_slash(host or 'https://api.segment.io') + '/v1/batch'
+    url = remove_trailing_slash(host or 'https://api.segment.io') + '/v1/batch'
     auth = HTTPBasicAuth(write_key, '')
     data = json.dumps(body, cls=DatetimeSerializer)
     headers = { 'content-type': 'application/json' }

@@ -34,7 +34,7 @@ def guess_timezone(dt):
 
     return dt
 
-def remove_slash(host):
+def remove_trailing_slash(host):
     if host.endswith('/'):
          return host[:-1]
     return host
