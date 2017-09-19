@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 import unittest
 import time
 import six
@@ -245,3 +245,17 @@ class TestClient(unittest.TestCase):
 
     def test_debug(self):
         Client('bad_key', debug=True)
+
+    def test_identify_with_date_object(self):
+        client = self.client
+        success, msg = client.identify(
+            'userId',
+            {
+                'birthdate': date(1981, 2, 2),
+            },
+        )
+        client.flush()
+        self.assertTrue(success)
+        self.assertFalse(self.failed)
+
+        self.assertEqual(msg['traits'], {'birthdate': date(1981, 2, 2)})

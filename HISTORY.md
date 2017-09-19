@@ -1,3 +1,9 @@
+Next release
+============
+
+  * [Fix](https://github.com/segmentio/analytics-python/issues/94): Date
+    objects are removed from event properties.
+
 
 1.2.7 / 2017-01-31
 ==================
