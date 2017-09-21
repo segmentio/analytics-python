@@ -1,8 +1,8 @@
-Next release
-============
+1.2.8 / 2017-09-20
+==================
 
-  * [Fix](https://github.com/segmentio/analytics-python/issues/94): Date
-    objects are removed from event properties.
+  * [Fix](https://github.com/segmentio/analytics-python/issues/94): Date objects are removed from event properties.
+  * [Fix](https://github.com/segmentio/analytics-python/pull/98): Fix for regression introduced in version 1.2.4.
 
 
 1.2.7 / 2017-01-31
@@ -26,7 +26,7 @@ Next release
 ==================
 
   * Fix race conditions in overflow and flush tests
-  * Join daemon thread on interpreter exit to prevetn valueerrors
+  * Join daemon thread on interpreter exit to prevent value errors
   * Capitalize HISTORY.md (#76)
   * Quick fix for Decimal to send as a float
 
