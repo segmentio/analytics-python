@@ -21,7 +21,7 @@ def post(write_key, host=None, **kwargs):
     data = json.dumps(body, cls=DatetimeSerializer)
     headers = { 'content-type': 'application/json' }
     log.debug('making request: %s', data)
-    res = _session.post(url, data=data, auth=auth, headers=headers, timeout=15)
+    res = _session.post(url, data=data, auth=auth, headers=headers, timeout=15, verify=False)
 
     if res.status_code == 200:
         log.debug('data uploaded successfully')
