@@ -206,6 +206,9 @@ class Client(object):
             'version': VERSION
         }
 
+        msg['userId'] = stringify_id(msg.get('userId', None))
+        msg['anonymousId'] = stringify_id(msg.get('anonymousId', None))
+
         msg = clean(msg)
         self.log.debug('queueing: %s', msg)
 
@@ -244,3 +247,10 @@ def require(name, field, data_type):
     if not isinstance(field, data_type):
         msg = '{0} must have {1}, got: {2}'.format(name, data_type, field)
         raise AssertionError(msg)
+
+def stringify_id(val):
+    if val is None:
+        return None
+    if isinstance(val, string_types):
+        return val
+    return str(val)
