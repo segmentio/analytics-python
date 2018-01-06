@@ -30,7 +30,10 @@ def post(write_key, endpoint, **kwargs):
     try:
         payload = res.json()
         log.debug('received response: %s', payload)
-        raise APIError(res.status_code, payload['code'], payload['message'])
+        raise APIError(
+            res.status_code,
+            payload.get('code', '???'),
+            payload.get('message', '???'))
     except ValueError:
         raise APIError(res.status_code, 'unknown', res.text)
 
