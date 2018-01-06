@@ -1,3 +1,7 @@
+1.3.1 / 2018-01-06
+==================
+
+  * Minor bugfix: API error report breaks when the error payload does not have a "code" key.
 
 1.2.7 / 2017-01-31
 ==================
