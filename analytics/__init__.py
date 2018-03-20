@@ -1,4 +1,3 @@
-
 from analytics.version import VERSION
 from analytics.client import Client
 
@@ -10,6 +9,7 @@ host = None
 on_error = None
 debug = False
 send = True
+max_queue_size = 10000 # Set to 0 for concurrent requests
 
 default_client = None
 
@@ -51,7 +51,7 @@ def _proxy(method, *args, **kwargs):
     global default_client
     if not default_client:
         default_client = Client(write_key, host=host, debug=debug, on_error=on_error,
-                                send=send)
+                                send=send, max_queue_size=max_queue_size)
 
     fn = getattr(default_client, method)
     fn(*args, **kwargs)

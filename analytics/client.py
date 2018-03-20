@@ -9,6 +9,7 @@ from six import string_types
 
 from analytics.utils import guess_timezone, clean
 from analytics.consumer import Consumer
+from analytics.request import post
 from analytics.version import VERSION
 
 try:
@@ -28,6 +29,8 @@ class Client(object):
                  send=True, on_error=None):
         require('write_key', write_key, string_types)
 
+        self.max_queue_size = max_queue_size
+        self.host = host
         self.queue = queue.Queue(max_queue_size)
         self.consumer = Consumer(self.queue, write_key, host=host, on_error=on_error)
         self.write_key = write_key
@@ -216,13 +219,16 @@ class Client(object):
         if not self.send:
             return True, msg
 
-        try:
-            self.queue.put(msg, block=False)
-            self.log.debug('enqueued %s.', msg['type'])
-            return True, msg
-        except queue.Full:
-            self.log.warn('analytics-python queue is full')
-            return False, msg
+        if self.max_queue_size == 0: # If we're not using a queue, send immediately (synchronously)
+            post(self.write_key, self.host, batch=[msg])
+        else:
+            try:
+                self.queue.put(msg, block=False)
+                self.log.debug('enqueued %s.', msg['type'])
+                return True, msg
+            except queue.Full:
+                self.log.warn('analytics-python queue is full')
+                return False, msg
 
     def flush(self):
         """Forces a flush from the internal queue to the server"""
