@@ -9,7 +9,7 @@ host = None
 on_error = None
 debug = False
 send = True
-max_queue_size = 10000 # Set to 0 for concurrent requests
+max_queue_size = 10000 # Set to 0 for synchronous requests
 
 default_client = None
 
