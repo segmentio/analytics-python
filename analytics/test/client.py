@@ -241,6 +241,17 @@ class TestClient(unittest.TestCase):
         # Make sure that the client queue is empty after flushing
         self.assertTrue(client.queue.empty())
 
+    def test_synchronous(self):
+        # Max queue size at 0 -> synchronous mode
+        client = Client('testsecret', max_queue_size=0)
+        # Ensure the consumer thread is not running
+        client.consumer.pause()
+
+        success, message = client.identify('userId')
+
+        self.assertTrue(client.queue.empty())
+        self.assertTrue(success)
+
     def test_overflow(self):
         client = Client('testsecret', max_queue_size=1)
         # Ensure consumer thread is no longer uploading
