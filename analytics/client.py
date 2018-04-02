@@ -221,6 +221,7 @@ class Client(object):
 
         if self.max_queue_size == 0: # If we're not using a queue, send immediately (synchronously)
             post(self.write_key, self.host, batch=[msg])
+            return True, msg
         else:
             try:
                 self.queue.put(msg, block=False)
