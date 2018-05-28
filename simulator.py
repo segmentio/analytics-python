@@ -55,6 +55,9 @@ def group():
     analytics.group(options.userId, options.groupId, json_hash(options.traits),
             json_hash(options.context), anonymous_id = options.anonymousId)
 
+def unknown():
+    print()
+
 analytics.write_key = options.writekey
 analytics.on_error = failed
 analytics.debug = True
@@ -67,7 +70,9 @@ switcher = {
     "group": group
 }
 
-func = switcher.get(options.type, lambda: print("Invalid Message Type " + options.type))
-func()
-
-analytics.flush()
+func = switcher.get(options.type)
+if func:
+    func()
+    analytics.flush()
+else:
+    print("Invalid Message Type " + options.type)
