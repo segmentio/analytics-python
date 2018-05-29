@@ -7,6 +7,8 @@ python:
   - "3.5"
 install:
   - "pip install ."
-script: make test
+script:
+  - make test
+  - make e2e_test
 matrix:
   fast_finish: true
