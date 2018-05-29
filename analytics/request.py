@@ -2,6 +2,7 @@ from datetime import date, datetime
 from dateutil.tz import tzutc
 import logging
 import json
+from analytics.version import VERSION
 
 from requests.auth import HTTPBasicAuth
 from requests import sessions
@@ -19,7 +20,10 @@ def post(write_key, host=None, **kwargs):
     url = remove_trailing_slash(host or 'https://api.segment.io') + '/v1/batch'
     auth = HTTPBasicAuth(write_key, '')
     data = json.dumps(body, cls=DatetimeSerializer)
-    headers = { 'content-type': 'application/json' }
+    headers = {
+        'Content-Type': 'application/json',
+        'User-Agent': 'analytics-python/' + VERSION
+    }
     log.debug('making request: %s', data)
     res = _session.post(url, data=data, auth=auth, headers=headers, timeout=15)
 
