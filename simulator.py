@@ -1,6 +1,7 @@
 import analytics
 import argparse
 import json
+import logging
 
 __name__ = 'simulator.py'
 __version__ = '0.0.1'
@@ -61,6 +62,11 @@ def unknown():
 analytics.write_key = options.writeKey
 analytics.on_error = failed
 analytics.debug = True
+
+log = logging.getLogger('segment')
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+log.addHandler(ch)
 
 switcher = {
     "track": track,
