@@ -12,7 +12,8 @@ e2e_test:
 		echo "Running end to end tests..."; \
 		wget https://github.com/segmentio/library-e2e-tester/releases/download/0.1.1/tester_linux_amd64; \
 		chmod +x tester_linux_amd64; \
-		./tester_linux_amd64 -segment-write-key="$SEGMENT_WRITE_KEY" -runscope-token="$RUNSCOPE_TOKEN" -runscope-bucket="$RUNSCOPE_BUCKET" -path='./cli_scripts/e2e_test.sh'; \
+		chmod +x e2e_test.sh; \
+		./tester_linux_amd64 -segment-write-key="$SEGMENT_WRITE_KEY" -runscope-token="$RUNSCOPE_TOKEN" -runscope-bucket="$RUNSCOPE_BUCKET" -path='./e2e_test.sh'; \
 		echo "End to end tests completed!"; \
 	fi
 

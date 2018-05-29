@@ -14,7 +14,7 @@ def json_hash(str):
 
 parser = argparse.ArgumentParser(description='send a segment message')
 
-parser.add_argument('--writekey', help='the Segment writeKey')
+parser.add_argument('--writeKey', help='the Segment writeKey')
 parser.add_argument('--type', help='The Segment message type')
 
 parser.add_argument('--userId', help='the user id to send the event as')
@@ -58,7 +58,7 @@ def group():
 def unknown():
     print()
 
-analytics.write_key = options.writekey
+analytics.write_key = options.writeKey
 analytics.on_error = failed
 analytics.debug = True
 
