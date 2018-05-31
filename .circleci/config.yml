@@ -12,7 +12,7 @@ jobs:
       - run: # install dependencies
           name: install dependencies
           command: |
-            pip install .
+            pip install --user .
       - run: # run tests!
           name: run tests
           command: |
