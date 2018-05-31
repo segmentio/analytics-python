@@ -6,7 +6,7 @@ jobs:
     steps:
       - checkout
       - run: pip install --user .
-      - run: make_test
+      - run: make test
 
   test_27:
     docker:
@@ -39,3 +39,13 @@ jobs:
       - checkout
       - run: pip install --user .
       - run: make e2e_test
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build
+      - test_27
+      - test_34
+      - test_35
+      - test_36
