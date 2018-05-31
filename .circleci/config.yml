@@ -12,12 +12,9 @@ jobs:
       - run: # install dependencies
           name: install dependencies
           command: |
-            python3 -m venv venv
-            . venv/bin/activate
             pip install .
       - run: # run tests!
           name: run tests
           command: |
-            . venv/bin/activate
             make test
             make e2e_test
