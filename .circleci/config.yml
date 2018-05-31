@@ -1,22 +1,21 @@
 version: 2
 jobs:
-  test_python35:
+  build:
     docker:
-      - image: circleci/python:3.5.5
+      - image: circleci/python:2.7.15-stretch
+      - image: circleci/python:3.4.8-jessie-node
+      - image: circleci/python:3.5.5-jessie
+      - image: circleci/python:3.6.5-jessie
 
     steps:
       - checkout
-
-      # install dependencies
-      - run:
+      - run: # install dependencies
           name: install dependencies
           command: |
             python3 -m venv venv
             . venv/bin/activate
             pip install .
-
-      # run tests!
-      - run:
+      - run: # run tests!
           name: run tests
           command: |
             . venv/bin/activate
