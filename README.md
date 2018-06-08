@@ -1,7 +1,7 @@
 ﻿analytics-python
 ==============
 
-[![Build Status](https://travis-ci.org/segmentio/analytics-python.svg?branch=master)](https://travis-ci.org/segmentio/analytics-python)
+[![Build Status](https://secure.gravatar.com/avatar?s=60)](https://circleci.com/gh/segmentio/analytics-python)
 
 analytics-python is a python client for [Segment](https://segment.com)
 

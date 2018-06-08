@@ -1,0 +1,51 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/python:2.7.15-stretch
+    steps:
+      - checkout
+      - run: pip install --user .
+      - run: make test
+
+  test_27:
+    docker:
+      - image: circleci/python:2.7.15-stretch
+    steps:
+      - checkout
+      - run: pip install --user .
+      - run: make e2e_test
+
+  test_34:
+    docker:
+      - image: circleci/python:3.4.8-jessie-node
+    steps:
+      - checkout
+      - run: pip install --user .
+      - run: make e2e_test
+
+  test_35:
+    docker:
+      - image: circleci/python:3.5.5-jessie
+    steps:
+      - checkout
+      - run: pip install --user .
+      - run: make e2e_test
+
+  test_36:
+    docker:
+      - image: circleci/python:3.6.5-jessie
+    steps:
+      - checkout
+      - run: pip install --user .
+      - run: make e2e_test
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build
+      - test_27
+      - test_34
+      - test_35
+      - test_36
