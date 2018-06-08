@@ -55,8 +55,7 @@ workflows:
         cron: "0 * * * *"
         filters:
           branches:
-            only:
-              - master
+            only: master
     jobs:
       - test_27
       - test_34
