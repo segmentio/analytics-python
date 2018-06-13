@@ -51,8 +51,13 @@ workflows:
       - test_36
   scheduled_e2e_test:
     triggers:
-      -schedule:
+      - schedule:
         cron: "0 * * * *"
+        filters:
+          branches:
+            only:
+              - master
+              - scheduled_e2e_testing
     jobs:
       - test_27
       - test_34
