@@ -12,13 +12,14 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'analytics'))
 from version import VERSION
 
 long_description = '''
-Segment is the simplest way to integrate analytics into your application.
-One API allows you to turn on any other analytics service. No more learning
-new APIs, repeated code, and wasted development time.
+This is an unofficial fork of Segment's analytics SDK. This fork is 100% 
+compatible with Segment's official SDK (it passes all the tests of the official
+version), but it supports configuring the backend HTTPS endpoint to which the
+events are delivered.
 
-This is the official python client that wraps the Segment REST API (https://segment.com).
+For more information on Segment go to https://segment.com.
 
-Documentation and more details at https://github.com/segmentio/analytics-python
+Documentation and more details at https://github.com/findhotel/analytics-python
 '''
 
 install_requires = [
@@ -29,18 +30,18 @@ install_requires = [
 ]
 
 setup(
-    name='analytics-python',
+    name='analytics-python-findhotel',
     version=VERSION,
-    url='https://github.com/segmentio/analytics-python',
-    author='Segment',
-    author_email='friends@segment.com',
-    maintainer='Segment',
-    maintainer_email='friends@segment.com',
+    url='https://github.com/findhotel/analytics-python',
+    author='FindHotel BV',
+    author_email='german@findhotel.net',
+    maintainer='FindHotel BV',
+    maintainer_email='german@findhotel.net',
     test_suite='analytics.test.all',
     packages=['analytics', 'analytics.test'],
     license='MIT License',
     install_requires=install_requires,
-    description='The hassle-free way to integrate analytics into any python application.',
+    description='FindHotel\'s fork of Segment\'s Python SDK.',
     long_description=long_description,
     classifiers=[
         "Development Status :: 5 - Production/Stable",

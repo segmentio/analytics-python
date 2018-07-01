@@ -1,8 +1,12 @@
+PYTHON := .env/bin/python
 
-test:
-	python setup.py test
+# create virtual environment
+.env:
+	virtualenv .env -p python3
 
-dist:
-	python setup.py sdist bdist_wheel upload
+clean:
+	rm -rf .env
 
-.PHONY: test dist
+# upload to Pypi
+pypi: .env
+	$(PYTHON) setup.py sdist upload
