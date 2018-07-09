@@ -49,7 +49,7 @@ class Client(object):
             self.consumer.start()
 
     def identify(self, user_id=None, traits=None, context=None, timestamp=None,
-                 anonymous_id=None, integrations=None):
+                 anonymous_id=None, integrations=None, message_id=None):
         traits = traits or {}
         context = context or {}
         integrations = integrations or {}
@@ -63,13 +63,14 @@ class Client(object):
             'context': context,
             'type': 'identify',
             'userId': user_id,
-            'traits': traits
+            'traits': traits,
+            'messageId': message_id,
         }
 
         return self._enqueue(msg)
 
     def track(self, user_id=None, event=None, properties=None, context=None,
-              timestamp=None, anonymous_id=None, integrations=None):
+              timestamp=None, anonymous_id=None, integrations=None, message_id=None):
         properties = properties or {}
         context = context or {}
         integrations = integrations or {}
@@ -85,13 +86,14 @@ class Client(object):
             'context': context,
             'userId': user_id,
             'type': 'track',
-            'event': event
+            'event': event,
+            'messageId': message_id,
         }
 
         return self._enqueue(msg)
 
     def alias(self, previous_id=None, user_id=None, context=None,
-              timestamp=None, integrations=None):
+              timestamp=None, integrations=None, message_id=None):
         context = context or {}
         integrations = integrations or {}
         require('previous_id', previous_id, ID_TYPES)
@@ -103,13 +105,14 @@ class Client(object):
             'timestamp': timestamp,
             'context': context,
             'userId': user_id,
-            'type': 'alias'
+            'type': 'alias',
+            'messageId': message_id,
         }
 
         return self._enqueue(msg)
 
     def group(self, user_id=None, group_id=None, traits=None, context=None,
-              timestamp=None, anonymous_id=None, integrations=None):
+              timestamp=None, anonymous_id=None, integrations=None, message_id=None):
         traits = traits or {}
         context = context or {}
         integrations = integrations or {}
@@ -125,14 +128,15 @@ class Client(object):
             'context': context,
             'userId': user_id,
             'traits': traits,
-            'type': 'group'
+            'type': 'group',
+            'messageId': message_id,
         }
 
         return self._enqueue(msg)
 
     def page(self, user_id=None, category=None, name=None, properties=None,
              context=None, timestamp=None, anonymous_id=None,
-             integrations=None):
+             integrations=None, message_id=None):
         properties = properties or {}
         context = context or {}
         integrations = integrations or {}
@@ -154,13 +158,14 @@ class Client(object):
             'userId': user_id,
             'type': 'page',
             'name': name,
+            'messageId': message_id,
         }
 
         return self._enqueue(msg)
 
     def screen(self, user_id=None, category=None, name=None, properties=None,
                context=None, timestamp=None, anonymous_id=None,
-               integrations=None):
+               integrations=None, message_id=None):
         properties = properties or {}
         context = context or {}
         integrations = integrations or {}
@@ -182,6 +187,7 @@ class Client(object):
             'userId': user_id,
             'type': 'screen',
             'name': name,
+            'messageId': message_id,
         }
 
         return self._enqueue(msg)
@@ -191,6 +197,9 @@ class Client(object):
         timestamp = msg['timestamp']
         if timestamp is None:
             timestamp = datetime.utcnow().replace(tzinfo=tzutc())
+        message_id = msg.get('messageId')
+        if message_id is None:
+            message_id = uuid4()
 
         require('integrations', msg['integrations'], dict)
         require('type', msg['type'], string_types)
@@ -200,7 +209,7 @@ class Client(object):
         # add common
         timestamp = guess_timezone(timestamp)
         msg['timestamp'] = timestamp.isoformat()
-        msg['messageId'] = str(uuid4())
+        msg['messageId'] = stringify_id(message_id)
         msg['context']['library'] = {
             'name': 'analytics-python',
             'version': VERSION
