@@ -13,7 +13,7 @@ e2e_test:
 		wget https://github.com/kevingilliard/library-e2e-tester/releases/download/0.1.2/tester_linux_amd64; \
 		chmod +x tester_linux_amd64; \
 		chmod +x e2e_test.sh; \
-		./tester_linux_amd64 -segment-write-key="$(SEGMENT_WRITE_KEY)" -webhook-auth-username="$(WEBHOOK_AUTH_USERNAME)" -runscope-bucket="$(RUNSCOPE_BUCKET)" -path='./e2e_test.sh'; \
+		./tester_linux_amd64 -segment-write-key="$(SEGMENT_WRITE_KEY)" -webhook-auth-username="$(WEBHOOK_AUTH_USERNAME)" -webhook-bucket="$(RUNSCOPE_BUCKET)" -path='./e2e_test.sh'; \
 		echo "End to end tests completed!"; \
 	fi
 
