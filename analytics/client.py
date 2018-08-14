@@ -220,6 +220,7 @@ class Client(object):
 
         if self.max_queue_size == 1:  # If queue size is 1, enqueue with blocking call (synchronously)
             self.queue.put(msg, block=True)
+            self.log.debug('enqueued with blocking %s.', msg['type'])
             return True, msg
 
         try:
