@@ -9,7 +9,6 @@ from six import string_types
 
 from analytics.utils import guess_timezone, clean
 from analytics.consumer import Consumer
-from analytics.request import post
 from analytics.version import VERSION
 
 try:
@@ -219,17 +218,17 @@ class Client(object):
         if not self.send:
             return True, msg
 
-        if self.max_queue_size == 0: # If we're not using a queue, send immediately (synchronously)
-            post(self.write_key, self.host, batch=[msg])
+        if self.max_queue_size == 1:  # If queue size is 1, enqueue with blocking call (synchronously)
+            self.queue.put(msg, block=True)
             return True, msg
-        else:
-            try:
-                self.queue.put(msg, block=False)
-                self.log.debug('enqueued %s.', msg['type'])
-                return True, msg
-            except queue.Full:
-                self.log.warn('analytics-python queue is full')
-                return False, msg
+
+        try:
+            self.queue.put(msg, block=False)
+            self.log.debug('enqueued %s.', msg['type'])
+            return True, msg
+        except queue.Full:
+            self.log.warning('analytics-python queue is full')
+            return False, msg
 
     def flush(self):
         """Forces a flush from the internal queue to the server"""
