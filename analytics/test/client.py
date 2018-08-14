@@ -242,8 +242,8 @@ class TestClient(unittest.TestCase):
         self.assertTrue(client.queue.empty())
 
     def test_synchronous(self):
-        # Max queue size at 0 -> synchronous mode
-        client = Client('testsecret', max_queue_size=0)
+        # Max queue size at 1 -> synchronous mode
+        client = Client('testsecret', max_queue_size=1)
         # Ensure the consumer thread is not running
         client.consumer.pause()
 
