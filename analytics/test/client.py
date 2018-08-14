@@ -249,11 +249,13 @@ class TestClient(unittest.TestCase):
 
         success, message = client.identify('userId')
 
+        self.assertEqual(client.queue.qsize(), 1)
+        client.flush()
         self.assertTrue(client.queue.empty())
         self.assertTrue(success)
 
     def test_overflow(self):
-        client = Client('testsecret', max_queue_size=1)
+        client = Client('testsecret', max_queue_size=2)
         # Ensure consumer thread is no longer uploading
         client.join()
 
