@@ -242,20 +242,16 @@ class TestClient(unittest.TestCase):
         self.assertTrue(client.queue.empty())
 
     def test_synchronous(self):
-        # Max queue size at 1 -> synchronous mode
-        client = Client('testsecret', max_queue_size=1)
+        client = Client('testsecret', sync_mode=True)
         # Ensure the consumer thread is not running
         client.consumer.pause()
 
         success, message = client.identify('userId')
-
-        self.assertEqual(client.queue.qsize(), 1)
-        client.flush()
         self.assertTrue(client.queue.empty())
         self.assertTrue(success)
 
     def test_overflow(self):
-        client = Client('testsecret', max_queue_size=2)
+        client = Client('testsecret', max_queue_size=1)
         # Ensure consumer thread is no longer uploading
         client.join()
 
