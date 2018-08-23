@@ -82,7 +82,7 @@ class Consumer(Thread):
             post(self.write_key, self.host, batch=batch)
         except Exception as exc:
             def maybe_retry():
-                if attempt > self.retries:
+                if attempt >= self.retries:
                     raise
                 self.request(batch, attempt+1)
 
@@ -92,6 +92,7 @@ class Consumer(Thread):
                     maybe_retry()
                 elif exc.status >= 400: # don't retry on other client errors
                     self.log.error('API error: %s', exc)
+                    raise
                 else:
                     self.log.debug('Unexpected APIError: %s', exc)
             else: # retry on all other errors (eg. network)
