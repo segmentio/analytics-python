@@ -76,7 +76,7 @@ class TestConsumer(unittest.TestCase):
                 except type(expected_exception) as exc:
                     self.assertEqual(exc, expected_exception)
                 else:
-                    self.fail("request() should've raised %s'" % str(type(expected_exception)))
+                    self.fail("request() should raise an exception if still failing after %d retries" % consumer.retries)
 
     def test_request_retry(self):
         # we should retry on general errors
@@ -90,8 +90,12 @@ class TestConsumer(unittest.TestCase):
 
         # we should NOT retry on other client errors
         api_error = APIError(400, 'code', 'Client Errors')
-        with self.assertRaises(APIError) as exc:
+        try:
             self._test_request_retry(api_error, 1)
+        except APIError:
+            pass
+        else:
+            self.fail('request() should not retry on client errors')
 
         # test for number of exceptions raise > retries value
         self._test_request_retry(APIError(500, 'code', 'Internal Server Error'), 4)
