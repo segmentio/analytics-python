@@ -71,9 +71,12 @@ class TestConsumer(unittest.TestCase):
             else:
                 # if exceptions are raised more times than the retries parameter,
                 # we expect the exception to be returned to the caller.
-                with self.assertRaises(type(expected_exception)) as exc:
+                try:
                     consumer.request([track])
-                self.assertEqual(exc.exception, expected_exception)
+                except type(expected_exception) as exc:
+                    self.assertEqual(exc, expected_exception)
+                else:
+                    self.fail("request() should've raised %s'" % str(type(expected_exception)))
 
     def test_request_retry(self):
         # we should retry on general errors
