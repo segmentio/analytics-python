@@ -12,5 +12,6 @@ script:
   - make test
   - make e2e_test
   - coverage report --show-missing
+  - bash <(curl -s https://codecov.io/bash)
 matrix:
   fast_finish: true
