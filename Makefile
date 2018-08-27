@@ -1,6 +1,6 @@
 
 test:
-	coverage run --branch --include=analytics/\* setup.py test
+	coverage run --branch --include=analytics/\* --omit=*/test* setup.py test
 
 dist:
 	python setup.py sdist bdist_wheel upload
