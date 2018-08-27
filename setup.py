@@ -24,8 +24,11 @@ Documentation and more details at https://github.com/segmentio/analytics-python
 install_requires = [
     "requests>=2.7,<3.0",
     "six>=1.5",
-    "mock>=2.0.0",
     "python-dateutil>2.1"
+]
+
+tests_require = [
+    "mock>=2.0.0"
 ]
 
 setup(
@@ -40,6 +43,7 @@ setup(
     packages=['analytics', 'analytics.test'],
     license='MIT License',
     install_requires=install_requires,
+    tests_require=tests_require,
     description='The hassle-free way to integrate analytics into any python application.',
     long_description=long_description,
     classifiers=[
