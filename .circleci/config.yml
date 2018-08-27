@@ -6,7 +6,7 @@ jobs:
     steps:
       - checkout
       - run: pip install --user .
-      - run: sudo pip install coverage
+      - run: sudo pip install coverage pylint==1.9.3
       - run: make test
       - persist_to_workspace:
           root: .
