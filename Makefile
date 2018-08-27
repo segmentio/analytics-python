@@ -2,7 +2,7 @@
 test:
 	coverage run --branch --include=analytics/\* --omit=*/test* setup.py test
 
-dist:
+release:
 	python setup.py sdist bdist_wheel upload
 
 e2e_test:
