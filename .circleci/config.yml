@@ -6,7 +6,25 @@ jobs:
     steps:
       - checkout
       - run: pip install --user .
+      - run: sudo pip install coverage
       - run: make test
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .coverage
+
+  coverage:
+    docker:
+      - image: circleci/python:2.7.15-stretch
+    steps:
+      - checkout
+      - attach_workspace: { at: . }
+      - run: sudo pip install coverage
+      - run: coverage report --show-missing | tee /tmp/coverage
+      - run: bash <(curl -s https://codecov.io/bash)
+      - store_artifacts:
+          path: /tmp/coverage
+          destination: test-coverage
 
   test_27:
     docker:
@@ -49,6 +67,12 @@ workflows:
       - test_34
       - test_35
       - test_36
+  static_analysis:
+    jobs:
+      - build
+      - coverage:
+          requires:
+            - build
   scheduled_e2e_test:
     triggers:
       - schedule:
