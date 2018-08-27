@@ -27,6 +27,10 @@ install_requires = [
     "python-dateutil>2.1"
 ]
 
+tests_require = [
+    "mock>=2.0.0"
+]
+
 setup(
     name='analytics-python',
     version=VERSION,
@@ -39,6 +43,7 @@ setup(
     packages=['analytics', 'analytics.test'],
     license='MIT License',
     install_requires=install_requires,
+    tests_require=tests_require,
     description='The hassle-free way to integrate analytics into any python application.',
     long_description=long_description,
     classifiers=[

@@ -2,7 +2,7 @@ import logging
 from threading import Thread
 
 from analytics.version import VERSION
-from analytics.request import post
+from analytics.request import post, APIError
 
 try:
     from queue import Empty
@@ -80,7 +80,20 @@ class Consumer(Thread):
         """Attempt to upload the batch and retry before raising an error """
         try:
             post(self.write_key, self.host, batch=batch)
-        except:
-            if attempt > self.retries:
-                raise
-            self.request(batch, attempt+1)
+        except Exception as exc:
+            def maybe_retry():
+                if attempt >= self.retries:
+                    raise
+                self.request(batch, attempt+1)
+
+            if isinstance(exc, APIError):
+                if exc.status >= 500 or exc.status == 429:
+                    # retry on server errors and client errors with 429 status code (rate limited)
+                    maybe_retry()
+                elif exc.status >= 400: # don't retry on other client errors
+                    self.log.error('API error: %s', exc)
+                    raise
+                else:
+                    self.log.debug('Unexpected APIError: %s', exc)
+            else: # retry on all other errors (eg. network)
+                maybe_retry()
