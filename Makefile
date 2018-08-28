@@ -1,5 +1,6 @@
 
 test:
+	pylint --rcfile=.pylintrc --reports=y --exit-zero analytics
 	coverage run --branch --include=analytics/\* --omit=*/test* setup.py test
 
 release:
