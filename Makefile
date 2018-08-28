@@ -1,5 +1,8 @@
 PYTHON := .env/bin/python
 
+test:
+	python setup.py test
+
 # create virtual environment
 .env:
 	virtualenv .env -p python3

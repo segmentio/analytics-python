@@ -24,9 +24,9 @@ Documentation and more details at https://github.com/findhotel/analytics-python
 
 install_requires = [
     "requests>=2.7,<3.0",
-    "six>=1.5",
+    "six>=1.7",
     "python-dateutil>2.1",
-    "retrying"
+    "retrying>=1.3.3"
 ]
 
 setup(
@@ -57,5 +57,6 @@ setup(
         "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
     ],
 )
