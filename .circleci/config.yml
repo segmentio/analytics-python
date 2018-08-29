@@ -6,12 +6,14 @@ jobs:
     steps:
       - checkout
       - run: pip install --user .
-      - run: sudo pip install coverage pylint==1.9.3
+      - run: sudo pip install coverage pylint==1.9.3 pycodestyle
       - run: make test
       - persist_to_workspace:
           root: .
           paths:
             - .coverage
+      - store_artifacts:
+          path: pycodestyle.out
 
   coverage:
     docker:
