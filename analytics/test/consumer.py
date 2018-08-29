@@ -1,9 +1,10 @@
 import unittest
 import mock
+import time
 
 try:
     from queue import Queue
-except:
+except ImportError:
     from Queue import Queue
 
 from analytics.consumer import Consumer
@@ -30,7 +31,7 @@ class TestConsumer(unittest.TestCase):
 
     def test_upload(self):
         q = Queue()
-        consumer  = Consumer(q, 'testsecret')
+        consumer = Consumer(q, 'testsecret')
         track = {
             'type': 'track',
             'event': 'python event',
@@ -39,6 +40,43 @@ class TestConsumer(unittest.TestCase):
         q.put(track)
         success = consumer.upload()
         self.assertTrue(success)
+
+    def test_upload_interval(self):
+        # Put _n_ items in the queue, pausing a little bit more than _upload_interval_
+        # after each one. The consumer should upload _n_ times.
+        q = Queue()
+        upload_interval = 0.3
+        consumer = Consumer(q, 'testsecret', upload_size=10, upload_interval=upload_interval)
+        with mock.patch('analytics.consumer.post') as mock_post:
+            consumer.start()
+            for i in range(0, 3):
+                track = {
+                    'type': 'track',
+                    'event': 'python event %d' % i,
+                    'userId': 'userId'
+                }
+                q.put(track)
+                time.sleep(upload_interval * 1.1)
+            self.assertEqual(mock_post.call_count, 3)
+
+    def test_multiple_uploads_per_interval(self):
+        # Put _upload_size*2_ items in the queue at once, then pause for _upload_interval_.
+        # The consumer should upload 2 times.
+        q = Queue()
+        upload_interval = 0.5
+        upload_size = 10
+        consumer = Consumer(q, 'testsecret', upload_size=upload_size, upload_interval=upload_interval)
+        with mock.patch('analytics.consumer.post') as mock_post:
+            consumer.start()
+            for i in range(0, upload_size * 2):
+                track = {
+                    'type': 'track',
+                    'event': 'python event %d' % i,
+                    'userId': 'userId'
+                }
+                q.put(track)
+            time.sleep(upload_interval * 1.1)
+            self.assertEqual(mock_post.call_count, 2)
 
     def test_request(self):
         consumer = Consumer(None, 'testsecret')
