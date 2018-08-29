@@ -1,5 +1,5 @@
 test:
-	pylint --rcfile=.pylintrc --reports=y --exit-zero analytics
+	pylint --rcfile=.pylintrc --reports=y --exit-zero analytics | tee pylint.out
 	# fail on pycodestyle errors on the code change
 	git diff origin/master..HEAD analytics | pycodestyle --ignore=E501 --diff --statistics --count
 	pycodestyle --ignore=E501 --statistics analytics > pycodestyle.out || true
