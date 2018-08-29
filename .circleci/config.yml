@@ -13,6 +13,8 @@ jobs:
           paths:
             - .coverage
       - store_artifacts:
+          path: pylint.out
+      - store_artifacts:
           path: pycodestyle.out
 
   coverage:
