@@ -1,5 +1,6 @@
 import logging
 from threading import Thread
+import monotonic
 
 from analytics.version import VERSION
 from analytics.request import post, APIError
@@ -13,12 +14,14 @@ class Consumer(Thread):
     """Consumes the messages from the client's queue."""
     log = logging.getLogger('segment')
 
-    def __init__(self, queue, write_key, upload_size=100, host=None, on_error=None):
+    def __init__(self, queue, write_key, upload_size=100, host=None, on_error=None,
+                 upload_interval=0.5):
         """Create a consumer thread."""
         Thread.__init__(self)
         # Make consumer a daemon thread so that it doesn't block program exit
         self.daemon = True
         self.upload_size = upload_size
+        self.upload_interval = upload_interval
         self.write_key = write_key
         self.host = host
         self.on_error = on_error
@@ -67,9 +70,14 @@ class Consumer(Thread):
         queue = self.queue
         items = []
 
+        start_time = monotonic.monotonic()
+
         while len(items) < self.upload_size:
+            elapsed = monotonic.monotonic() - start_time
+            if elapsed >= self.upload_interval:
+                break
             try:
-                item = queue.get(block=True, timeout=0.5)
+                item = queue.get(block=True, timeout=self.upload_interval - elapsed)
                 items.append(item)
             except Empty:
                 break

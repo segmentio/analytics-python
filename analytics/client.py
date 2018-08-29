@@ -25,11 +25,12 @@ class Client(object):
     log = logging.getLogger('segment')
 
     def __init__(self, write_key=None, host=None, debug=False, max_queue_size=10000,
-                 send=True, on_error=None):
+                 send=True, on_error=None, upload_interval=0.5):
         require('write_key', write_key, string_types)
 
         self.queue = queue.Queue(max_queue_size)
-        self.consumer = Consumer(self.queue, write_key, host=host, on_error=on_error)
+        self.consumer = Consumer(self.queue, write_key, host=host, on_error=on_error,
+                                 upload_interval=upload_interval)
         self.write_key = write_key
         self.on_error = on_error
         self.debug = debug
