@@ -241,6 +241,18 @@ class TestClient(unittest.TestCase):
         # Make sure that the client queue is empty after flushing
         self.assertTrue(client.queue.empty())
 
+    def test_shutdown(self):
+        client = self.client
+        # set up the consumer with more requests than a single batch will allow
+        for i in range(1000):
+            success, msg = client.identify('userId', {'trait': 'value'})
+        client.shutdown()
+        # we expect two things after shutdown:
+        # 1. client queue is empty
+        # 2. consumer thread has stopped
+        self.assertTrue(client.queue.empty())
+        self.assertFalse(client.consumer.is_alive())
+
     def test_overflow(self):
         client = Client('testsecret', max_queue_size=1)
         # Ensure consumer thread is no longer uploading

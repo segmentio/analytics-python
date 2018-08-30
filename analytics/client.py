@@ -241,6 +241,11 @@ class Client(object):
             # consumer thread has not started
             pass
 
+    def shutdown(self):
+        """Flush all messages and cleanly shutdown the client"""
+        self.flush()
+        self.join()
+
 
 def require(name, field, data_type):
     """Require that the named `field` has the right `data_type`"""
