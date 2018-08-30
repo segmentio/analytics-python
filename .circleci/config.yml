@@ -30,6 +30,17 @@ jobs:
           path: /tmp/coverage
           destination: test-coverage
 
+  snyk:
+    docker:
+      - image: circleci/python:2.7.15-stretch
+    steps:
+      - checkout
+      - attach_workspace: { at: . }
+      - run: python setup.py egg_info
+      - run: cp analytics_python.egg-info/requires.txt requirements.txt
+      - run: pip install --user -r requirements.txt
+      - run: curl -sL https://raw.githubusercontent.com/segmentio/snyk_helpers/master/initialization/snyk.sh | sh
+
   test_27:
     docker:
       - image: circleci/python:2.7.15-stretch
@@ -75,6 +86,10 @@ workflows:
     jobs:
       - build
       - coverage:
+          requires:
+            - build
+      - snyk:
+          context: snyk
           requires:
             - build
   scheduled_e2e_test:
