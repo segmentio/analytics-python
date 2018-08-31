@@ -21,4 +21,4 @@ e2e_test:
 		echo "End to end tests completed!"; \
 	fi
 
-.PHONY: test dist e2e_test
+.PHONY: test release e2e_test
