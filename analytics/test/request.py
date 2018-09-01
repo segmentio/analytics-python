@@ -16,7 +16,7 @@ class TestRequests(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
 
     def test_invalid_request_error(self):
-        self.assertRaises(Exception, post, 'testsecret', 'https://api.segment.io', '[{]')
+        self.assertRaises(Exception, post, 'testsecret', 'https://api.segment.io', False, '[{]')
 
     def test_invalid_host(self):
         self.assertRaises(Exception, post, 'testsecret', 'api.segment.io/', batch=[])
