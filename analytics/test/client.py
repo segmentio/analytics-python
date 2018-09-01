@@ -1,6 +1,5 @@
 from datetime import date, datetime
 import unittest
-import time
 import six
 
 from analytics.version import VERSION
@@ -295,3 +294,10 @@ class TestClient(unittest.TestCase):
         self.assertFalse(self.failed)
 
         self.assertEqual(msg['traits'], {'birthdate': date(1981, 2, 2)})
+
+    def test_gzip(self):
+        client = Client('testsecret', on_error=self.fail, gzip=True)
+        for _ in range(10):
+            client.identify('userId', {'trait': 'value'})
+        client.flush()
+        self.assertFalse(self.failed)

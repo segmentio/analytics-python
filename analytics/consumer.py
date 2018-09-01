@@ -15,7 +15,7 @@ class Consumer(Thread):
     log = logging.getLogger('segment')
 
     def __init__(self, queue, write_key, upload_size=100, host=None, on_error=None,
-                 upload_interval=0.5):
+                 upload_interval=0.5, gzip=False):
         """Create a consumer thread."""
         Thread.__init__(self)
         # Make consumer a daemon thread so that it doesn't block program exit
@@ -26,6 +26,7 @@ class Consumer(Thread):
         self.host = host
         self.on_error = on_error
         self.queue = queue
+        self.gzip = gzip
         # It's important to set running in the constructor: if we are asked to
         # pause immediately after construction, we might set running to True in
         # run() *after* we set it to False in pause... and keep running forever.
@@ -87,7 +88,7 @@ class Consumer(Thread):
     def request(self, batch, attempt=0):
         """Attempt to upload the batch and retry before raising an error """
         try:
-            post(self.write_key, self.host, batch=batch)
+            post(self.write_key, self.host, gzip=self.gzip, batch=batch)
         except Exception as exc:
             def maybe_retry():
                 if attempt >= self.retries:

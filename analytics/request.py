@@ -2,17 +2,21 @@ from datetime import date, datetime
 from dateutil.tz import tzutc
 import logging
 import json
-from analytics.version import VERSION
-
+from gzip import GzipFile
 from requests.auth import HTTPBasicAuth
 from requests import sessions
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import BytesIO as StringIO
 
+from analytics.version import VERSION
 from analytics.utils import remove_trailing_slash
 
 _session = sessions.Session()
 
 
-def post(write_key, host=None, **kwargs):
+def post(write_key, host=None, gzip=False, **kwargs):
     """Post the `kwargs` to the API"""
     log = logging.getLogger('segment')
     body = kwargs
@@ -20,11 +24,18 @@ def post(write_key, host=None, **kwargs):
     url = remove_trailing_slash(host or 'https://api.segment.io') + '/v1/batch'
     auth = HTTPBasicAuth(write_key, '')
     data = json.dumps(body, cls=DatetimeSerializer)
+    log.debug('making request: %s', data)
     headers = {
         'Content-Type': 'application/json',
         'User-Agent': 'analytics-python/' + VERSION
     }
-    log.debug('making request: %s', data)
+    if gzip:
+        headers['Content-Encoding'] = 'gzip'
+        buf = StringIO()
+        with GzipFile(fileobj=buf, mode='w') as gz:
+            gz.write(data.encode())
+        data = buf.getvalue()
+
     res = _session.post(url, data=data, auth=auth, headers=headers, timeout=15)
 
     if res.status_code == 200:
