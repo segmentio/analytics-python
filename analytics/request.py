@@ -5,10 +5,7 @@ import json
 from gzip import GzipFile
 from requests.auth import HTTPBasicAuth
 from requests import sessions
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import BytesIO as StringIO
+from io import BytesIO
 
 from analytics.version import VERSION
 from analytics.utils import remove_trailing_slash
@@ -31,9 +28,10 @@ def post(write_key, host=None, gzip=False, **kwargs):
     }
     if gzip:
         headers['Content-Encoding'] = 'gzip'
-        buf = StringIO()
+        buf = BytesIO()
         with GzipFile(fileobj=buf, mode='w') as gz:
-            gz.write(data.encode())
+            # 'data' was produced by json.dumps(), whose default encoding is utf-8.
+            gz.write(data.encode('utf-8'))
         data = buf.getvalue()
 
     res = _session.post(url, data=data, auth=auth, headers=headers, timeout=15)
