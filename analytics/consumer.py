@@ -1,9 +1,10 @@
 import logging
 from threading import Thread
 import monotonic
+import json
 
 from analytics.version import VERSION
-from analytics.request import post, APIError
+from analytics.request import post, APIError, DatetimeSerializer
 
 try:
     from queue import Empty
@@ -85,7 +86,7 @@ class Consumer(Thread):
             try:
                 item = queue.get(block=True, timeout=self.upload_interval - elapsed)
                 items.append(item)
-                total_size += len(str(item).encode())
+                total_size += len(json.dumps(item, cls=DatetimeSerializer).encode())
                 if total_size >= BATCH_SIZE_LIMIT:
                     self.log.debug('hit batch size limit (size: %d)', total_size)
                     break
