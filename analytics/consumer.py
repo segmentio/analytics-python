@@ -7,8 +7,12 @@ from analytics.request import post, APIError
 
 try:
     from queue import Empty
-except:
+except ImportError:
     from Queue import Empty
+
+# Our servers only accept batches less than 500KB. Here limit is set slightly
+# lower to leave space for extra data that will be added later, eg. "sentAt".
+BATCH_SIZE_LIMIT = 475000
 
 class Consumer(Thread):
     """Consumes the messages from the client's queue."""
@@ -71,6 +75,7 @@ class Consumer(Thread):
         items = []
 
         start_time = monotonic.monotonic()
+        total_size = 0
 
         while len(items) < self.upload_size:
             elapsed = monotonic.monotonic() - start_time
@@ -79,6 +84,10 @@ class Consumer(Thread):
             try:
                 item = queue.get(block=True, timeout=self.upload_interval - elapsed)
                 items.append(item)
+                total_size += len(str(item).encode())
+                if total_size >= BATCH_SIZE_LIMIT:
+                    self.log.debug('hit batch size limit (size: %d)', total_size)
+                    break
             except Empty:
                 break
 
