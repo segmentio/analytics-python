@@ -98,7 +98,7 @@ class Consumer(Thread):
                 # retry on all other errors (eg. network)
                 return False
 
-        @backoff.on_exception(backoff.expo, Exception, max_tries=self.retries+1, giveup=fatal_exception)
+        @backoff.on_exception(backoff.expo, Exception, max_tries=self.retries + 1, giveup=fatal_exception)
         def send_request():
             post(self.write_key, self.host, batch=batch)
 
