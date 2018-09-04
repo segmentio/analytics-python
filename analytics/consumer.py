@@ -14,6 +14,7 @@ except ImportError:
 # lower to leave space for extra data that will be added later, eg. "sentAt".
 BATCH_SIZE_LIMIT = 475000
 
+
 class Consumer(Thread):
     """Consumes the messages from the client's queue."""
     log = logging.getLogger('segment')
@@ -112,5 +113,5 @@ class Consumer(Thread):
                     raise
                 else:
                     self.log.debug('Unexpected APIError: %s', exc)
-            else: # retry on all other errors (eg. network)
+            else:  # retry on all other errors (eg. network)
                 maybe_retry()

@@ -153,7 +153,7 @@ class TestConsumer(unittest.TestCase):
             'userId': 'userId'
         }
         msg_size = len(json.dumps(track))
-        n_msgs = 475000 / msg_size + 1 # number of messages in a maximum-size batch
+        n_msgs = 475000 / msg_size + 1  # number of messages in a maximum-size batch
 
         def mock_post_fn(_, data, **kwargs):
             res = mock.Mock()
@@ -167,4 +167,3 @@ class TestConsumer(unittest.TestCase):
                 q.put(track)
             time.sleep(1)
             self.assertEquals(mock_post.call_count, 2)
-
