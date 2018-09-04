@@ -96,7 +96,7 @@ class TestConsumer(unittest.TestCase):
         mock_post.call_count = 0
 
         with mock.patch('analytics.consumer.post', mock.Mock(side_effect=mock_post)):
-            consumer = Consumer(None, 'testsecret')
+            consumer = Consumer(None, 'testsecret', retries=3)
             track = {
                 'type': 'track',
                 'event': 'python event',
