@@ -14,7 +14,7 @@ e2e_test:
 	else \
 		set -e; \
 		echo "Running end to end tests..."; \
-		wget https://github.com/segmentio/library-e2e-tester/releases/download/0.2.0/tester_linux_amd64; \
+		wget https://github.com/segmentio/library-e2e-tester/releases/download/0.2.1/tester_linux_amd64; \
 		chmod +x tester_linux_amd64; \
 		chmod +x e2e_test.sh; \
 		./tester_linux_amd64 -segment-write-key="$(SEGMENT_WRITE_KEY)" -webhook-auth-username="$(WEBHOOK_AUTH_USERNAME)" -webhook-bucket="$(WEBHOOK_BUCKET)" -path='./e2e_test.sh'; \
