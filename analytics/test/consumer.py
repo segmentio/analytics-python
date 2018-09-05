@@ -1,6 +1,7 @@
 import unittest
 import mock
 import time
+import json
 
 try:
     from queue import Queue
@@ -142,3 +143,27 @@ class TestConsumer(unittest.TestCase):
         consumer = Consumer(None, 'testsecret')
         consumer.pause()
         self.assertFalse(consumer.running)
+
+    def test_max_batch_size(self):
+        q = Queue()
+        consumer = Consumer(q, 'testsecret', upload_size=100000, upload_interval=3)
+        track = {
+            'type': 'track',
+            'event': 'python event',
+            'userId': 'userId'
+        }
+        msg_size = len(json.dumps(track))
+        n_msgs = 475000 / msg_size  # number of messages in a maximum-size batch
+
+        def mock_post_fn(_, data, **kwargs):
+            res = mock.Mock()
+            res.status_code = 200
+            self.assertTrue(len(data.encode()) < 500000, 'batch size (%d) exceeds 500KB limit' % len(data.encode()))
+            return res
+
+        with mock.patch('analytics.request._session.post', side_effect=mock_post_fn) as mock_post:
+            consumer.start()
+            for _ in range(0, n_msgs + 2):
+                q.put(track)
+            q.join()
+            self.assertEquals(mock_post.call_count, 2)
