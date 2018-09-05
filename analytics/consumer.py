@@ -1,21 +1,23 @@
 import logging
 from threading import Thread
 import monotonic
+import backoff
 
 from analytics.version import VERSION
 from analytics.request import post, APIError
 
 try:
     from queue import Empty
-except:
+except ImportError:
     from Queue import Empty
+
 
 class Consumer(Thread):
     """Consumes the messages from the client's queue."""
     log = logging.getLogger('segment')
 
     def __init__(self, queue, write_key, upload_size=100, host=None, on_error=None,
-                 upload_interval=0.5, gzip=False):
+                 upload_interval=0.5, gzip=False, retries=10):
         """Create a consumer thread."""
         Thread.__init__(self)
         # Make consumer a daemon thread so that it doesn't block program exit
@@ -31,7 +33,7 @@ class Consumer(Thread):
         # pause immediately after construction, we might set running to True in
         # run() *after* we set it to False in pause... and keep running forever.
         self.running = True
-        self.retries = 3
+        self.retries = retries
 
     def run(self):
         """Runs the consumer."""
@@ -85,24 +87,20 @@ class Consumer(Thread):
 
         return items
 
-    def request(self, batch, attempt=0):
+    def request(self, batch):
         """Attempt to upload the batch and retry before raising an error """
-        try:
-            post(self.write_key, self.host, gzip=self.gzip, batch=batch)
-        except Exception as exc:
-            def maybe_retry():
-                if attempt >= self.retries:
-                    raise
-                self.request(batch, attempt+1)
 
+        def fatal_exception(exc):
             if isinstance(exc, APIError):
-                if exc.status >= 500 or exc.status == 429:
-                    # retry on server errors and client errors with 429 status code (rate limited)
-                    maybe_retry()
-                elif exc.status >= 400: # don't retry on other client errors
-                    self.log.error('API error: %s', exc)
-                    raise
-                else:
-                    self.log.debug('Unexpected APIError: %s', exc)
-            else: # retry on all other errors (eg. network)
-                maybe_retry()
+                # retry on server errors and client errors with 429 status code (rate limited),
+                # don't retry on other client errors
+                return (400 <= exc.status < 500) and exc.status != 429
+            else:
+                # retry on all other errors (eg. network)
+                return False
+
+        @backoff.on_exception(backoff.expo, Exception, max_tries=self.retries + 1, giveup=fatal_exception)
+        def send_request():
+            post(self.write_key, self.host, gzip=self.gzip, batch=batch)
+
+        send_request()
