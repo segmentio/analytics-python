@@ -11,6 +11,8 @@ try:
 except ImportError:
     from Queue import Empty
 
+MAX_MSG_SIZE = 32 << 10
+
 # Our servers only accept batches less than 500KB. Here limit is set slightly
 # lower to leave space for extra data that will be added later, eg. "sentAt".
 BATCH_SIZE_LIMIT = 475000
@@ -85,11 +87,15 @@ class Consumer(Thread):
                 break
             try:
                 item = queue.get(block=True, timeout=self.upload_interval - elapsed)
-                items.append(item)
-                total_size += len(json.dumps(item, cls=DatetimeSerializer).encode())
-                if total_size >= BATCH_SIZE_LIMIT:
-                    self.log.debug('hit batch size limit (size: %d)', total_size)
-                    break
+                item_size = len(json.dumps(item, cls=DatetimeSerializer).encode())
+                if item_size > MAX_MSG_SIZE:
+                    self.log.error('Item exceeds 32kb limit, dropping. (%s)', str(item))
+                else:
+                    items.append(item)
+                    total_size += item_size
+                    if total_size >= BATCH_SIZE_LIMIT:
+                        self.log.debug('hit batch size limit (size: %d)', total_size)
+                        break
             except Empty:
                 break
 

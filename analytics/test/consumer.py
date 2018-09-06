@@ -8,7 +8,7 @@ try:
 except ImportError:
     from Queue import Queue
 
-from analytics.consumer import Consumer
+from analytics.consumer import Consumer, MAX_MSG_SIZE
 from analytics.request import APIError
 
 
@@ -29,6 +29,15 @@ class TestConsumer(unittest.TestCase):
             q.put(i)
         next = consumer.next()
         self.assertEqual(next, list(range(upload_size)))
+
+    def test_dropping_oversize_msg(self):
+        q = Queue()
+        consumer = Consumer(q, '')
+        oversize_msg = {'m': 'x' * MAX_MSG_SIZE}
+        q.put(oversize_msg)
+        next = consumer.next()
+        self.assertEqual(next, [])
+        self.assertTrue(q.empty())
 
     def test_upload(self):
         q = Queue()
