@@ -165,8 +165,8 @@ class TestConsumer(unittest.TestCase):
             'event': 'python event',
             'userId': 'userId'
         }
-        msg_size = len(json.dumps(track))
-        n_msgs = 475000 / msg_size  # number of messages in a maximum-size batch
+        msg_size = len(json.dumps(track).encode())
+        n_msgs = int(475000 / msg_size)  # number of messages in a maximum-size batch
 
         def mock_post_fn(_, data, **kwargs):
             res = mock.Mock()
