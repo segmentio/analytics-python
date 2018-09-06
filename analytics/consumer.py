@@ -2,14 +2,19 @@ import logging
 from threading import Thread
 import monotonic
 import backoff
+import json
 
 from analytics.version import VERSION
-from analytics.request import post, APIError
+from analytics.request import post, APIError, DatetimeSerializer
 
 try:
     from queue import Empty
 except ImportError:
     from Queue import Empty
+
+# Our servers only accept batches less than 500KB. Here limit is set slightly
+# lower to leave space for extra data that will be added later, eg. "sentAt".
+BATCH_SIZE_LIMIT = 475000
 
 
 class Consumer(Thread):
@@ -74,6 +79,7 @@ class Consumer(Thread):
         items = []
 
         start_time = monotonic.monotonic()
+        total_size = 0
 
         while len(items) < self.upload_size:
             elapsed = monotonic.monotonic() - start_time
@@ -82,6 +88,10 @@ class Consumer(Thread):
             try:
                 item = queue.get(block=True, timeout=self.upload_interval - elapsed)
                 items.append(item)
+                total_size += len(json.dumps(item, cls=DatetimeSerializer).encode())
+                if total_size >= BATCH_SIZE_LIMIT:
+                    self.log.debug('hit batch size limit (size: %d)', total_size)
+                    break
             except Empty:
                 break
 
