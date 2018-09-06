@@ -109,13 +109,13 @@ class Consumer(Thread):
             def maybe_retry():
                 if attempt >= self.retries:
                     raise
-                self.request(batch, attempt+1)
+                self.request(batch, attempt + 1)
 
             if isinstance(exc, APIError):
                 if exc.status >= 500 or exc.status == 429:
                     # retry on server errors and client errors with 429 status code (rate limited)
                     maybe_retry()
-                elif exc.status >= 400: # don't retry on other client errors
+                elif exc.status >= 400:  # don't retry on other client errors
                     self.log.error('API error: %s', exc)
                     raise
                 else:
