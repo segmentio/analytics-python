@@ -79,6 +79,6 @@ switcher = {
 func = switcher.get(options.type)
 if func:
     func()
-    analytics.flush()
+    analytics.shutdown()
 else:
     print("Invalid Message Type " + options.type)
