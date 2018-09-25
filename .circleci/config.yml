@@ -59,11 +59,13 @@ jobs:
       - run: make test
       - run: make e2e_test
 
-  test_35: *test_34
+  test_35:
+    <<: *test_34
     docker:
       - image: circleci/python:3.5.5-jessie
 
-  test_36: *test_34
+  test_36:
+    <<: *test_34
     docker:
       - image: circleci/python:3.6.5-jessie
 
