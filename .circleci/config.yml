@@ -69,15 +69,35 @@ jobs:
     docker:
       - image: circleci/python:3.6.5-jessie
 
+  publish:
+    docker:
+      - image: circleci/python:3.6.5-jessie
+    steps:
+      - checkout
+      - run: sudo pip install twine
+      - run: make release
+
 workflows:
   version: 2
-  build_and_test:
+  build_test_release:
     jobs:
       - build
       - test_27
       - test_34
       - test_35
       - test_36
+      - publish:
+          requires:
+            - build
+            - test_27
+            - test_34
+            - test_35
+            - test_36
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^\d+\.\d+\.\d+$/
   static_analysis:
     jobs:
       - build
