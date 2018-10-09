@@ -97,7 +97,7 @@ workflows:
             branches:
               ignore: /.*/
             tags:
-              only: /^\d+\.\d+\.\d+((a|b|rc)\d)?$/
+              only: /^\d+\.\d+\.\d+((a|b|rc)\d)?$/ # matches 1.2.3, 1.2.3a1, 1.2.3b1, 1.2.3rc1 etc..
   static_analysis:
     jobs:
       - build
