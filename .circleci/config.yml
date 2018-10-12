@@ -1,4 +1,8 @@
 version: 2
+defaults:
+  taggedReleasesFilter: &taggedReleasesFilter
+    tags:
+      only: /^\d+\.\d+\.\d+((a|b|rc)\d)?$/ # matches 1.2.3, 1.2.3a1, 1.2.3b1, 1.2.3rc1 etc..
 jobs:
   build:
     docker:
@@ -81,11 +85,21 @@ workflows:
   version: 2
   build_test_release:
     jobs:
-      - build
-      - test_27
-      - test_34
-      - test_35
-      - test_36
+      - build:
+          filters:
+            <<: *taggedReleasesFilter
+      - test_27:
+          filters:
+            <<: *taggedReleasesFilter
+      - test_34:
+          filters:
+            <<: *taggedReleasesFilter
+      - test_35:
+          filters:
+            <<: *taggedReleasesFilter
+      - test_36:
+          filters:
+            <<: *taggedReleasesFilter
       - publish:
           requires:
             - build
@@ -94,10 +108,9 @@ workflows:
             - test_35
             - test_36
           filters:
+            <<: *taggedReleasesFilter
             branches:
               ignore: /.*/
-            tags:
-              only: /^\d+\.\d+\.\d+((a|b|rc)\d)?$/ # matches 1.2.3, 1.2.3a1, 1.2.3b1, 1.2.3rc1 etc..
   static_analysis:
     jobs:
       - build
