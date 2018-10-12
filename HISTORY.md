@@ -1,3 +1,18 @@
+1.3.0 / 2018-10-10
+==================
+
+  * Add User-Agent header to messages
+  * Don't retry sending on client errors except 429
+  * Allow user-defined upload interval
+  * Add `shutdown` function
+  * Add gzip support
+  * Add exponential backoff with jitter when retrying
+  * Add a paramater in Client to configure max retries
+  * Limit batch upload size to 500KB
+  * Drop messages greater than 32kb
+  * Allow user-defined upload size
+  * Support custom messageId
+
 1.2.9 / 2017-11-28
 ==================
 
