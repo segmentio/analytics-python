@@ -1,4 +1,5 @@
 from datetime import datetime
+import time
 from uuid import uuid4
 import logging
 import numbers
@@ -199,16 +200,16 @@ class Client(object):
         """Push a new `msg` onto the queue, return `(success, msg)`"""
         timestamp = msg['timestamp']
         if timestamp is None:
-            timestamp = datetime.utcnow().replace(tzinfo=tzutc())
+            # milliseconds since the Epoch
+            timestamp = int(time.time()*1000)
 
         require('integrations', msg['integrations'], dict)
         require('type', msg['type'], string_types)
-        require('timestamp', timestamp, datetime)
+        require('timestamp', timestamp, int)
         require('context', msg['context'], dict)
 
         # add common
-        timestamp = guess_timezone(timestamp)
-        msg['timestamp'] = timestamp.isoformat()
+        msg['timestamp'] = timestamp
         msg['messageId'] = msg.get('messageId') or str(uuid4())
         msg['context']['library'] = {
             'name': 'analytics-python',

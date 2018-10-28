@@ -31,7 +31,7 @@ class TestClient(unittest.TestCase):
         self.assertFalse(self.failed)
 
         self.assertEqual(msg['event'], 'python test event')
-        self.assertTrue(isinstance(msg['timestamp'], str))
+        self.assertTrue(isinstance(msg['timestamp'], int))
         self.assertTrue(isinstance(msg['messageId'], str))
         self.assertEqual(msg['userId'], 'userId')
         self.assertEqual(msg['properties'], {})
@@ -41,12 +41,12 @@ class TestClient(unittest.TestCase):
         client = self.client
         success, msg = client.track(
             'userId', 'python test event', { 'property': 'value' },
-            { 'ip': '192.168.0.1' }, datetime(2014, 9, 3), 'anonymousId',
+            { 'ip': '192.168.0.1' }, int(datetime(2014, 9, 3).timestamp()*1000), 'anonymousId',
             { 'Amplitude': True })
 
         self.assertTrue(success)
 
-        self.assertEqual(msg['timestamp'], '2014-09-03T00:00:00+00:00')
+        self.assertEqual(msg['timestamp'], int(datetime(2014, 9, 3).timestamp()*1000))
         self.assertEqual(msg['properties'], { 'property': 'value' })
         self.assertEqual(msg['integrations'], { 'Amplitude': True })
         self.assertEqual(msg['context']['ip'], '192.168.0.1')
@@ -68,7 +68,7 @@ class TestClient(unittest.TestCase):
         self.assertFalse(self.failed)
 
         self.assertEqual(msg['traits'], { 'trait': 'value' })
-        self.assertTrue(isinstance(msg['timestamp'], str))
+        self.assertTrue(isinstance(msg['timestamp'], int))
         self.assertTrue(isinstance(msg['messageId'], str))
         self.assertEqual(msg['userId'], 'userId')
         self.assertEqual(msg['type'], 'identify')
@@ -77,11 +77,11 @@ class TestClient(unittest.TestCase):
         client = self.client
         success, msg = client.identify(
             'userId', { 'trait': 'value' }, { 'ip': '192.168.0.1' },
-            datetime(2014, 9, 3), 'anonymousId', { 'Amplitude': True })
+            int(datetime(2014, 9, 3).timestamp()*1000), 'anonymousId', { 'Amplitude': True })
 
         self.assertTrue(success)
 
-        self.assertEqual(msg['timestamp'], '2014-09-03T00:00:00+00:00')
+        self.assertEqual(msg['timestamp'], int(datetime(2014, 9, 3).timestamp()*1000))
         self.assertEqual(msg['integrations'], { 'Amplitude': True })
         self.assertEqual(msg['context']['ip'], '192.168.0.1')
         self.assertEqual(msg['traits'], { 'trait': 'value' })
@@ -90,7 +90,7 @@ class TestClient(unittest.TestCase):
             'name': 'analytics-python',
             'version': VERSION
         })
-        self.assertTrue(isinstance(msg['timestamp'], str))
+        self.assertTrue(isinstance(msg['timestamp'], int))
         self.assertTrue(isinstance(msg['messageId'], str))
         self.assertEqual(msg['userId'], 'userId')
         self.assertEqual(msg['type'], 'identify')
@@ -110,11 +110,11 @@ class TestClient(unittest.TestCase):
         client = self.client
         success, msg = client.group(
             'userId', 'groupId', { 'trait': 'value' }, { 'ip': '192.168.0.1' },
-            datetime(2014, 9, 3), 'anonymousId', { 'Amplitude': True })
+            int(datetime(2014, 9, 3).timestamp()*1000), 'anonymousId', { 'Amplitude': True })
 
         self.assertTrue(success)
 
-        self.assertEqual(msg['timestamp'], '2014-09-03T00:00:00+00:00')
+        self.assertEqual(msg['timestamp'], int(datetime(2014, 9, 3).timestamp()*1000))
         self.assertEqual(msg['integrations'], { 'Amplitude': True })
         self.assertEqual(msg['context']['ip'], '192.168.0.1')
         self.assertEqual(msg['traits'], { 'trait': 'value' })
@@ -123,7 +123,7 @@ class TestClient(unittest.TestCase):
             'name': 'analytics-python',
             'version': VERSION
         })
-        self.assertTrue(isinstance(msg['timestamp'], str))
+        self.assertTrue(isinstance(msg['timestamp'], int))
         self.assertTrue(isinstance(msg['messageId'], str))
         self.assertEqual(msg['userId'], 'userId')
         self.assertEqual(msg['type'], 'group')
@@ -151,12 +151,12 @@ class TestClient(unittest.TestCase):
         client = self.client
         success, msg = client.page(
             'userId', 'category', 'name', { 'property': 'value' },
-            { 'ip': '192.168.0.1' }, datetime(2014, 9, 3), 'anonymousId',
-            { 'Amplitude': True })
+            { 'ip': '192.168.0.1' }, int(datetime(2014, 9, 3).timestamp()*1000),
+            'anonymousId', { 'Amplitude': True })
 
         self.assertTrue(success)
 
-        self.assertEqual(msg['timestamp'], '2014-09-03T00:00:00+00:00')
+        self.assertEqual(msg['timestamp'], int(datetime(2014, 9, 3).timestamp()*1000))
         self.assertEqual(msg['integrations'], { 'Amplitude': True })
         self.assertEqual(msg['context']['ip'], '192.168.0.1')
         self.assertEqual(msg['properties'], { 'property': 'value' })
@@ -166,7 +166,7 @@ class TestClient(unittest.TestCase):
             'version': VERSION
         })
         self.assertEqual(msg['category'], 'category')
-        self.assertTrue(isinstance(msg['timestamp'], str))
+        self.assertTrue(isinstance(msg['timestamp'], int))
         self.assertTrue(isinstance(msg['messageId'], str))
         self.assertEqual(msg['userId'], 'userId')
         self.assertEqual(msg['type'], 'page')
@@ -185,12 +185,12 @@ class TestClient(unittest.TestCase):
         client = self.client
         success, msg = client.screen(
             'userId', 'category', 'name', { 'property': 'value' },
-            { 'ip': '192.168.0.1' }, datetime(2014, 9, 3), 'anonymousId',
+            { 'ip': '192.168.0.1' }, int(datetime(2014, 9, 3).timestamp()*1000), 'anonymousId',
             { 'Amplitude': True })
 
         self.assertTrue(success)
 
-        self.assertEqual(msg['timestamp'], '2014-09-03T00:00:00+00:00')
+        self.assertEqual(msg['timestamp'], int(datetime(2014, 9, 3).timestamp()*1000))
         self.assertEqual(msg['integrations'], { 'Amplitude': True })
         self.assertEqual(msg['context']['ip'], '192.168.0.1')
         self.assertEqual(msg['properties'], { 'property': 'value' })
@@ -199,7 +199,7 @@ class TestClient(unittest.TestCase):
             'name': 'analytics-python',
             'version': VERSION
         })
-        self.assertTrue(isinstance(msg['timestamp'], str))
+        self.assertTrue(isinstance(msg['timestamp'], int))
         self.assertTrue(isinstance(msg['messageId'], str))
         self.assertEqual(msg['category'], 'category')
         self.assertEqual(msg['userId'], 'userId')

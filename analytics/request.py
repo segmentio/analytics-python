@@ -2,6 +2,7 @@ from datetime import date, datetime
 from dateutil.tz import tzutc
 import logging
 import json
+import time
 
 from requests.auth import HTTPBasicAuth
 from requests import sessions
@@ -16,7 +17,8 @@ def post(write_key, endpoint, **kwargs):
     """Post the `kwargs` to the API"""
     log = logging.getLogger('segment')
     body = kwargs
-    body["sentAt"] = datetime.utcnow().replace(tzinfo=tzutc()).isoformat()
+    #body["sentAt"] = datetime.utcnow().replace(tzinfo=tzutc()).isoformat()
+    body["sentAt"] = int(time.time()*1000)
     auth = HTTPBasicAuth(write_key, '')
     data = json.dumps(body, cls=DatetimeSerializer)
     headers = { 'content-type': 'application/json', 'x-api-key': write_key }
