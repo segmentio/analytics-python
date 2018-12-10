@@ -1,5 +1,4 @@
-analytics-python
-==============
+# analytics-python
 
 [![Build Status](https://travis-ci.org/FindHotel/analytics-python.svg?branch=master)](https://travis-ci.org/FindHotel/analytics-python)
 
@@ -9,6 +8,8 @@ analytics-python is a python client is a slightly modified version of [Segment's
 
 ## Usage
 
+Use package directly:
+
 ```python
 import analytics
 
@@ -16,20 +17,45 @@ import analytics
 analytics.write_key='AWS_API_GATEWAY_KEY'
 
 # The custom endpoint to where the events will be delivered to
-analytics.endpoint='https://polku.fih.io/dev/[hookname]'
+analytics.endpoint='https://segment.fih.io/v1/[endpoint-key]'
 
 analytics.track('kljsdgs99', 'SignedUp', {'plan': 'Enterprise'})
+analytics.flush()
 ```
 
+Use client with custom error handling function:
 
-## More information 
+```python
+
+import analytics
+
+ANALYTICS_WRITE_KEY='AWS_API_GATEWAY_KEY'
+ANALYTICS_ENDPOINT='https://segment.fih.io/v1/[endpoint-key]'
+
+def log_error(e, batch):
+  print("exception: {}, batch: {}".format(e, batch), flush=True)
+
+client = analytics.Client(
+  endpoint=ANALYTICS_ENDPOINT,
+  write_key=ANALYTICS_WRITE_KEY,
+  debug=analytics.debug,
+  on_error=log_error,
+  send=analytics.send,
+  max_queue_size=analytics.max_queue_size,
+  upload_size=analytics.upload_size
+)
+
+client.track(...)
+client.flush()
+```
+
+## More information
 
 The documentation for Segment's Python SDK that this repository is based on is available at [https://segment.com/libraries/python](https://segment.com/libraries/python). You can use Segment's docs to get familiar with the API.
 
-
 ## License
 
-```
+```txt
 WWWWWW||WWWWWW
  W W W||W W W
       ||
