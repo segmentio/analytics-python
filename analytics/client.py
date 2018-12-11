@@ -45,14 +45,14 @@ class Client(object):
         self.debug = debug
         self.send = send
 
-        if transport not in ('http', 's3'):
+        if transport == 'http':
+            self.consumer = Consumer(self.queue, write_key, endpoint=endpoint,
+                                     on_error=on_error, upload_size=upload_size)
+        elif transport == 's3':
+            self.consumer = S3Consumer(self.queue, write_key, endpoint=endpoint,
+                                       on_error=on_error, upload_size=upload_size)
+        else:
             raise ValueError("transport should be either http or s3")
-
-        self.consumer = Consumer(self.queue, write_key, endpoint=endpoint,
-                                 on_error=on_error, upload_size=upload_size) \
-          if transport=='http' else \
-                        S3Consumer(self.queue, write_key, endpoint=endpoint,
-                                   on_error=on_error, upload_size=upload_size)
 
         if debug:
             self.log.setLevel(logging.DEBUG)

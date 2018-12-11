@@ -150,7 +150,7 @@ class S3Consumer(Thread):
         return written_items
 
     def _upload_request(self, attempt=0):
-        """Attempt to upload the data present in the buffer. It will throw AssertionError on failure."""
+        """Attempt to upload the data present in the buffer. It will throw Exception on failure."""
 
         bucket = self.s3_details['bucket']
         key = self.s3_details['key_template'] % (self.s3_details['part'])
