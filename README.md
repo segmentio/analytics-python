@@ -8,7 +8,7 @@ analytics-python is a python client is a slightly modified version of [Segment's
 
 ## Usage
 
-Use package directly:
+You can package directly, in this case default `http` transport will be used:
 
 ```python
 import analytics
@@ -48,6 +48,10 @@ client = analytics.Client(
 client.track(...)
 client.flush()
 ```
+
+### Using S3 transport
+
+When using `s3` transport SDK will upload data directly to AWS S3 bypassing http interface.
 
 ## More information
 

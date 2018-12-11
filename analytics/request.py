@@ -10,6 +10,30 @@ from retrying import retry
 
 _session = sessions.Session()
 
+@retry(wait_exponential_multiplier=500, wait_exponential_max=5000,
+       stop_max_delay=20000)
+def get(write_key, endpoint):
+    log = logging.getLogger('segment')
+    headers = {
+        'content-type': 'application/json',
+        'x-api-key': write_key,
+    }
+    res = _session.get(endpoint, headers=headers, timeout=15)
+
+    if res.status_code == 200:
+        log.debug('get request is successful')
+        return res.json()
+
+    try:
+        payload = res.json()
+        log.debug('received response: %s', payload)
+        raise APIError(
+            res.status_code,
+            payload.get('code', '???'),
+            payload.get('message', '???'))
+    except ValueError:
+        raise APIError(res.status_code, 'unknown', res.text)
+
 
 @retry(wait_exponential_multiplier=500, wait_exponential_max=5000,
        stop_max_delay=20000)
@@ -21,7 +45,10 @@ def post(write_key, endpoint, **kwargs):
     body["sentAt"] = int(time.time()*1000)
     auth = HTTPBasicAuth(write_key, '')
     data = json.dumps(body, cls=DatetimeSerializer)
-    headers = { 'content-type': 'application/json', 'x-api-key': write_key }
+    headers = {
+        'content-type': 'application/json',
+        'x-api-key': write_key,
+    }
     log.debug('making request: %s', data)
     res = _session.post(endpoint, data=data, auth=auth, headers=headers, timeout=15)
 
