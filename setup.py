@@ -26,7 +26,8 @@ install_requires = [
     "requests>=2.7,<3.0",
     "six>=1.7",
     "python-dateutil>2.1",
-    "retrying>=1.3.3"
+    "retrying>=1.3.3",
+    'boto3>=1.9.57'
 ]
 
 setup(
@@ -41,7 +42,7 @@ setup(
     packages=['analytics', 'analytics.test'],
     license='MIT License',
     install_requires=install_requires,
-    description='FindHotel\'s fork of Segment\'s Python SDK.',
+    description="FindHotel's fork of Segment's Python SDK.",
     long_description=long_description,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -50,10 +51,8 @@ setup(
         "Operating System :: OS Independent",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.2",
-        "Programming Language :: Python :: 3.3",
-        "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7"
     ],
 )
