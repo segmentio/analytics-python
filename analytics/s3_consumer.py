@@ -6,17 +6,13 @@ import uuid
 from functools import reduce
 from threading import Thread
 from datetime import datetime
+from queue import Empty
 
 import boto3
 
 import analytics
-from analytics.version import VERSION
-from analytics.request import post, get
+from analytics.request import get
 
-try:
-    from queue import Empty
-except:
-    from Queue import Empty
 
 MB = 1024*1024
 
@@ -71,7 +67,7 @@ class S3Consumer(Thread):
         # pause immediately after construction, we might set running to True in
         # run() *after* we set it to False in pause... and keep running forever.
         self.running = True
-    
+
     def _reset_buffer(self):
         self.buf = io.BytesIO()
 
@@ -172,4 +168,5 @@ class S3Consumer(Thread):
         )
         self.log.info("Upload to s3 finished with result: {}".format(result))
 
-        assert result['HTTPStatusCode'] == 200, json.dumps(result)
+        if result['HTTPStatusCode'] != 200:
+            raise Exception("S3 upload failed: {}".format(result))

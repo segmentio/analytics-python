@@ -24,7 +24,7 @@ ID_TYPES = (numbers.Number, string_types)
 
 class Client(object):
     """Create a new Segment client.
-    
+
     upload_size has different meaning, depending on chosen transport.
     For http transport upload_size means number of items to be batched
     in a single POST request to backend.
