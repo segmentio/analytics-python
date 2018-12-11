@@ -35,6 +35,8 @@ class S3Consumer(Thread):
         Thread.__init__(self)
         # Make consumer a daemon thread so that it doesn't block program exit
         self.daemon = True
+        if upload_size < 1*MB:
+            raise ValueError("upload_size should be >= {} (1 MB), got {}".format(1*MB, upload_size))
         self.upload_size = upload_size
         self.on_error = on_error
         self.queue = queue

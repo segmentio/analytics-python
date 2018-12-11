@@ -53,6 +53,31 @@ client.flush()
 
 When using `s3` transport SDK will upload data directly to AWS S3 bypassing http interface.
 
+```python
+
+MB = 1024*1024
+
+c = Client(
+     write_key="write-key",
+     endpoint="https://segment.fih.io/v1/[endpoint-key]",
+     upload_size=1*MB,
+     transport='s3',
+     max_queue_size=1000000,
+)
+
+for i in range(30000):
+     c.track(
+          user_id='pavel',
+          event='UUIDGenerated',
+          properties=dict(id=str(uuid.uuid4()), counter=i)
+     )
+     if i % 10000 == 0:
+          c.flush()
+
+c.flush()
+assert False
+```
+
 ## More information
 
 The documentation for Segment's Python SDK that this repository is based on is available at [https://segment.com/libraries/python](https://segment.com/libraries/python). You can use Segment's docs to get familiar with the API.
