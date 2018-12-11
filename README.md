@@ -8,6 +8,10 @@ analytics-python is a python client is a slightly modified version of [Segment's
 
 ## Usage
 
+The documentation for Segment's Python SDK that this repository is based on
+is available at [https://segment.com/libraries/python](https://segment.com/libraries/python).
+Check Segment's docs to get familiar with the API.
+
 You can package directly, in this case default `http` transport will be used:
 
 ```python

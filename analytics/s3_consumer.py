@@ -126,7 +126,8 @@ class S3Consumer(Thread):
             # mark items as acknowledged from queue
             for _ in range(total_items_to_upload):
                 self.queue.task_done()
-            return success
+
+        return success
 
     def next(self):
         """Writes the next batch of items from the queue to the buffer."""
