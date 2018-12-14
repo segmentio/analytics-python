@@ -7,6 +7,7 @@ __version__ = VERSION
 """Settings."""
 write_key = None
 endpoint = 'https://api.segment.io/v1/batch'
+transport = 'http'
 max_queue_size = 10000
 upload_size = 100
 on_error = None
@@ -55,7 +56,7 @@ def _proxy(method, *args, **kwargs):
         default_client = Client(write_key, debug=debug, on_error=on_error,
                                 send=send, endpoint=endpoint,
                                 max_queue_size=max_queue_size,
-                                upload_size=upload_size)
+                                upload_size=upload_size, transport=transport)
 
     fn = getattr(default_client, method)
     fn(*args, **kwargs)

@@ -10,6 +10,7 @@ from six import string_types
 
 from analytics.utils import guess_timezone, clean
 from analytics.consumer import Consumer
+from analytics.s3_consumer import S3Consumer
 from analytics.version import VERSION
 
 try:
@@ -22,21 +23,36 @@ ID_TYPES = (numbers.Number, string_types)
 
 
 class Client(object):
-    """Create a new Segment client."""
+    """Create a new Segment client.
+
+    upload_size has different meaning, depending on chosen transport.
+    For http transport upload_size means number of items to be batched
+    in a single POST request to backend.
+    For s3 transport upload_size means size in bytes of _uncompressed_
+    partition of the data. Sane default value is between 10 and 100 MB
+    depending on compressability of underlying data.
+    """
     log = logging.getLogger('segment')
 
     def __init__(self, write_key=None, debug=False, max_queue_size=10000,
-                 send=True, on_error=None, endpoint=None, upload_size=100):
+                 send=True, on_error=None, endpoint=None, upload_size=100,
+                 transport='http'):
         require('write_key', write_key, string_types)
-
         self.queue = queue.Queue(max_queue_size)
-        self.consumer = Consumer(self.queue, write_key, endpoint=endpoint,
-                                 on_error=on_error, upload_size=upload_size)
         self.write_key = write_key
         self.endpoint = endpoint
         self.on_error = on_error
         self.debug = debug
         self.send = send
+
+        if transport == 'http':
+            self.consumer = Consumer(self.queue, write_key, endpoint=endpoint,
+                                     on_error=on_error, upload_size=upload_size)
+        elif transport == 's3':
+            self.consumer = S3Consumer(self.queue, write_key, endpoint=endpoint,
+                                       on_error=on_error, upload_size=upload_size)
+        else:
+            raise ValueError("transport should be either http or s3")
 
         if debug:
             self.log.setLevel(logging.DEBUG)

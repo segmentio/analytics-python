@@ -1,14 +1,10 @@
 import logging
 from threading import Thread
+from queue import Empty
 
 import analytics
-from analytics.version import VERSION
 from analytics.request import post
 
-try:
-    from queue import Empty
-except:
-    from Queue import Empty
 
 class Consumer(Thread):
     """Consumes the messages from the client's queue."""
@@ -59,7 +55,7 @@ class Consumer(Thread):
                 self.on_error(e, batch)
         finally:
             # mark items as acknowledged from queue
-            for item in batch:
+            for _ in batch:
                 self.queue.task_done()
             return success
 
