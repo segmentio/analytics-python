@@ -28,7 +28,7 @@ class S3Consumer(Thread):
     )
 
     def __init__(self, queue, write_key, upload_size=10*MB, on_error=None,
-                 endpoint=None, dt=None):
+                 endpoint=None, dt=None, key_decorator=lambda x: x):
         """Create a consumer thread.
         upload_size is the size of chunk in bytes.
         """
@@ -50,16 +50,20 @@ class S3Consumer(Thread):
         s3_details = S3Consumer._s3_details(write_key, endpoint or analytics.endpoint)
 
         layouts = [(k, dt.strftime(v)) for (k, v) in self._layouts]
-        prefix = reduce(lambda a, kv: a.replace(*kv), layouts, s3_details['prefix'])
+        prefix = key_decorator(
+            reduce(lambda a, kv: a.replace(*kv), layouts, s3_details['prefix']))
+
+        # %d token will be preserved for future substitution
+        key_template = '{prefix}/{job_id}-part-%d.json.gz'
 
         self.s3_details = dict(
             bucket=s3_details['bucket'],
-            key_template='{prefix}/{job_id}-part-%d.json.gz'.format(
+            key_template=key_template.format(
                 prefix=prefix,
                 job_id=str(uuid.uuid4())
             ),
-            part=0,
-            tags=s3_details.get('tags', None),
+            part=0,  # part of the file to uploaded, incremented on each upload cycle
+            meta=s3_details.get('meta', None),
         )
         self.log.debug("s3 details: {}".format(self.s3_details))
 
@@ -87,10 +91,16 @@ class S3Consumer(Thread):
         res = get(write_key, endpoint)
         if not ('s3_bucket' in res and 's3_prefix' in res):
             raise ValueError("Response should contain s3_bucket and s3_prefix keys, got {}".format(res))
+        
+        meta = None
+        meta_raw = res.get('context', {}).get('meta', None)
+        if meta_raw is not None:
+            meta = dict([token.split('=') for token in meta_raw.split('&')])
+
         return {
             'bucket': res['s3_bucket'],
             'prefix': res['s3_prefix'],
-            'tags': res.get('tags', None),
+            'meta': meta,
         }
 
     def run(self):
@@ -154,15 +164,15 @@ class S3Consumer(Thread):
 
         bucket = self.s3_details['bucket']
         key = self.s3_details['key_template'] % (self.s3_details['part'])
-        tags = self.s3_details.get('tags', None)
+        meta = self.s3_details.get('meta', None)
 
         kwargs = dict(
             ACL='bucket-owner-full-control',
             Bucket=bucket,
             Key=key,
         )
-        if tags is not None:
-            kwargs['Tagging'] = tags
+        if meta is not None:
+            kwargs['Metadata'] = meta
 
         self.log.info("Uploading to s3 with args {}".format(kwargs))
         result = self.s3.put_object(

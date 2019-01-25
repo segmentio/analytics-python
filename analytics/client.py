@@ -36,7 +36,7 @@ class Client(object):
 
     def __init__(self, write_key=None, debug=False, max_queue_size=10000,
                  send=True, on_error=None, endpoint=None, upload_size=100,
-                 transport='http'):
+                 transport='http', key_decorator=lambda x: x):
         require('write_key', write_key, string_types)
         self.queue = queue.Queue(max_queue_size)
         self.write_key = write_key
@@ -50,7 +50,8 @@ class Client(object):
                                      on_error=on_error, upload_size=upload_size)
         elif transport == 's3':
             self.consumer = S3Consumer(self.queue, write_key, endpoint=endpoint,
-                                       on_error=on_error, upload_size=upload_size)
+                                       on_error=on_error, upload_size=upload_size,
+                                       key_decorator=key_decorator)
         else:
             raise ValueError("transport should be either http or s3")
 
