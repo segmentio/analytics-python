@@ -82,6 +82,18 @@ c.flush()
 assert False
 ```
 
+## Release process
+
+1. Make sure that `VERSION` in `version.py` is updated
+2. Merge PR to master
+3. Create a distribution package
+
+       python setup.py sdist
+       
+3. Upload to pypi
+       
+       twine upload dist/*
+
 ## More information
 
 The documentation for Segment's Python SDK that this repository is based on is available at [https://segment.com/libraries/python](https://segment.com/libraries/python). You can use Segment's docs to get familiar with the API.
