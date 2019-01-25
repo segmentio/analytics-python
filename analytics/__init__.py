@@ -13,6 +13,7 @@ upload_size = 100
 on_error = None
 debug = False
 send = True
+key_decorator = lambda x: x
 
 default_client = None
 
@@ -53,10 +54,16 @@ def _proxy(method, *args, **kwargs):
     """Create an analytics client if one doesn't exist and send to it."""
     global default_client
     if not default_client:
-        default_client = Client(write_key, debug=debug, on_error=on_error,
-                                send=send, endpoint=endpoint,
-                                max_queue_size=max_queue_size,
-                                upload_size=upload_size, transport=transport)
+        default_client = Client(
+            write_key,
+            debug=debug,
+            on_error=on_error,
+            send=send,
+            endpoint=endpoint,
+            max_queue_size=max_queue_size,
+            upload_size=upload_size,
+            transport=transport,
+            key_decorator=key_decorator)
 
     fn = getattr(default_client, method)
     fn(*args, **kwargs)
