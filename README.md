@@ -89,9 +89,9 @@ assert False
 3. Create a distribution package
 
        python setup.py sdist
-       
+
 3. Upload to pypi
-       
+
        twine upload dist/*
 
 ## More information
