@@ -54,7 +54,8 @@ class TestClient(unittest.TestCase):
         self.assertEqual(msg['anonymousId'], 'anonymousId')
         self.assertEqual(msg['context']['library'], {
             'name': 'analytics-python',
-            'version': VERSION
+            'version': VERSION,
+            'transport': 'http',
         })
         self.assertTrue(isinstance(msg['messageId'], str))
         self.assertEqual(msg['userId'], 'userId')
@@ -88,7 +89,8 @@ class TestClient(unittest.TestCase):
         self.assertEqual(msg['anonymousId'], 'anonymousId')
         self.assertEqual(msg['context']['library'], {
             'name': 'analytics-python',
-            'version': VERSION
+            'version': VERSION,
+            'transport': 'http',
         })
         self.assertTrue(isinstance(msg['timestamp'], int))
         self.assertTrue(isinstance(msg['messageId'], str))
@@ -121,7 +123,8 @@ class TestClient(unittest.TestCase):
         self.assertEqual(msg['anonymousId'], 'anonymousId')
         self.assertEqual(msg['context']['library'], {
             'name': 'analytics-python',
-            'version': VERSION
+            'version': VERSION,
+            'transport': 'http',
         })
         self.assertTrue(isinstance(msg['timestamp'], int))
         self.assertTrue(isinstance(msg['messageId'], str))
@@ -163,7 +166,8 @@ class TestClient(unittest.TestCase):
         self.assertEqual(msg['anonymousId'], 'anonymousId')
         self.assertEqual(msg['context']['library'], {
             'name': 'analytics-python',
-            'version': VERSION
+            'version': VERSION,
+            'transport': 'http',
         })
         self.assertEqual(msg['category'], 'category')
         self.assertTrue(isinstance(msg['timestamp'], int))
@@ -197,7 +201,8 @@ class TestClient(unittest.TestCase):
         self.assertEqual(msg['anonymousId'], 'anonymousId')
         self.assertEqual(msg['context']['library'], {
             'name': 'analytics-python',
-            'version': VERSION
+            'version': VERSION,
+            'transport': 'http',
         })
         self.assertTrue(isinstance(msg['timestamp'], int))
         self.assertTrue(isinstance(msg['messageId'], str))
