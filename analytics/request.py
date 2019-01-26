@@ -43,14 +43,15 @@ def post(write_key, endpoint, **kwargs):
     body = kwargs
     #body["sentAt"] = datetime.utcnow().replace(tzinfo=tzutc()).isoformat()
     body["sentAt"] = int(time.time()*1000)
-    auth = HTTPBasicAuth(write_key, '')
+    #auth = HTTPBasicAuth(write_key, '')
     data = json.dumps(body, cls=DatetimeSerializer)
     headers = {
         'content-type': 'application/json',
         'x-api-key': write_key,
     }
     log.debug('making request: %s', data)
-    res = _session.post(endpoint, data=data, auth=auth, headers=headers, timeout=15)
+    #res = _session.post(endpoint, data=data, auth=auth, headers=headers, timeout=15)
+    res = _session.post(endpoint, data=data, headers=headers, timeout=15)
 
     if res.status_code == 200:
         log.debug('data uploaded successfully')

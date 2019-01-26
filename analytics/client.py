@@ -45,6 +45,7 @@ class Client(object):
         self.debug = debug
         self.send = send
 
+        self.transport = transport
         if transport == 'http':
             self.consumer = Consumer(self.queue, write_key, endpoint=endpoint,
                                      on_error=on_error, upload_size=upload_size)
@@ -230,7 +231,8 @@ class Client(object):
         msg['messageId'] = msg.get('messageId') or str(uuid4())
         msg['context']['library'] = {
             'name': 'analytics-python',
-            'version': VERSION
+            'version': VERSION,
+            'transport': self.transport,
         }
 
         msg = clean(msg)

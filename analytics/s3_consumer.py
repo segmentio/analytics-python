@@ -3,10 +3,12 @@ import io
 import json
 import gzip
 import uuid
+import time
 from functools import reduce
 from threading import Thread
 from datetime import datetime
 from queue import Empty
+from urllib.parse import urlparse
 
 import boto3
 
@@ -40,6 +42,9 @@ class S3Consumer(Thread):
         self.upload_size = upload_size
         self.on_error = on_error
         self.queue = queue
+        self.write_key = write_key
+        self.resource_path = urlparse(endpoint).path
+        self.job_id = str(uuid.uuid4())
 
         if dt is None:
             dt = datetime.now()
@@ -53,19 +58,30 @@ class S3Consumer(Thread):
         prefix = key_decorator(
             reduce(lambda a, kv: a.replace(*kv), layouts, s3_details['prefix']))
 
+        current_files = self.s3.list_objects_v2(
+            Bucket=s3_details['bucket'],
+            Prefix=prefix+'/',
+        )
+        if current_files['KeyCount'] > 0:
+            raise Exception("There are {len} current files exist in s3://{bucket}/{prefix}/".format(
+                len=current_files['KeyCount'],
+                bucket=s3_details['bucket'],
+                prefix=prefix,
+            ))
+
         # %d token will be preserved for future substitution
-        key_template = '{prefix}/{job_id}-part-%d.json.gz'
+        key_template = '{prefix}/{job_id}-part-%04d.json.gz'
 
         self.s3_details = dict(
             bucket=s3_details['bucket'],
             key_template=key_template.format(
                 prefix=prefix,
-                job_id=str(uuid.uuid4())
+                job_id=self.job_id,
             ),
-            part=0,  # part of the file to uploaded, incremented on each upload cycle
+            part=0,  # part of the file to be uploaded, incremented on each upload cycle
             meta=s3_details.get('meta', None),
         )
-        self.log.debug("s3 details: {}".format(self.s3_details))
+        self.log.info("s3 details: {}".format(self.s3_details))
 
         self.encoder = json.JSONEncoder()
 
@@ -149,7 +165,20 @@ class S3Consumer(Thread):
 
         while written_bytes < self.upload_size or queue.empty():
             try:
-                item = queue.get(block=True, timeout=0.5)
+                event = queue.get(block=True, timeout=0.5)
+                ts = int(time.time()*1000)
+                item = {
+                    'context': {
+                        'identity': {
+                            'apiKey': self.write_key,
+                        },
+                        'resourcePath': self.resource_path,
+                        'requestId': self.job_id,
+                    },
+                    'event': event,
+                    'sentAt': ts,
+                    'receivedAt': ts,
+                }
                 s = self.encoder.encode(item) + '\n'
                 written_bytes += writer.write(bytes(s, 'UTF-8'))
                 written_items += 1
@@ -181,5 +210,5 @@ class S3Consumer(Thread):
         )
         self.log.info("Upload to s3 finished with result: {}".format(result))
 
-        if result['HTTPStatusCode'] != 200:
+        if result.get('ResponseMetadata', {}).get('HTTPStatusCode', 0) != 200:
             raise Exception("S3 upload failed: {}".format(result))
