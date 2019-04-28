@@ -12,6 +12,7 @@
   * Drop messages greater than 32kb
   * Allow user-defined upload size
   * Support custom messageId
+  * Add `sync_mode` option ([#147](https://github.com/segmentio/analytics-python/pull/147))
 
 1.2.9 / 2017-11-28
 ==================
