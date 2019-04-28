@@ -256,6 +256,14 @@ class TestClient(unittest.TestCase):
         self.assertTrue(client.queue.empty())
         self.assertFalse(client.consumer.is_alive())
 
+    def test_synchronous(self):
+        client = Client('testsecret', sync_mode=True)
+
+        success, message = client.identify('userId')
+        self.assertIsNone(client.consumer)
+        self.assertTrue(client.queue.empty())
+        self.assertTrue(success)
+
     def test_overflow(self):
         client = Client('testsecret', max_queue_size=1)
         # Ensure consumer thread is no longer uploading

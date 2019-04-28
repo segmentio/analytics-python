@@ -9,6 +9,7 @@ from six import string_types
 
 from analytics.utils import guess_timezone, clean
 from analytics.consumer import Consumer
+from analytics.request import post
 from analytics.version import VERSION
 
 try:
@@ -26,30 +27,37 @@ class Client(object):
 
     def __init__(self, write_key=None, host=None, debug=False, max_queue_size=10000,
                  send=True, on_error=None, upload_size=100, upload_interval=0.5,
-                 gzip=False, max_retries=10):
+                 gzip=False, max_retries=10, sync_mode=False):
         require('write_key', write_key, string_types)
 
         self.queue = queue.Queue(max_queue_size)
-        self.consumer = Consumer(self.queue, write_key, host=host, on_error=on_error,
-                                 upload_size=upload_size, upload_interval=upload_interval,
-                                 gzip=gzip, retries=max_retries)
         self.write_key = write_key
         self.on_error = on_error
         self.debug = debug
         self.send = send
+        self.sync_mode = sync_mode
+        self.host = host
+        self.gzip = gzip
 
         if debug:
             self.log.setLevel(logging.DEBUG)
 
-        # if we've disabled sending, just don't start the consumer
-        if send:
-            # On program exit, allow the consumer thread to exit cleanly.
-            # This prevents exceptions and a messy shutdown when the interpreter is
-            # destroyed before the daemon thread finishes execution. However, it
-            # is *not* the same as flushing the queue! To guarantee all messages
-            # have been delivered, you'll still need to call flush().
-            atexit.register(self.join)
-            self.consumer.start()
+        if sync_mode:
+            self.consumer = None
+        else:
+            self.consumer = Consumer(self.queue, write_key, host=host, on_error=on_error,
+                                     upload_size=upload_size, upload_interval=upload_interval,
+                                     gzip=gzip, retries=max_retries)
+
+            # if we've disabled sending, just don't start the consumer
+            if send:
+                # On program exit, allow the consumer thread to exit cleanly.
+                # This prevents exceptions and a messy shutdown when the interpreter is
+                # destroyed before the daemon thread finishes execution. However, it
+                # is *not* the same as flushing the queue! To guarantee all messages
+                # have been delivered, you'll still need to call flush().
+                atexit.register(self.join)
+                self.consumer.start()
 
     def identify(self, user_id=None, traits=None, context=None, timestamp=None,
                  anonymous_id=None, integrations=None, message_id=None):
@@ -228,12 +236,18 @@ class Client(object):
         if not self.send:
             return True, msg
 
+        if self.sync_mode:
+            self.log.debug('enqueued with blocking %s.', msg['type'])
+            post(self.write_key, self.host, gzip=self.gzip, batch=[msg])
+
+            return True, msg
+
         try:
             self.queue.put(msg, block=False)
             self.log.debug('enqueued %s.', msg['type'])
             return True, msg
         except queue.Full:
-            self.log.warn('analytics-python queue is full')
+            self.log.warning('analytics-python queue is full')
             return False, msg
 
     def flush(self):

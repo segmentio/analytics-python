@@ -10,6 +10,7 @@ host = None
 on_error = None
 debug = False
 send = True
+sync_mode = False
 
 default_client = None
 
@@ -58,7 +59,7 @@ def _proxy(method, *args, **kwargs):
     global default_client
     if not default_client:
         default_client = Client(write_key, host=host, debug=debug, on_error=on_error,
-                                send=send)
+                                send=send, sync_mode=sync_mode)
 
     fn = getattr(default_client, method)
     fn(*args, **kwargs)
