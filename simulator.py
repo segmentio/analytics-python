@@ -7,11 +7,13 @@ __name__ = 'simulator.py'
 __version__ = '0.0.1'
 __description__ = 'scripting simulator'
 
+
 def json_hash(str):
-  if str:
-    return json.loads(str)
+    if str:
+        return json.loads(str)
 
 # analytics -method=<method> -segment-write-key=<segmentWriteKey> [options]
+
 
 parser = argparse.ArgumentParser(description='send a segment message')
 
@@ -33,31 +35,44 @@ parser.add_argument('--groupId', help='the group id')
 
 options = parser.parse_args()
 
+
 def failed(status, msg):
     raise Exception(msg)
 
+
 def track():
-    analytics.track(options.userId, options.event, anonymous_id = options.anonymousId,
-            properties = json_hash(options.properties), context = json_hash(options.context))
+    analytics.track(
+        options.userId, options.event, anonymous_id=options.anonymousId,
+        properties=json_hash(options.properties), context=json_hash(options.context))
+
 
 def page():
-    analytics.page(options.userId, name = options.name, anonymous_id = options.anonymousId,
-            properties = json_hash(options.properties), context = json_hash(options.context))
+    analytics.page(
+        options.userId, name=options.name, anonymous_id=options.anonymousId,
+        properties=json_hash(options.properties), context=json_hash(options.context))
+
 
 def screen():
-    analytics.screen(options.userId, name = options.name, anonymous_id = options.anonymousId,
-            properties = json_hash(options.properties), context = json_hash(options.context))
+    analytics.screen(
+        options.userId, name=options.name, anonymous_id=options.anonymousId,
+        properties=json_hash(options.properties), context=json_hash(options.context))
+
 
 def identify():
-    analytics.identify(options.userId, anonymous_id = options.anonymousId,
-            traits = json_hash(options.traits), context = json_hash(options.context))
+    analytics.identify(
+        options.userId, anonymous_id=options.anonymousId,
+        traits=json_hash(options.traits), context=json_hash(options.context))
+
 
 def group():
-    analytics.group(options.userId, options.groupId, json_hash(options.traits),
-            json_hash(options.context), anonymous_id = options.anonymousId)
+    analytics.group(
+        options.userId, options.groupId, json_hash(options.traits),
+        json_hash(options.context), anonymous_id=options.anonymousId)
+
 
 def unknown():
     print()
+
 
 analytics.write_key = options.writeKey
 analytics.on_error = failed

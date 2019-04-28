@@ -13,7 +13,7 @@ from analytics.version import VERSION
 
 try:
     import queue
-except:
+except ImportError:
     import Queue as queue
 
 
@@ -264,6 +264,7 @@ def require(name, field, data_type):
     if not isinstance(field, data_type):
         msg = '{0} must have {1}, got: {2}'.format(name, data_type, field)
         raise AssertionError(msg)
+
 
 def stringify_id(val):
     if val is None:
