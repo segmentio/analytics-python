@@ -13,7 +13,7 @@ from analytics.utils import remove_trailing_slash
 _session = sessions.Session()
 
 
-def post(write_key, host=None, gzip=False, **kwargs):
+def post(write_key, host=None, gzip=False, proxies=None, **kwargs):
     """Post the `kwargs` to the API"""
     log = logging.getLogger('segment')
     body = kwargs
@@ -34,7 +34,16 @@ def post(write_key, host=None, gzip=False, **kwargs):
             gz.write(data.encode('utf-8'))
         data = buf.getvalue()
 
-    res = _session.post(url, data=data, auth=auth, headers=headers, timeout=15)
+    kwargs = {
+        "data": data,
+        "auth": auth,
+        "headers": headers,
+        "timeout": 15
+    }
+    if proxies:
+        kwargs["proxies"] = proxies
+
+    res = _session.post(url, **kwargs)
 
     if res.status_code == 200:
         log.debug('data uploaded successfully')

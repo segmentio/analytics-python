@@ -27,7 +27,7 @@ class Client(object):
 
     def __init__(self, write_key=None, host=None, debug=False, max_queue_size=10000,
                  send=True, on_error=None, upload_size=100, upload_interval=0.5,
-                 gzip=False, max_retries=10, sync_mode=False):
+                 gzip=False, proxies=None, max_retries=10, sync_mode=False):
         require('write_key', write_key, string_types)
 
         self.queue = queue.Queue(max_queue_size)
@@ -38,6 +38,7 @@ class Client(object):
         self.sync_mode = sync_mode
         self.host = host
         self.gzip = gzip
+        self.proxies = proxies
 
         if debug:
             self.log.setLevel(logging.DEBUG)
@@ -47,7 +48,7 @@ class Client(object):
         else:
             self.consumer = Consumer(self.queue, write_key, host=host, on_error=on_error,
                                      upload_size=upload_size, upload_interval=upload_interval,
-                                     gzip=gzip, retries=max_retries)
+                                     gzip=gzip, retries=max_retries, proxies=proxies)
 
             # if we've disabled sending, just don't start the consumer
             if send:
@@ -238,7 +239,7 @@ class Client(object):
 
         if self.sync_mode:
             self.log.debug('enqueued with blocking %s.', msg['type'])
-            post(self.write_key, self.host, gzip=self.gzip, batch=[msg])
+            post(self.write_key, self.host, gzip=self.gzip, proxies=self.proxies, batch=[msg])
 
             return True, msg
 
