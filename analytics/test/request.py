@@ -49,4 +49,3 @@ class TestRequests(unittest.TestCase):
                 'event': 'python event',
                 'type': 'track'
             }], timeout=0.0001)
-            

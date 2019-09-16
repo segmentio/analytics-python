@@ -329,6 +329,10 @@ class TestClient(unittest.TestCase):
             time.sleep(1)
             self.assertEquals(mock_post.call_count, 2)
 
-    def test_should_set_timeout(self):
+    def test_user_defined_timeout(self):
         client = Client('testsecret', timeout=10)
         self.assertEquals(client.consumer.timeout, 10)
+    
+    def test_default_timeout_15(self):
+        client = Client('testsecret')
+        self.assertEquals(client.consumer.timeout, 15)
