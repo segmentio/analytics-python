@@ -332,7 +332,7 @@ class TestClient(unittest.TestCase):
     def test_user_defined_timeout(self):
         client = Client('testsecret', timeout=10)
         self.assertEquals(client.consumer.timeout, 10)
-    
+
     def test_default_timeout_15(self):
         client = Client('testsecret')
         self.assertEquals(client.consumer.timeout, 15)
