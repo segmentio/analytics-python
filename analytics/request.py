@@ -35,11 +35,7 @@ def post(write_key, host=None, gzip=False, timeout=15, **kwargs):
             gz.write(data.encode('utf-8'))
         data = buf.getvalue()
 
-    try:
-        res = _session.post(url, data=data, auth=auth, headers=headers, timeout=timeout)
-    except:
-        print("timedout")
-        #sys.exit()
+    res = _session.post(url, data=data, auth=auth, headers=headers, timeout=timeout)
 
     if res.status_code == 200:
         log.debug('data uploaded successfully')
