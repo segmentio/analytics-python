@@ -6,7 +6,6 @@ from gzip import GzipFile
 from requests.auth import HTTPBasicAuth
 from requests import sessions
 from io import BytesIO
-import sys
 
 from analytics.version import VERSION
 from analytics.utils import remove_trailing_slash
