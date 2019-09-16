@@ -1,6 +1,7 @@
 from datetime import datetime, date
 import unittest
 import json
+import requests
 
 from analytics.request import post, DatetimeSerializer
 
@@ -32,3 +33,20 @@ class TestRequests(unittest.TestCase):
         result = json.dumps(data, cls=DatetimeSerializer)
         expected = '{"created": "%s"}' % today.isoformat()
         self.assertEqual(result, expected)
+
+    def test_should_not_timeout(self):
+        res = post('testsecret', batch=[{
+            'userId': 'userId',
+            'event': 'python event',
+            'type': 'track'
+        }], timeout=15)
+        self.assertEqual(res.status_code, 200)
+
+    def test_should_timeout(self):
+        with self.assertRaises(requests.ReadTimeout):
+            res = post('testsecret', batch=[{
+                'userId': 'userId',
+                'event': 'python event',
+                'type': 'track'
+            }], timeout=0.0001)
+            
