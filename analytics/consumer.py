@@ -24,7 +24,7 @@ class Consumer(Thread):
     log = logging.getLogger('segment')
 
     def __init__(self, queue, write_key, upload_size=100, host=None, on_error=None,
-                 upload_interval=0.5, gzip=False, retries=10):
+                 upload_interval=0.5, gzip=False, retries=10, timeout=15):
         """Create a consumer thread."""
         Thread.__init__(self)
         # Make consumer a daemon thread so that it doesn't block program exit
@@ -41,6 +41,7 @@ class Consumer(Thread):
         # run() *after* we set it to False in pause... and keep running forever.
         self.running = True
         self.retries = retries
+        self.timeout = timeout
 
     def run(self):
         """Runs the consumer."""
@@ -117,6 +118,6 @@ class Consumer(Thread):
 
         @backoff.on_exception(backoff.expo, Exception, max_tries=self.retries + 1, giveup=fatal_exception)
         def send_request():
-            post(self.write_key, self.host, gzip=self.gzip, batch=batch)
+            post(self.write_key, self.host, gzip=self.gzip, timeout=self.timeout, batch=batch)
 
         send_request()

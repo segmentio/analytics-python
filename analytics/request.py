@@ -6,6 +6,7 @@ from gzip import GzipFile
 from requests.auth import HTTPBasicAuth
 from requests import sessions
 from io import BytesIO
+import sys
 
 from analytics.version import VERSION
 from analytics.utils import remove_trailing_slash
@@ -13,7 +14,7 @@ from analytics.utils import remove_trailing_slash
 _session = sessions.Session()
 
 
-def post(write_key, host=None, gzip=False, **kwargs):
+def post(write_key, host=None, gzip=False, timeout=15, **kwargs):
     """Post the `kwargs` to the API"""
     log = logging.getLogger('segment')
     body = kwargs
@@ -34,7 +35,11 @@ def post(write_key, host=None, gzip=False, **kwargs):
             gz.write(data.encode('utf-8'))
         data = buf.getvalue()
 
-    res = _session.post(url, data=data, auth=auth, headers=headers, timeout=15)
+    try:
+        res = _session.post(url, data=data, auth=auth, headers=headers, timeout=timeout)
+    except:
+        print("timedout")
+        #sys.exit()
 
     if res.status_code == 200:
         log.debug('data uploaded successfully')
