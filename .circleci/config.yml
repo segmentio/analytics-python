@@ -6,7 +6,7 @@ defaults:
 jobs:
   build:
     docker:
-      - image: circleci/python:2.7.15-stretch
+      - image: circleci/python:2.7.16-stretch
     steps:
       - checkout
       - run: pip install --user .
@@ -23,7 +23,7 @@ jobs:
 
   coverage:
     docker:
-      - image: circleci/python:2.7.15-stretch
+      - image: circleci/python:2.7.16-stretch
     steps:
       - checkout
       - attach_workspace: { at: . }
@@ -36,7 +36,7 @@ jobs:
 
   snyk:
     docker:
-      - image: circleci/python:2.7.15-stretch
+      - image: circleci/python:2.7.16-stretch
     steps:
       - checkout
       - attach_workspace: { at: . }
@@ -47,15 +47,15 @@ jobs:
 
   test_27:
     docker:
-      - image: circleci/python:2.7.15-stretch
+      - image: circleci/python:2.7.16-stretch
     steps:
       - checkout
       - run: pip install --user .
       - run: make e2e_test
 
-  test_34: &test_34
+  test_35: &test_35
     docker:
-      - image: circleci/python:3.4.8-jessie-node
+      - image: circleci/python:3.5.7-stretch
     steps:
       - checkout
       - run: pip install --user .
@@ -63,15 +63,20 @@ jobs:
       - run: make test
       - run: make e2e_test
 
-  test_35:
-    <<: *test_34
-    docker:
-      - image: circleci/python:3.5.5-jessie
-
   test_36:
-    <<: *test_34
+    <<: *test_35
     docker:
-      - image: circleci/python:3.6.5-jessie
+      - image: circleci/python:3.6.9-stretch
+
+  test_37:
+    <<: *test_35
+    docker:
+      - image: circleci/python:3.7.4-stretch
+
+  test_38:
+    <<: *test_35
+    docker:
+      - image: circleci/python:3.8-buster
 
   publish:
     docker:
@@ -91,22 +96,26 @@ workflows:
       - test_27:
           filters:
             <<: *taggedReleasesFilter
-      - test_34:
-          filters:
-            <<: *taggedReleasesFilter
       - test_35:
           filters:
             <<: *taggedReleasesFilter
       - test_36:
           filters:
             <<: *taggedReleasesFilter
+      - test_37:
+          filters:
+            <<: *taggedReleasesFilter
+      - test_38:
+          filters:
+            <<: *taggedReleasesFilter
       - publish:
           requires:
             - build
             - test_27
-            - test_34
             - test_35
             - test_36
+            - test_37
+            - test_38
           filters:
             <<: *taggedReleasesFilter
             branches:
@@ -132,6 +141,7 @@ workflows:
                 - scheduled_e2e_testing
     jobs:
       - test_27
-      - test_34
       - test_35
       - test_36
+      - test_37
+      - test_37
