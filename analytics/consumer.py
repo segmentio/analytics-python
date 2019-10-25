@@ -1,5 +1,6 @@
 import logging
 from threading import Thread
+from multiprocessing.pool import Pool
 import monotonic
 import backoff
 import json
@@ -17,6 +18,25 @@ MAX_MSG_SIZE = 32 << 10
 # Our servers only accept batches less than 500KB. Here limit is set slightly
 # lower to leave space for extra data that will be added later, eg. "sentAt".
 BATCH_SIZE_LIMIT = 475000
+
+
+def request(batch, write_key, host, gzip, timeout, retries):
+    """Attempt to upload the batch and retry before raising an error """
+
+    def fatal_exception(exc):
+        if isinstance(exc, APIError):
+            # retry on server errors and client errors with 429 status code (rate limited),
+            # don't retry on other client errors
+            return (400 <= exc.status < 500) and exc.status != 429
+        else:
+            # retry on all other errors (eg. network)
+            return False
+
+    @backoff.on_exception(backoff.expo, Exception, max_tries=retries + 1, giveup=fatal_exception)
+    def send_request():
+        post(write_key, host, gzip=gzip, timeout=timeout, batch=batch)
+
+    send_request()
 
 
 class Consumer(Thread):
@@ -42,6 +62,7 @@ class Consumer(Thread):
         self.running = True
         self.retries = retries
         self.timeout = timeout
+        self.pool = Pool(32)
 
     def run(self):
         """Runs the consumer."""
@@ -49,6 +70,8 @@ class Consumer(Thread):
         while self.running:
             self.upload()
 
+        self.pool.close()
+        self.pool.join()
         self.log.debug('consumer exited.')
 
     def pause(self):
@@ -56,25 +79,31 @@ class Consumer(Thread):
         self.running = False
 
     def upload(self):
-        """Upload the next batch of items, return whether successful."""
-        success = False
+        """Asynchronously upload the next batch of items."""
         batch = self.next()
-        if len(batch) == 0:
-            return False
+        length = len(batch)
+        if length == 0:
+            return
 
-        try:
-            self.request(batch)
-            success = True
-        except Exception as e:
+        def on_success(x):
+            done()
+
+        def on_error(e):
             self.log.error('error uploading: %s', e)
-            success = False
             if self.on_error:
                 self.on_error(e, batch)
-        finally:
-            # mark items as acknowledged from queue
-            for item in batch:
+            done()
+
+        def done():
+            for i in range(length):
                 self.queue.task_done()
-            return success
+
+        self.pool.apply_async(
+            request,
+            args=[batch, self.write_key, self.host, self.gzip, self.timeout, self.retries],
+            callback=on_success,
+            error_callback=on_error
+        )
 
     def next(self):
         """Return the next batch of items to upload."""
@@ -103,21 +132,3 @@ class Consumer(Thread):
                 break
 
         return items
-
-    def request(self, batch):
-        """Attempt to upload the batch and retry before raising an error """
-
-        def fatal_exception(exc):
-            if isinstance(exc, APIError):
-                # retry on server errors and client errors with 429 status code (rate limited),
-                # don't retry on other client errors
-                return (400 <= exc.status < 500) and exc.status != 429
-            else:
-                # retry on all other errors (eg. network)
-                return False
-
-        @backoff.on_exception(backoff.expo, Exception, max_tries=self.retries + 1, giveup=fatal_exception)
-        def send_request():
-            post(self.write_key, self.host, gzip=self.gzip, timeout=self.timeout, batch=batch)
-
-        send_request()
