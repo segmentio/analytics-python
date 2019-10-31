@@ -11,6 +11,13 @@ on_error = None
 debug = False
 send = True
 sync_mode = False
+upload_size = 100
+upload_interval = 0.5
+max_queue_size = 10000
+gzip = False
+timeout = 15
+max_retries = 10
+
 
 default_client = None
 
@@ -58,8 +65,9 @@ def _proxy(method, *args, **kwargs):
     """Create an analytics client if one doesn't exist and send to it."""
     global default_client
     if not default_client:
-        default_client = Client(write_key, host=host, debug=debug, on_error=on_error,
-                                send=send, sync_mode=sync_mode)
+        default_client = Client(write_key, host=host, debug=debug, max_queue_size=max_queue_size,
+                                send=send, on_error=on_error, upload_size=upload_size, upload_interval=upload_interval,
+                                gzip=gzip, max_retries=max_retries, sync_mode=sync_mode, timeout=timeout)
 
     fn = getattr(default_client, method)
     fn(*args, **kwargs)
