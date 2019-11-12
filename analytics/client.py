@@ -22,12 +22,38 @@ ID_TYPES = (numbers.Number, string_types)
 
 
 class Client(object):
+    class DefaultConfig(object):
+        write_key = None
+        host = None
+        on_error = None
+        debug = False
+        send = True
+        sync_mode = False
+        upload_size = 100
+        upload_interval = 0.5
+        max_queue_size = 10000
+        gzip = False
+        timeout = 15
+        max_retries = 10
+
     """Create a new Segment client."""
     log = logging.getLogger('segment')
 
-    def __init__(self, write_key=None, host=None, debug=False, max_queue_size=10000,
-                 send=True, on_error=None, upload_size=100, upload_interval=0.5,
-                 gzip=False, max_retries=10, sync_mode=False, timeout=15):
+    def __init__(
+        self,
+        write_key=DefaultConfig.write_key,
+        host=DefaultConfig.host,
+        debug=DefaultConfig.debug,
+        max_queue_size=DefaultConfig.max_queue_size,
+        send=DefaultConfig.send,
+        on_error=DefaultConfig.on_error,
+        upload_size=DefaultConfig.upload_size,
+        upload_interval=DefaultConfig.upload_interval,
+        gzip=DefaultConfig.gzip,
+        max_retries=DefaultConfig.max_retries,
+        sync_mode=DefaultConfig.sync_mode,
+        timeout=DefaultConfig.timeout
+    ):
         require('write_key', write_key, string_types)
 
         self.queue = queue.Queue(max_queue_size)
