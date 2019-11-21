@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'analytics'))
 from version import VERSION
 
 long_description = '''
-This is an unofficial fork of Segment's analytics SDK. This fork is 100% 
+This is an unofficial fork of Segment's analytics SDK. This fork is 100%
 compatible with Segment's official SDK (it passes all the tests of the official
 version), but it supports configuring the backend HTTPS endpoint to which the
 events are delivered.

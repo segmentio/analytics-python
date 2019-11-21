@@ -7,9 +7,6 @@ test:
 .env:
 	virtualenv .env -p python3
 
-test:	# create virtual environment
-	python setup.py test
-
 clean:
 	rm -rf .env
 
