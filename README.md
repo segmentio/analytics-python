@@ -1,7 +1,7 @@
 ﻿analytics-python
 ==============
 
-[![Build Status](https://secure.gravatar.com/avatar?s=60)](https://circleci.com/gh/segmentio/analytics-python)
+[![Build Status](https://circleci.com/gh/segmentio/analytics-python.svg?style=svg)](https://circleci.com/gh/segmentio/analytics-python)
 
 analytics-python is a python client for [Segment](https://segment.com)
 
@@ -75,4 +75,3 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
