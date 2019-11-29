@@ -73,13 +73,19 @@ jobs:
     docker:
       - image: circleci/python:3.6.5-jessie
 
-  test_37:
-    <<: *test_34
+  test_37: &test_37
     docker:
       - image: python:3.7-alpine
+    steps:
+      - checkout
+      - run: apk add make
+      - run: pip install --user .
+      - run: pip install coverage pylint==1.9.3 pycodestyle
+      - run: make test
+      - run: make e2e_test
 
   test_38:
-    <<: *test_34
+    <<: *test_37
     docker:
       - image: python:3.8-alpine
 
