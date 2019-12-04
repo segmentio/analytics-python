@@ -23,12 +23,12 @@ class TestConsumer(unittest.TestCase):
 
     def test_next_limit(self):
         q = Queue()
-        upload_size = 50
-        consumer = Consumer(q, '', upload_size)
+        flush_at = 50
+        consumer = Consumer(q, '', flush_at)
         for i in range(10000):
             q.put(i)
         next = consumer.next()
-        self.assertEqual(next, list(range(upload_size)))
+        self.assertEqual(next, list(range(flush_at)))
 
     def test_dropping_oversize_msg(self):
         q = Queue()
@@ -51,12 +51,13 @@ class TestConsumer(unittest.TestCase):
         success = consumer.upload()
         self.assertTrue(success)
 
-    def test_upload_interval(self):
-        # Put _n_ items in the queue, pausing a little bit more than _upload_interval_
+    def test_flush_interval(self):
+        # Put _n_ items in the queue, pausing a little bit more than _flush_interval_
         # after each one. The consumer should upload _n_ times.
         q = Queue()
-        upload_interval = 0.3
-        consumer = Consumer(q, 'testsecret', upload_size=10, upload_interval=upload_interval)
+        flush_interval = 0.3
+        consumer = Consumer(q, 'testsecret', flush_at=10,
+                            flush_interval=flush_interval)
         with mock.patch('analytics.consumer.post') as mock_post:
             consumer.start()
             for i in range(0, 3):
@@ -66,26 +67,27 @@ class TestConsumer(unittest.TestCase):
                     'userId': 'userId'
                 }
                 q.put(track)
-                time.sleep(upload_interval * 1.1)
+                time.sleep(flush_interval * 1.1)
             self.assertEqual(mock_post.call_count, 3)
 
     def test_multiple_uploads_per_interval(self):
-        # Put _upload_size*2_ items in the queue at once, then pause for _upload_interval_.
+        # Put _flush_at*2_ items in the queue at once, then pause for _flush_interval_.
         # The consumer should upload 2 times.
         q = Queue()
-        upload_interval = 0.5
-        upload_size = 10
-        consumer = Consumer(q, 'testsecret', upload_size=upload_size, upload_interval=upload_interval)
+        flush_interval = 0.5
+        flush_at = 10
+        consumer = Consumer(q, 'testsecret', flush_at=flush_at,
+                            flush_interval=flush_interval)
         with mock.patch('analytics.consumer.post') as mock_post:
             consumer.start()
-            for i in range(0, upload_size * 2):
+            for i in range(0, flush_at * 2):
                 track = {
                     'type': 'track',
                     'event': 'python event %d' % i,
                     'userId': 'userId'
                 }
                 q.put(track)
-            time.sleep(upload_interval * 1.1)
+            time.sleep(flush_interval * 1.1)
             self.assertEqual(mock_post.call_count, 2)
 
     def test_request(self):
@@ -123,7 +125,8 @@ class TestConsumer(unittest.TestCase):
                 except type(expected_exception) as exc:
                     self.assertEqual(exc, expected_exception)
                 else:
-                    self.fail("request() should raise an exception if still failing after %d retries" % consumer.retries)
+                    self.fail(
+                        "request() should raise an exception if still failing after %d retries" % consumer.retries)
 
     def test_request_retry(self):
         # we should retry on general errors
@@ -132,11 +135,13 @@ class TestConsumer(unittest.TestCase):
 
         # we should retry on server errors
         consumer = Consumer(None, 'testsecret')
-        self._test_request_retry(consumer, APIError(500, 'code', 'Internal Server Error'), 2)
+        self._test_request_retry(consumer, APIError(
+            500, 'code', 'Internal Server Error'), 2)
 
         # we should retry on HTTP 429 errors
         consumer = Consumer(None, 'testsecret')
-        self._test_request_retry(consumer, APIError(429, 'code', 'Too Many Requests'), 2)
+        self._test_request_retry(consumer, APIError(
+            429, 'code', 'Too Many Requests'), 2)
 
         # we should NOT retry on other client errors
         consumer = Consumer(None, 'testsecret')
@@ -150,7 +155,8 @@ class TestConsumer(unittest.TestCase):
 
         # test for number of exceptions raise > retries value
         consumer = Consumer(None, 'testsecret', retries=3)
-        self._test_request_retry(consumer, APIError(500, 'code', 'Internal Server Error'), 3)
+        self._test_request_retry(consumer, APIError(
+            500, 'code', 'Internal Server Error'), 3)
 
     def test_pause(self):
         consumer = Consumer(None, 'testsecret')
@@ -159,19 +165,22 @@ class TestConsumer(unittest.TestCase):
 
     def test_max_batch_size(self):
         q = Queue()
-        consumer = Consumer(q, 'testsecret', upload_size=100000, upload_interval=3)
+        consumer = Consumer(
+            q, 'testsecret', flush_at=100000, flush_interval=3)
         track = {
             'type': 'track',
             'event': 'python event',
             'userId': 'userId'
         }
         msg_size = len(json.dumps(track).encode())
-        n_msgs = int(475000 / msg_size)  # number of messages in a maximum-size batch
+        # number of messages in a maximum-size batch
+        n_msgs = int(475000 / msg_size)
 
         def mock_post_fn(_, data, **kwargs):
             res = mock.Mock()
             res.status_code = 200
-            self.assertTrue(len(data.encode()) < 500000, 'batch size (%d) exceeds 500KB limit' % len(data.encode()))
+            self.assertTrue(len(data.encode()) < 500000,
+                            'batch size (%d) exceeds 500KB limit' % len(data.encode()))
             return res
 
         with mock.patch('analytics.request._session.post', side_effect=mock_post_fn) as mock_post:
