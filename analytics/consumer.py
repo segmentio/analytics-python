@@ -23,14 +23,14 @@ class Consumer(Thread):
     """Consumes the messages from the client's queue."""
     log = logging.getLogger('segment')
 
-    def __init__(self, queue, write_key, upload_size=100, host=None, on_error=None,
-                 upload_interval=0.5, gzip=False, retries=10, timeout=15):
+    def __init__(self, queue, write_key, flush_at=100, host=None, on_error=None,
+                 flush_interval=0.5, gzip=False, retries=10, timeout=15):
         """Create a consumer thread."""
         Thread.__init__(self)
         # Make consumer a daemon thread so that it doesn't block program exit
         self.daemon = True
-        self.upload_size = upload_size
-        self.upload_interval = upload_interval
+        self.flush_at = flush_at
+        self.flush_interval = flush_interval
         self.write_key = write_key
         self.host = host
         self.on_error = on_error
@@ -84,20 +84,24 @@ class Consumer(Thread):
         start_time = monotonic.monotonic()
         total_size = 0
 
-        while len(items) < self.upload_size:
+        while len(items) < self.flush_at:
             elapsed = monotonic.monotonic() - start_time
-            if elapsed >= self.upload_interval:
+            if elapsed >= self.flush_interval:
                 break
             try:
-                item = queue.get(block=True, timeout=self.upload_interval - elapsed)
-                item_size = len(json.dumps(item, cls=DatetimeSerializer).encode())
+                item = queue.get(
+                    block=True, timeout=self.flush_interval - elapsed)
+                item_size = len(json.dumps(
+                    item, cls=DatetimeSerializer).encode())
                 if item_size > MAX_MSG_SIZE:
-                    self.log.error('Item exceeds 32kb limit, dropping. (%s)', str(item))
+                    self.log.error(
+                        'Item exceeds 32kb limit, dropping. (%s)', str(item))
                     continue
                 items.append(item)
                 total_size += item_size
                 if total_size >= BATCH_SIZE_LIMIT:
-                    self.log.debug('hit batch size limit (size: %d)', total_size)
+                    self.log.debug(
+                        'hit batch size limit (size: %d)', total_size)
                     break
             except Empty:
                 break
@@ -118,6 +122,7 @@ class Consumer(Thread):
 
         @backoff.on_exception(backoff.expo, Exception, max_tries=self.retries + 1, giveup=fatal_exception)
         def send_request():
-            post(self.write_key, self.host, gzip=self.gzip, timeout=self.timeout, batch=batch)
+            post(self.write_key, self.host, gzip=self.gzip,
+                 timeout=self.timeout, batch=batch)
 
         send_request()

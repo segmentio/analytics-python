@@ -25,9 +25,10 @@ class Client(object):
     """Create a new Segment client."""
     log = logging.getLogger('segment')
 
-    def __init__(self, write_key=None, host=None, debug=False, max_queue_size=10000,
-                 send=True, on_error=None, upload_size=100, upload_interval=0.5,
-                 gzip=False, max_retries=10, sync_mode=False, timeout=15):
+    def __init__(self, write_key=None, host=None, debug=False,
+                 max_queue_size=10000, send=True, on_error=None, flush_at=100,
+                 flush_interval=0.5, gzip=False, max_retries=3,
+                 sync_mode=False, timeout=15):
         require('write_key', write_key, string_types)
 
         self.queue = queue.Queue(max_queue_size)
@@ -47,7 +48,7 @@ class Client(object):
             self.consumer = None
         else:
             self.consumer = Consumer(self.queue, write_key, host=host, on_error=on_error,
-                                     upload_size=upload_size, upload_interval=upload_interval,
+                                     flush_at=flush_at, flush_interval=flush_interval,
                                      gzip=gzip, retries=max_retries, timeout=timeout)
 
             # if we've disabled sending, just don't start the consumer
@@ -239,7 +240,8 @@ class Client(object):
 
         if self.sync_mode:
             self.log.debug('enqueued with blocking %s.', msg['type'])
-            post(self.write_key, self.host, gzip=self.gzip, timeout=self.timeout, batch=[msg])
+            post(self.write_key, self.host, gzip=self.gzip,
+                 timeout=self.timeout, batch=[msg])
 
             return True, msg
 
@@ -279,6 +281,7 @@ def require(name, field, data_type):
     if not isinstance(field, data_type):
         msg = '{0} must have {1}, got: {2}'.format(name, data_type, field)
         raise AssertionError(msg)
+
 
 def stringify_id(val):
     if val is None:
