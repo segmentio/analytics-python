@@ -1,7 +1,7 @@
 ﻿analytics-python
 ==============
 
-[![CircleCI](https://circleci.com/gh/segmentio/analytics-python.svg?style=svg)](https://circleci.com/gh/segmentio/analytics-python)
+[![CircleCI](https://circleci.com/gh/segmentio/analytics-python.svg?style=svg&circle-token=b09aadca8e15901549cf885adcb8e1eaf671a5d8)](https://circleci.com/gh/segmentio/analytics-python)
 
 analytics-python is a python client for [Segment](https://segment.com)
 
