@@ -256,13 +256,14 @@ class TestClient(unittest.TestCase):
         # 1. client queue is empty
         # 2. consumer thread has stopped
         self.assertTrue(client.queue.empty())
-        self.assertFalse(client.consumer.is_alive())
+        for consumer in client.consumers:
+            self.assertFalse(consumer.is_alive())
 
     def test_synchronous(self):
         client = Client('testsecret', sync_mode=True)
 
         success, message = client.identify('userId')
-        self.assertIsNone(client.consumer)
+        self.assertFalse(client.consumers)
         self.assertTrue(client.queue.empty())
         self.assertTrue(success)
 
@@ -333,8 +334,10 @@ class TestClient(unittest.TestCase):
 
     def test_user_defined_timeout(self):
         client = Client('testsecret', timeout=10)
-        self.assertEquals(client.consumer.timeout, 10)
+        for consumer in client.consumers:
+            self.assertEquals(consumer.timeout, 10)
 
     def test_default_timeout_15(self):
         client = Client('testsecret')
-        self.assertEquals(client.consumer.timeout, 15)
+        for consumer in client.consumers:
+            self.assertEquals(consumer.timeout, 15)
