@@ -65,12 +65,14 @@ class TestUtils(unittest.TestCase):
         utils.clean(item)
 
     def test_clean_fn(self):
-        cleaned = utils.clean({ 'fn': lambda x: x, 'number': 4 })
+        cleaned = utils.clean({'fn': lambda x: x, 'number': 4})
         self.assertEqual(cleaned['number'], 4)
         # TODO: fixme, different behavior on python 2 and 3
         if 'fn' in cleaned:
             self.assertEqual(cleaned['fn'], None)
 
     def test_remove_slash(self):
-        self.assertEqual('http://segment.io', utils.remove_trailing_slash('http://segment.io/'))
-        self.assertEqual('http://segment.io', utils.remove_trailing_slash('http://segment.io'))
+        self.assertEqual('http://segment.io',
+                         utils.remove_trailing_slash('http://segment.io/'))
+        self.assertEqual('http://segment.io',
+                         utils.remove_trailing_slash('http://segment.io'))

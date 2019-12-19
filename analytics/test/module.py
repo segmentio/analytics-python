@@ -26,7 +26,7 @@ class TestModule(unittest.TestCase):
         analytics.flush()
 
     def test_identify(self):
-        analytics.identify('userId', { 'email': 'user@email.com' })
+        analytics.identify('userId', {'email': 'user@email.com'})
         analytics.flush()
 
     def test_group(self):
