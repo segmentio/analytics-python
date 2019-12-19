@@ -51,7 +51,8 @@ jobs:
     steps:
       - checkout
       - run: pip install --user .
-      - run: sudo pip install setuptools coverage pylint==1.9.3 pycodestyle
+      - run: sudo pip install setuptools coverage pylint==1.9.3 pycodestyle flake8
+      - run: flake8 --max-complexity=10 ./analytics
       - run: make test
       - run: make e2e_test
 
@@ -61,7 +62,8 @@ jobs:
     steps:
       - checkout
       - run: pip install --user .
-      - run: sudo pip install coverage pylint==1.9.3 pycodestyle
+      - run: sudo pip install coverage pylint==1.9.3 pycodestyle flake8
+      - run: flake8 --max-complexity=10 ./analytics
       - run: make test
       - run: make e2e_test
 
