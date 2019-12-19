@@ -14,7 +14,7 @@ from analytics.version import VERSION
 
 try:
     import queue
-except:
+except ImportError:
     import Queue as queue
 
 
@@ -48,17 +48,20 @@ class Client(object):
             self.consumers = None
         else:
             # On program exit, allow the consumer thread to exit cleanly.
-            # This prevents exceptions and a messy shutdown when the interpreter is
-            # destroyed before the daemon thread finishes execution. However, it
-            # is *not* the same as flushing the queue! To guarantee all messages
-            # have been delivered, you'll still need to call flush().
+            # This prevents exceptions and a messy shutdown when the
+            # interpreter is destroyed before the daemon thread finishes
+            # execution. However, it is *not* the same as flushing the queue!
+            # To guarantee all messages have been delivered, you'll still need
+            # to call flush().
             if send:
                 atexit.register(self.join)
             for n in range(thread):
                 self.consumers = []
-                consumer = Consumer(self.queue, write_key, host=host, on_error=on_error,
-                                    flush_at=flush_at, flush_interval=flush_interval,
-                                    gzip=gzip, retries=max_retries, timeout=timeout)
+                consumer = Consumer(
+                    self.queue, write_key, host=host, on_error=on_error,
+                    flush_at=flush_at, flush_interval=flush_interval,
+                    gzip=gzip, retries=max_retries, timeout=timeout,
+                )
                 self.consumers.append(consumer)
 
                 # if we've disabled sending, just don't start the consumer
@@ -87,7 +90,8 @@ class Client(object):
         return self._enqueue(msg)
 
     def track(self, user_id=None, event=None, properties=None, context=None,
-              timestamp=None, anonymous_id=None, integrations=None, message_id=None):
+              timestamp=None, anonymous_id=None, integrations=None,
+              message_id=None):
         properties = properties or {}
         context = context or {}
         integrations = integrations or {}
@@ -129,7 +133,8 @@ class Client(object):
         return self._enqueue(msg)
 
     def group(self, user_id=None, group_id=None, traits=None, context=None,
-              timestamp=None, anonymous_id=None, integrations=None, message_id=None):
+              timestamp=None, anonymous_id=None, integrations=None,
+              message_id=None):
         traits = traits or {}
         context = context or {}
         integrations = integrations or {}
@@ -266,7 +271,9 @@ class Client(object):
         self.log.debug('successfully flushed about %s items.', size)
 
     def join(self):
-        """Ends the consumer thread once the queue is empty. Blocks execution until finished"""
+        """Ends the consumer thread once the queue is empty.
+        Blocks execution until finished
+        """
         for consumer in self.consumers:
             consumer.pause()
             try:
