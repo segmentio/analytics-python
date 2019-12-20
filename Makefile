@@ -1,8 +1,6 @@
 test:
 	pylint --rcfile=.pylintrc --reports=y --exit-zero analytics | tee pylint.out
-	# fail on pycodestyle errors on the code change
-	git diff origin/master..HEAD analytics | pycodestyle --ignore=E501,W503 --diff --statistics --count
-	pycodestyle --ignore=E501,W503 --statistics analytics > pycodestyle.out || true
+	flake8 --max-complexity=10 --statistics analytics > flake8.out || true
 	coverage run --branch --include=analytics/\* --omit=*/test* setup.py test
 
 release:
