@@ -30,11 +30,13 @@ def post(write_key, host=None, gzip=False, timeout=15, **kwargs):
         headers['Content-Encoding'] = 'gzip'
         buf = BytesIO()
         with GzipFile(fileobj=buf, mode='w') as gz:
-            # 'data' was produced by json.dumps(), whose default encoding is utf-8.
+            # 'data' was produced by json.dumps(),
+            # whose default encoding is utf-8.
             gz.write(data.encode('utf-8'))
         data = buf.getvalue()
 
-    res = _session.post(url, data=data, auth=auth, headers=headers, timeout=timeout)
+    res = _session.post(url, data=data, auth=auth,
+                        headers=headers, timeout=timeout)
 
     if res.status_code == 200:
         log.debug('data uploaded successfully')

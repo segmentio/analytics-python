@@ -17,13 +17,15 @@ class TestRequests(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
 
     def test_invalid_request_error(self):
-        self.assertRaises(Exception, post, 'testsecret', 'https://api.segment.io', False, '[{]')
+        self.assertRaises(Exception, post, 'testsecret',
+                          'https://api.segment.io', False, '[{]')
 
     def test_invalid_host(self):
-        self.assertRaises(Exception, post, 'testsecret', 'api.segment.io/', batch=[])
+        self.assertRaises(Exception, post, 'testsecret',
+                          'api.segment.io/', batch=[])
 
     def test_datetime_serialization(self):
-        data = { 'created': datetime(2012, 3, 4, 5, 6, 7, 891011) }
+        data = {'created': datetime(2012, 3, 4, 5, 6, 7, 891011)}
         result = json.dumps(data, cls=DatetimeSerializer)
         self.assertEqual(result, '{"created": "2012-03-04T05:06:07.891011"}')
 
@@ -44,7 +46,7 @@ class TestRequests(unittest.TestCase):
 
     def test_should_timeout(self):
         with self.assertRaises(requests.ReadTimeout):
-            res = post('testsecret', batch=[{
+            post('testsecret', batch=[{
                 'userId': 'userId',
                 'event': 'python event',
                 'type': 'track'

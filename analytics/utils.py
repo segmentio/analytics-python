@@ -13,10 +13,13 @@ def is_naive(dt):
     """Determines if a given datetime.datetime is naive."""
     return dt.tzinfo is None or dt.tzinfo.utcoffset(dt) is None
 
+
 def total_seconds(delta):
     """Determines total seconds with python < 2.7 compat."""
     # http://stackoverflow.com/questions/3694835/python-2-6-5-divide-timedelta-with-timedelta
-    return (delta.microseconds + (delta.seconds + delta.days * 24 * 3600) * 1e6) / 1e6
+    return (delta.microseconds
+            + (delta.seconds + delta.days * 24 * 3600) * 1e6) / 1e6
+
 
 def guess_timezone(dt):
     """Attempts to convert a naive datetime to an aware datetime."""
@@ -34,10 +37,12 @@ def guess_timezone(dt):
 
     return dt
 
+
 def remove_trailing_slash(host):
     if host.endswith('/'):
-         return host[:-1]
+        return host[:-1]
     return host
+
 
 def clean(item):
     if isinstance(item, Decimal):
@@ -52,8 +57,10 @@ def clean(item):
     else:
         return _coerce_unicode(item)
 
+
 def _clean_list(list_):
     return [clean(item) for item in list_]
+
 
 def _clean_dict(dict_):
     data = {}
@@ -68,6 +75,7 @@ def _clean_dict(dict_):
             )
     return data
 
+
 def _coerce_unicode(cmplx):
     try:
         item = cmplx.decode("utf-8", "strict")
@@ -76,6 +84,4 @@ def _coerce_unicode(cmplx):
         item.decode("utf-8", "strict")
         log.warning('Error decoding: %s', item)
         return None
-    except:
-        raise
     return item

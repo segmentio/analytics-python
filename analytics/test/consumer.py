@@ -52,8 +52,9 @@ class TestConsumer(unittest.TestCase):
         self.assertTrue(success)
 
     def test_flush_interval(self):
-        # Put _n_ items in the queue, pausing a little bit more than _flush_interval_
-        # after each one. The consumer should upload _n_ times.
+        # Put _n_ items in the queue, pausing a little bit more than
+        # _flush_interval_ after each one.
+        # The consumer should upload _n_ times.
         q = Queue()
         flush_interval = 0.3
         consumer = Consumer(q, 'testsecret', flush_at=10,
@@ -71,8 +72,8 @@ class TestConsumer(unittest.TestCase):
             self.assertEqual(mock_post.call_count, 3)
 
     def test_multiple_uploads_per_interval(self):
-        # Put _flush_at*2_ items in the queue at once, then pause for _flush_interval_.
-        # The consumer should upload 2 times.
+        # Put _flush_at*2_ items in the queue at once, then pause for
+        # _flush_interval_. The consumer should upload 2 times.
         q = Queue()
         flush_interval = 0.5
         flush_at = 10
@@ -99,7 +100,8 @@ class TestConsumer(unittest.TestCase):
         }
         consumer.request([track])
 
-    def _test_request_retry(self, consumer, expected_exception, exception_count):
+    def _test_request_retry(self, consumer,
+                            expected_exception, exception_count):
 
         def mock_post(*args, **kwargs):
             mock_post.call_count += 1
@@ -107,26 +109,29 @@ class TestConsumer(unittest.TestCase):
                 raise expected_exception
         mock_post.call_count = 0
 
-        with mock.patch('analytics.consumer.post', mock.Mock(side_effect=mock_post)):
+        with mock.patch('analytics.consumer.post',
+                        mock.Mock(side_effect=mock_post)):
             track = {
                 'type': 'track',
                 'event': 'python event',
                 'userId': 'userId'
             }
-            # request() should succeed if the number of exceptions raised is less
-            # than the retries paramater.
+            # request() should succeed if the number of exceptions raised is
+            # less than the retries paramater.
             if exception_count <= consumer.retries:
                 consumer.request([track])
             else:
-                # if exceptions are raised more times than the retries parameter,
-                # we expect the exception to be returned to the caller.
+                # if exceptions are raised more times than the retries
+                # parameter, we expect the exception to be returned to
+                # the caller.
                 try:
                     consumer.request([track])
                 except type(expected_exception) as exc:
                     self.assertEqual(exc, expected_exception)
                 else:
                     self.fail(
-                        "request() should raise an exception if still failing after %d retries" % consumer.retries)
+                        "request() should raise an exception if still failing "
+                        "after %d retries" % consumer.retries)
 
     def test_request_retry(self):
         # we should retry on general errors
@@ -180,10 +185,12 @@ class TestConsumer(unittest.TestCase):
             res = mock.Mock()
             res.status_code = 200
             self.assertTrue(len(data.encode()) < 500000,
-                            'batch size (%d) exceeds 500KB limit' % len(data.encode()))
+                            'batch size (%d) exceeds 500KB limit'
+                            % len(data.encode()))
             return res
 
-        with mock.patch('analytics.request._session.post', side_effect=mock_post_fn) as mock_post:
+        with mock.patch('analytics.request._session.post',
+                        side_effect=mock_post_fn) as mock_post:
             consumer.start()
             for _ in range(0, n_msgs + 2):
                 q.put(track)
