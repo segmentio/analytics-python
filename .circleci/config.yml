@@ -43,7 +43,12 @@ jobs:
       - run: python setup.py egg_info
       - run: cp analytics_python.egg-info/requires.txt requirements.txt
       - run: pip install --user -r requirements.txt
-      - run: curl -sL https://raw.githubusercontent.com/segmentio/snyk_helpers/master/initialization/snyk.sh | sh
+      - run:
+          name: Snyk
+          command: curl -sL https://raw.githubusercontent.com/segmentio/snyk_helpers/master/initialization/snyk.sh | sh
+          environment:
+            SNYK_FAIL_ON: upgradable
+            SNYK_SEVERITY_THRESHOLD: high
 
   test_27:
     docker:
