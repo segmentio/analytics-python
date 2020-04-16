@@ -30,7 +30,10 @@ install_requires = [
 ]
 
 tests_require = [
-    "mock>=2.0.0"
+    "mock>=2.0.0",
+    "pylint==1.9.3",
+    "flake8>=3.7.9",
+    "coverage>=5.0"
 ]
 
 setup(
@@ -45,7 +48,9 @@ setup(
     packages=['analytics', 'analytics.test'],
     license='MIT License',
     install_requires=install_requires,
-    tests_require=tests_require,
+    extras_require={
+        'test': tests_require
+    },
     description='The hassle-free way to integrate analytics into any python application.',
     long_description=long_description,
     classifiers=[
