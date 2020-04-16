@@ -9,8 +9,7 @@ jobs:
       - image: circleci/python:2.7.15-stretch
     steps:
       - checkout
-      - run: pip install --user .
-      - run: sudo pip install coverage pylint==1.9.3 flake8
+      - run: pip install --user .[test]
       - run: make test
       - persist_to_workspace:
           root: .
@@ -27,7 +26,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace: { at: . }
-      - run: sudo pip install coverage
+      - run: pip install --user .[test]
       - run: coverage report --show-missing | tee /tmp/coverage
       - run: bash <(curl -s https://codecov.io/bash)
       - store_artifacts:
@@ -50,8 +49,7 @@ jobs:
       - image: circleci/python:2.7.15-stretch
     steps:
       - checkout
-      - run: pip install --user .
-      - run: sudo pip install setuptools coverage pylint==1.9.3 flake8
+      - run: pip install --user .[test]
       - run:
           name: Linting with Flake8
           command: |
@@ -64,8 +62,7 @@ jobs:
       - image: circleci/python:3.4.8-jessie-node
     steps:
       - checkout
-      - run: pip install --user .
-      - run: sudo pip install coverage pylint==1.9.3 flake8
+      - run: pip install --user .[test]
       - run:
           name: Linting with Flake8
           command: |
