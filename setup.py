@@ -36,6 +36,10 @@ tests_require = [
     "coverage>=5.0"
 ]
 
+# coverage >= 5 doesn't support Python 3.x <= 3.4
+if (sys.version_info.major == 3 and sys.version_info.minor < 5):
+    tests_require.remove("coverage>=5.0")
+
 setup(
     name='analytics-python',
     version=VERSION,
