@@ -6,7 +6,7 @@ defaults:
 jobs:
   build:
     docker:
-      - image: circleci/python:2.7.15-stretch
+      - image: circleci/python:2.7
     steps:
       - checkout
       - run: pip install --user .
@@ -23,7 +23,7 @@ jobs:
 
   coverage:
     docker:
-      - image: circleci/python:2.7.15-stretch
+      - image: circleci/python:2.7
     steps:
       - checkout
       - attach_workspace: { at: . }
@@ -36,22 +36,20 @@ jobs:
 
   snyk:
     docker:
-      - image: circleci/python:2.7.15-stretch
+      - image: circleci/python:3.8
     steps:
       - checkout
       - attach_workspace: { at: . }
-      - run: python setup.py egg_info
-      - run: cp analytics_python.egg-info/requires.txt requirements.txt
-      - run: pip install --user -r requirements.txt
+      - run: pip install dephell
+      - run: dephell deps convert --from=setup.py --to=requirements.txt
       - run: curl -sL https://raw.githubusercontent.com/segmentio/snyk_helpers/master/initialization/snyk.sh | sh
 
-  test_27:
+  test_27: &test
     docker:
-      - image: circleci/python:2.7.15-stretch
+      - image: circleci/python:2.7
     steps:
       - checkout
-      - run: pip install --user .
-      - run: sudo pip install coverage pylint==1.9.3 flake8 mock==3.0.5
+      - run: pip install --user .[test]
       - run:
           name: Linting with Flake8
           command: |
@@ -59,13 +57,17 @@ jobs:
       - run: make test
       - run: make e2e_test
 
-  test_34: &test_34
+  test_34:
     docker:
-      - image: circleci/python:3.4.8-jessie-node
+      - image: circleci/python:3.4
     steps:
       - checkout
-      - run: pip install --user .
+      - run: pip install --user .[test]
+
+      # The circleci/python:3.4 image doesn't set PATH correctly, so we need to
+      # install these by hand with sudo
       - run: sudo pip install coverage pylint==1.9.3 flake8 mock==3.0.5
+
       - run:
           name: Linting with Flake8
           command: |
@@ -74,28 +76,28 @@ jobs:
       - run: make e2e_test
 
   test_35:
-    <<: *test_34
+    <<: *test
     docker:
-      - image: circleci/python:3.5.5-jessie
+      - image: circleci/python:3.5
 
   test_36:
-    <<: *test_34
+    <<: *test
     docker:
-      - image: circleci/python:3.6.5-jessie
+      - image: circleci/python:3.6
 
   test_37:
-    <<: *test_34
+    <<: *test
     docker:
-      - image: circleci/python:3.7-stretch
+      - image: circleci/python:3.7
 
   test_38:
-    <<: *test_34
+    <<: *test
     docker:
-      - image: circleci/python:3.8-buster
+      - image: circleci/python:3.8
 
   publish:
     docker:
-      - image: circleci/python:3.6.5-jessie
+      - image: circleci/python:3.6
     steps:
       - checkout
       - run: sudo pip install twine
