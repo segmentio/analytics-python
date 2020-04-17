@@ -9,6 +9,7 @@ jobs:
       - image: circleci/python:2.7.15-stretch
     steps:
       - checkout
+      - run: sudo pip install --upgrade pip
       - run: pip install --user .[test]
       - run: make test
       - persist_to_workspace:
@@ -26,6 +27,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace: { at: . }
+      - run: sudo pip install --upgrade pip
       - run: pip install --user .[test]
       - run: coverage report --show-missing | tee /tmp/coverage
       - run: bash <(curl -s https://codecov.io/bash)
@@ -49,6 +51,7 @@ jobs:
       - image: circleci/python:2.7.15-stretch
     steps:
       - checkout
+      - run: sudo pip install --upgrade pip
       - run: pip install --user .[test]
       - run:
           name: Linting with Flake8
@@ -62,6 +65,7 @@ jobs:
       - image: circleci/python:3.4.8-jessie-node
     steps:
       - checkout
+      - run: sudo pip install --upgrade pip
       - run: pip install --user .[test]
       - run:
           name: Linting with Flake8
