@@ -62,11 +62,12 @@ jobs:
 
   test_34: &test_34
     docker:
-      - image: circleci/python:3.4
+      - image: circleci/python:3.4-stretch-node
     steps:
       - checkout
       - run: sudo pip install --upgrade pip
       - run: pip install --user .[test]
+      - run: sudo pip install coverage pylint==1.9.3 flake8
       - run:
           name: Linting with Flake8
           command: |
