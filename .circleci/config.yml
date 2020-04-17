@@ -10,7 +10,7 @@ jobs:
     steps:
       - checkout
       - run: pip install --user .
-      - run: sudo pip install coverage pylint==1.9.3 flake8
+      - run: sudo pip install coverage pylint==1.9.3 flake8 mock==3.0.5
       - run: make test
       - persist_to_workspace:
           root: .
@@ -51,7 +51,7 @@ jobs:
     steps:
       - checkout
       - run: pip install --user .
-      - run: sudo pip install setuptools coverage pylint==1.9.3 flake8
+      - run: sudo pip install coverage pylint==1.9.3 flake8 mock==3.0.5
       - run:
           name: Linting with Flake8
           command: |
@@ -65,7 +65,7 @@ jobs:
     steps:
       - checkout
       - run: pip install --user .
-      - run: sudo pip install coverage pylint==1.9.3 flake8
+      - run: sudo pip install coverage pylint==1.9.3 flake8 mock==3.0.5
       - run:
           name: Linting with Flake8
           command: |
