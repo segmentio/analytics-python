@@ -6,7 +6,7 @@ defaults:
 jobs:
   build:
     docker:
-      - image: circleci/python:2.7.15-stretch
+      - image: circleci/python:2.7
     steps:
       - checkout
       - run: sudo pip install --upgrade pip
@@ -23,7 +23,7 @@ jobs:
 
   coverage:
     docker:
-      - image: circleci/python:2.7.15-stretch
+      - image: circleci/python:2.7
     steps:
       - checkout
       - attach_workspace: { at: . }
@@ -37,7 +37,7 @@ jobs:
 
   snyk:
     docker:
-      - image: circleci/python:2.7.15-stretch
+      - image: circleci/python:2.7
     steps:
       - checkout
       - attach_workspace: { at: . }
@@ -48,7 +48,7 @@ jobs:
 
   test_27:
     docker:
-      - image: circleci/python:2.7.15-stretch
+      - image: circleci/python:2.7
     steps:
       - checkout
       - run: sudo pip install --upgrade pip
@@ -62,7 +62,7 @@ jobs:
 
   test_34: &test_34
     docker:
-      - image: circleci/python:3.4.8-jessie-node
+      - image: circleci/python:3.4
     steps:
       - checkout
       - run: sudo pip install --upgrade pip
@@ -77,26 +77,26 @@ jobs:
   test_35:
     <<: *test_34
     docker:
-      - image: circleci/python:3.5.5-jessie
+      - image: circleci/python:3.5
 
   test_36:
     <<: *test_34
     docker:
-      - image: circleci/python:3.6.5-jessie
+      - image: circleci/python:3.6
 
   test_37:
     <<: *test_34
     docker:
-      - image: circleci/python:3.7-stretch
+      - image: circleci/python:3.7
 
   test_38:
     <<: *test_34
     docker:
-      - image: circleci/python:3.8-buster
+      - image: circleci/python:3.8
 
   publish:
     docker:
-      - image: circleci/python:3.6.5-jessie
+      - image: circleci/python:3.6
     steps:
       - checkout
       - run: sudo pip install twine
