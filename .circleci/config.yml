@@ -36,13 +36,12 @@ jobs:
 
   snyk:
     docker:
-      - image: circleci/python:2.7
+      - image: circleci/python:3.8
     steps:
       - checkout
       - attach_workspace: { at: . }
-      - run: python setup.py egg_info
-      - run: cp analytics_python.egg-info/requires.txt requirements.txt
-      - run: pip install --user -r requirements.txt
+      - run: pip install dephell
+      - run: dephell deps convert --from=setup.py --to=requirements.txt
       - run: curl -sL https://raw.githubusercontent.com/segmentio/snyk_helpers/master/initialization/snyk.sh | sh
 
   test_27:
