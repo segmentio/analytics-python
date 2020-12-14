@@ -1,4 +1,9 @@
-1.3.0 / 2018-10-10
+1.3.0-beta1 / 2019-04-27
+==================
+ 
+  * Add `sync_mode` option ([#147](https://github.com/segmentio/analytics-python/pull/147))
+
+1.3.0-beta0 / 2018-10-10
 ==================
 
   * Add User-Agent header to messages
@@ -12,7 +17,6 @@
   * Drop messages greater than 32kb
   * Allow user-defined upload size
   * Support custom messageId
-  * Add `sync_mode` option ([#147](https://github.com/segmentio/analytics-python/pull/147))
 
 1.2.9 / 2017-11-28
 ==================
