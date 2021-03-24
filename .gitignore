@@ -7,3 +7,4 @@ MANIFEST
 build
 .eggs
 *.bat
+.vscode/
