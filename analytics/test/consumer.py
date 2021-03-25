@@ -91,7 +91,8 @@ class TestConsumer(unittest.TestCase):
             time.sleep(flush_interval * 1.1)
             self.assertEqual(mock_post.call_count, 2)
 
-    def test_request(self):
+    @classmethod
+    def test_request(cls):
         consumer = Consumer(None, 'testsecret')
         track = {
             'type': 'track',

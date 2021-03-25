@@ -1,11 +1,11 @@
 from datetime import date, datetime
-from dateutil.tz import tzutc
+from io import BytesIO
+from gzip import GzipFile
 import logging
 import json
-from gzip import GzipFile
+from dateutil.tz import tzutc
 from requests.auth import HTTPBasicAuth
 from requests import sessions
-from io import BytesIO
 
 from analytics.version import VERSION
 from analytics.utils import remove_trailing_slash
@@ -46,13 +46,14 @@ def post(write_key, host=None, gzip=False, timeout=15, **kwargs):
         payload = res.json()
         log.debug('received response: %s', payload)
         raise APIError(res.status_code, payload['code'], payload['message'])
-    except ValueError:
-        raise APIError(res.status_code, 'unknown', res.text)
+    except ValueError as value_error:
+        raise APIError(res.status_code, 'unknown', res.text) from value_error
 
 
 class APIError(Exception):
 
     def __init__(self, status, code, message):
+        super().__init__(self, message)
         self.message = message
         self.status = status
         self.code = code

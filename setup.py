@@ -1,6 +1,6 @@
-from version import VERSION
 import os
 import sys
+from analytics.version import VERSION
 
 try:
     from setuptools import setup

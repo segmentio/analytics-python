@@ -73,7 +73,7 @@ class Consumer(Thread):
                 self.on_error(e, batch)
         finally:
             # mark items as acknowledged from queue
-            for item in batch:
+            for _ in batch:
                 self.queue.task_done()
             return success
 
