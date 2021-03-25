@@ -1,7 +1,7 @@
 ﻿analytics-python
 ==============
 
-[![CircleCI](https://circleci.com/gh/north-two-five/analytics-python.svg?style=svg&circle-token=7f225692265ab09f1dbe3f3a672efa137b1cfced)](https://circleci.com/gh/north-two-five/analytics-python)
+[![CircleCI](https://circleci.com/gh/North-Two-Five/analytics-python.svg?style=svg&circle-token=7f225692265ab09f1dbe3f3a672efa137b1cfced)](https://circleci.com/gh/North-Two-Five/analytics-python)
 
 analytics-python is a python client for [Segment](https://segment.com)
 
