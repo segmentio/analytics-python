@@ -53,7 +53,6 @@ def post(write_key, host=None, gzip=False, timeout=15, **kwargs):
 class APIError(Exception):
 
     def __init__(self, status, code, message):
-        super().__init__(self, message)
         self.message = message
         self.status = status
         self.code = code
