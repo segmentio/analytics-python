@@ -55,7 +55,7 @@ class Client(object):
             # to call flush().
             if send:
                 atexit.register(self.join)
-            for n in range(thread):
+            for _ in range(thread):
                 self.consumers = []
                 consumer = Consumer(
                     self.queue, write_key, host=host, on_error=on_error,
