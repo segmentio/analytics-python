@@ -322,7 +322,7 @@ class TestClient(unittest.TestCase):
                         flush_at=10, flush_interval=3)
 
         def mock_post_fn(*args, **kwargs):
-            self.assertEquals(len(kwargs['batch']), 10)
+            self.assertEqual(len(kwargs['batch']), 10)
 
         # the post function should be called 2 times, with a batch size of 10
         # each time.
@@ -331,14 +331,14 @@ class TestClient(unittest.TestCase):
             for _ in range(20):
                 client.identify('userId', {'trait': 'value'})
             time.sleep(1)
-            self.assertEquals(mock_post.call_count, 2)
+            self.assertEqual(mock_post.call_count, 2)
 
     def test_user_defined_timeout(self):
         client = Client('testsecret', timeout=10)
         for consumer in client.consumers:
-            self.assertEquals(consumer.timeout, 10)
+            self.assertEqual(consumer.timeout, 10)
 
     def test_default_timeout_15(self):
         client = Client('testsecret')
         for consumer in client.consumers:
-            self.assertEquals(consumer.timeout, 15)
+            self.assertEqual(consumer.timeout, 15)
