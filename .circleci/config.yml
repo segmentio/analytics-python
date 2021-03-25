@@ -1,4 +1,4 @@
-version: 2
+version: 3
 defaults:
   taggedReleasesFilter: &taggedReleasesFilter
     tags:
@@ -6,7 +6,7 @@ defaults:
 jobs:
   build:
     docker:
-      - image: circleci/python:2.7
+      - image: circleci/python:3.8
     steps:
       - checkout
       - run: pip install --user .
@@ -23,7 +23,7 @@ jobs:
 
   coverage:
     docker:
-      - image: circleci/python:2.7
+      - image: circleci/python:3.8
     steps:
       - checkout
       - attach_workspace: { at: . }
