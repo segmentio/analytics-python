@@ -46,8 +46,8 @@ def post(write_key, host=None, gzip=False, timeout=15, **kwargs):
         payload = res.json()
         log.debug('received response: %s', payload)
         raise APIError(res.status_code, payload['code'], payload['message'])
-    except ValueError as value_error:
-        raise APIError(res.status_code, 'unknown', res.text) from value_error
+    except ValueError:
+        raise APIError(res.status_code, 'unknown', res.text)
 
 
 class APIError(Exception):
