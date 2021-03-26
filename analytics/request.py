@@ -1,11 +1,11 @@
 from datetime import date, datetime
-from dateutil.tz import tzutc
+from io import BytesIO
+from gzip import GzipFile
 import logging
 import json
-from gzip import GzipFile
+from dateutil.tz import tzutc
 from requests.auth import HTTPBasicAuth
 from requests import sessions
-from io import BytesIO
 
 from analytics.version import VERSION
 from analytics.utils import remove_trailing_slash

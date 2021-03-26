@@ -56,7 +56,8 @@ class TestUtils(unittest.TestCase):
         }
         self.assertEqual(dict_with_dates, utils.clean(dict_with_dates))
 
-    def test_bytes(self):
+    @classmethod
+    def test_bytes(cls):
         if six.PY3:
             item = bytes(10)
         else:
@@ -67,7 +68,6 @@ class TestUtils(unittest.TestCase):
     def test_clean_fn(self):
         cleaned = utils.clean({'fn': lambda x: x, 'number': 4})
         self.assertEqual(cleaned['number'], 4)
-        # TODO: fixme, different behavior on python 2 and 3
         if 'fn' in cleaned:
             self.assertEqual(cleaned['fn'], None)
 

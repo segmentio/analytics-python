@@ -91,7 +91,8 @@ class TestConsumer(unittest.TestCase):
             time.sleep(flush_interval * 1.1)
             self.assertEqual(mock_post.call_count, 2)
 
-    def test_request(self):
+    @classmethod
+    def test_request(cls):
         consumer = Consumer(None, 'testsecret')
         track = {
             'type': 'track',
@@ -195,4 +196,4 @@ class TestConsumer(unittest.TestCase):
             for _ in range(0, n_msgs + 2):
                 q.put(track)
             q.join()
-            self.assertEquals(mock_post.call_count, 2)
+            self.assertEqual(mock_post.call_count, 2)

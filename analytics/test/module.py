@@ -5,8 +5,8 @@ import analytics
 
 class TestModule(unittest.TestCase):
 
-    def failed(self):
-        self.failed = True
+    # def failed(self):
+    #     self.failed = True
 
     def setUp(self):
         self.failed = False

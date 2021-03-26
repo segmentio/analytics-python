@@ -1,8 +1,8 @@
 from datetime import date, datetime
 import unittest
+import time
 import six
 import mock
-import time
 
 from analytics.version import VERSION
 from analytics.client import Client
@@ -238,8 +238,8 @@ class TestClient(unittest.TestCase):
     def test_flush(self):
         client = self.client
         # set up the consumer with more requests than a single batch will allow
-        for i in range(1000):
-            success, msg = client.identify('userId', {'trait': 'value'})
+        for _ in range(1000):
+            _, _ = client.identify('userId', {'trait': 'value'})
         # We can't reliably assert that the queue is non-empty here; that's
         # a race condition. We do our best to load it up though.
         client.flush()
@@ -249,8 +249,8 @@ class TestClient(unittest.TestCase):
     def test_shutdown(self):
         client = self.client
         # set up the consumer with more requests than a single batch will allow
-        for i in range(1000):
-            success, msg = client.identify('userId', {'trait': 'value'})
+        for _ in range(1000):
+            _, _ = client.identify('userId', {'trait': 'value'})
         client.shutdown()
         # we expect two things after shutdown:
         # 1. client queue is empty
@@ -262,7 +262,7 @@ class TestClient(unittest.TestCase):
     def test_synchronous(self):
         client = Client('testsecret', sync_mode=True)
 
-        success, message = client.identify('userId')
+        success, _ = client.identify('userId')
         self.assertFalse(client.consumers)
         self.assertTrue(client.queue.empty())
         self.assertTrue(success)
@@ -272,10 +272,10 @@ class TestClient(unittest.TestCase):
         # Ensure consumer thread is no longer uploading
         client.join()
 
-        for i in range(10):
+        for _ in range(10):
             client.identify('userId')
 
-        success, msg = client.identify('userId')
+        success, _ = client.identify('userId')
         # Make sure we are informed that the queue is at capacity
         self.assertFalse(success)
 
@@ -322,7 +322,7 @@ class TestClient(unittest.TestCase):
                         flush_at=10, flush_interval=3)
 
         def mock_post_fn(*args, **kwargs):
-            self.assertEquals(len(kwargs['batch']), 10)
+            self.assertEqual(len(kwargs['batch']), 10)
 
         # the post function should be called 2 times, with a batch size of 10
         # each time.
@@ -331,14 +331,14 @@ class TestClient(unittest.TestCase):
             for _ in range(20):
                 client.identify('userId', {'trait': 'value'})
             time.sleep(1)
-            self.assertEquals(mock_post.call_count, 2)
+            self.assertEqual(mock_post.call_count, 2)
 
     def test_user_defined_timeout(self):
         client = Client('testsecret', timeout=10)
         for consumer in client.consumers:
-            self.assertEquals(consumer.timeout, 10)
+            self.assertEqual(consumer.timeout, 10)
 
     def test_default_timeout_15(self):
         client = Client('testsecret')
         for consumer in client.consumers:
-            self.assertEquals(consumer.timeout, 15)
+            self.assertEqual(consumer.timeout, 15)

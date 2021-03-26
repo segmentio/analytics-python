@@ -1,8 +1,9 @@
-from dateutil.tz import tzlocal, tzutc
-from datetime import date, datetime
-from decimal import Decimal
 import logging
 import numbers
+
+from decimal import Decimal
+from datetime import date, datetime
+from dateutil.tz import tzlocal, tzutc
 
 import six
 
@@ -31,9 +32,8 @@ def guess_timezone(dt):
             # this was created using datetime.datetime.now()
             # so we are in the local timezone
             return dt.replace(tzinfo=tzlocal())
-        else:
-            # at this point, the best we can do is guess UTC
-            return dt.replace(tzinfo=tzutc())
+        # at this point, the best we can do is guess UTC
+        return dt.replace(tzinfo=tzutc())
 
     return dt
 
