@@ -342,3 +342,8 @@ class TestClient(unittest.TestCase):
         client = Client('testsecret')
         for consumer in client.consumers:
             self.assertEqual(consumer.timeout, 15)
+
+    def test_proxies(self):
+        client = Client('testsecret', proxies='203.243.63.16:80')
+        success, msg = client.identify('userId', {'trait': 'value'})
+        self.assertTrue(success)

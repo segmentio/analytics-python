@@ -28,7 +28,7 @@ class Client(object):
     def __init__(self, write_key=None, host=None, debug=False,
                  max_queue_size=10000, send=True, on_error=None, flush_at=100,
                  flush_interval=0.5, gzip=False, max_retries=3,
-                 sync_mode=False, timeout=15, thread=1):
+                 sync_mode=False, timeout=15, thread=1, proxies=None):
         require('write_key', write_key, string_types)
 
         self.queue = queue.Queue(max_queue_size)
@@ -40,6 +40,7 @@ class Client(object):
         self.host = host
         self.gzip = gzip
         self.timeout = timeout
+        self.proxies = proxies
 
         if debug:
             self.log.setLevel(logging.DEBUG)
@@ -61,6 +62,7 @@ class Client(object):
                     self.queue, write_key, host=host, on_error=on_error,
                     flush_at=flush_at, flush_interval=flush_interval,
                     gzip=gzip, retries=max_retries, timeout=timeout,
+                    proxies=proxies,
                 )
                 self.consumers.append(consumer)
 
@@ -250,7 +252,7 @@ class Client(object):
         if self.sync_mode:
             self.log.debug('enqueued with blocking %s.', msg['type'])
             post(self.write_key, self.host, gzip=self.gzip,
-                 timeout=self.timeout, batch=[msg])
+                 timeout=self.timeout, proxies=self.proxies, batch=[msg])
 
             return True, msg
 
