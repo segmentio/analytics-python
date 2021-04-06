@@ -61,7 +61,8 @@ class Client(object):
                 consumer = Consumer(
                     self.queue, write_key, host=host, on_error=on_error,
                     flush_at=flush_at, flush_interval=flush_interval,
-                    gzip=gzip, retries=max_retries, timeout=timeout, proxies=proxies,
+                    gzip=gzip, retries=max_retries, timeout=timeout, 
+                    proxies=proxies,
                 )
                 self.consumers.append(consumer)
 
