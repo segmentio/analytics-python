@@ -51,3 +51,12 @@ class TestRequests(unittest.TestCase):
                 'event': 'python event',
                 'type': 'track'
             }], timeout=0.0001)
+
+    def test_proxies(self):
+        res = post('testsecret',batch=[{
+                'userId': 'userId',
+                'event': 'python event',
+                'type': 'track',
+                'proxies': '203.243.63.16:80'
+                }])
+        self.assertEqual(res.status_code, 200)
