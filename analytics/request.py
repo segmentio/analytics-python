@@ -13,7 +13,7 @@ from analytics.utils import remove_trailing_slash
 _session = sessions.Session()
 
 
-def post(write_key, host=None, gzip=False, timeout=15, **kwargs):
+def post(write_key, host=None, gzip=False, timeout=15, proxies=None, **kwargs):
     """Post the `kwargs` to the API"""
     log = logging.getLogger('segment')
     body = kwargs
@@ -34,6 +34,16 @@ def post(write_key, host=None, gzip=False, timeout=15, **kwargs):
             # whose default encoding is utf-8.
             gz.write(data.encode('utf-8'))
         data = buf.getvalue()
+
+    kwargs = {
+        "data": data,
+        "auth": auth,
+        "headers": headers,
+        "timeout": 15,
+    }
+
+    if proxies:
+        kwargs['proxies'] = proxies
 
     res = _session.post(url, data=data, auth=auth,
                         headers=headers, timeout=timeout)
