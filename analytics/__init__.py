@@ -69,9 +69,9 @@ def _proxy(method, *args, **kwargs):
     """Create an analytics client if one doesn't exist and send to it."""
     global default_client
     if not default_client:
-        default_client = Client(write_key, host=host, debug=debug, 
+        default_client = Client(write_key, host=host, debug=debug,
                                 max_queue_size=max_queue_size,
-                                send=send, on_error=on_error, 
+                                send=send, on_error=on_error,
                                 gzip=gzip, max_retries=max_retries,
                                 sync_mode=sync_mode, timeout=timeout)
 
