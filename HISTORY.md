@@ -1,3 +1,9 @@
+1.3.0-beta2 / 2020-04-23
+==================
+  * Fix linting code and readme heling basic things.
+  * Add support for HTTP proxy
+  * Allows more settings to be configured from singleton
+  
 1.3.0-beta1 / 2019-04-27
 ==================
  
