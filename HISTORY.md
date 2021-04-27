@@ -1,4 +1,4 @@
-1.3.0-beta2 / 2020-04-23
+1.3.1 / 2021-04-23
 ==================
   * Fix linting code and readme heling basic things.
   * Add support for HTTP proxy
