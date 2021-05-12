@@ -21,19 +21,6 @@ jobs:
       - store_artifacts:
           path: flake8.out
 
-  coverage:
-    docker:
-      - image: circleci/python:2.7
-    steps:
-      - checkout
-      - attach_workspace: { at: . }
-      - run: sudo pip install coverage
-      - run: coverage report --show-missing | tee /tmp/coverage
-      - run: bash <(curl -s https://codecov.io/bash)
-      - store_artifacts:
-          path: /tmp/coverage
-          destination: test-coverage
-
   snyk:
     docker:
       - image: circleci/python:3.8
