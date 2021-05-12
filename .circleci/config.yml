@@ -10,12 +10,10 @@ jobs:
     steps:
       - checkout
       - run: pip install --user .
-      - run: sudo pip install coverage pylint==1.9.3 flake8 mock==3.0.5
+      - run: sudo pip install pylint==1.9.3 flake8 mock==3.0.5
       - run: make test
       - persist_to_workspace:
           root: .
-          paths:
-            - .coverage
       - store_artifacts:
           path: pylint.out
       - store_artifacts:
@@ -109,9 +107,6 @@ workflows:
   static_analysis:
     jobs:
       - build
-      - coverage:
-          requires:
-            - build
       - snyk:
           context: snyk
           requires:
