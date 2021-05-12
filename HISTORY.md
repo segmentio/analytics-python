@@ -1,4 +1,4 @@
-1.3.1 / 2021-04-23
+1.3.1 / 2021-05-12
 ==================
   * Fix linting code and readme heling basic things.
   * Add support for HTTP proxy
