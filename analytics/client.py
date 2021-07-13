@@ -35,8 +35,8 @@ class Client(object):
         max_retries = 10
         proxies = None
         thread = 1
-        flush_interval = 0.5
-        flush_at = 100
+        upload_interval = 0.5
+        upload_size = 100
         max_retries = 10
 
     """Create a new Segment client."""
@@ -55,8 +55,8 @@ class Client(object):
                  timeout=DefaultConfig.timeout,
                  proxies=DefaultConfig.proxies,
                  thread=DefaultConfig.thread,
-                 flush_at=DefaultConfig.flush_at,
-                 flush_interval=DefaultConfig.flush_interval,):
+                 upload_size=DefaultConfig.upload_size,
+                 upload_interval=DefaultConfig.upload_interval,):
         require('write_key', write_key, string_types)
 
         self.queue = queue.Queue(max_queue_size)
@@ -88,7 +88,7 @@ class Client(object):
                 self.consumers = []
                 consumer = Consumer(
                     self.queue, write_key, host=host, on_error=on_error,
-                    flush_at=flush_at, flush_interval=flush_interval,
+                    upload_size=upload_size, upload_interval=upload_interval,
                     gzip=gzip, retries=max_retries, timeout=timeout,
                     proxies=proxies,
                 )

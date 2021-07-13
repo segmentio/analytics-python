@@ -317,9 +317,9 @@ class TestClient(unittest.TestCase):
         client.flush()
         self.assertFalse(self.failed)
 
-    def test_user_defined_flush_at(self):
+    def test_user_defined_upload_size(self):
         client = Client('testsecret', on_error=self.fail,
-                        flush_at=10, flush_interval=3)
+                        upload_size=10, upload_interval=3)
 
         def mock_post_fn(*args, **kwargs):
             self.assertEqual(len(kwargs['batch']), 10)
