@@ -23,12 +23,12 @@ class TestConsumer(unittest.TestCase):
 
     def test_next_limit(self):
         q = Queue()
-        flush_at = 50
-        consumer = Consumer(q, '', flush_at)
+        upload_size = 50
+        consumer = Consumer(q, '', upload_size)
         for i in range(10000):
             q.put(i)
         next = consumer.next()
-        self.assertEqual(next, list(range(flush_at)))
+        self.assertEqual(next, list(range(upload_size)))
 
     def test_dropping_oversize_msg(self):
         q = Queue()
@@ -51,14 +51,14 @@ class TestConsumer(unittest.TestCase):
         success = consumer.upload()
         self.assertTrue(success)
 
-    def test_flush_interval(self):
+    def test_upload_interval(self):
         # Put _n_ items in the queue, pausing a little bit more than
-        # _flush_interval_ after each one.
+        # _upload_interval_ after each one.
         # The consumer should upload _n_ times.
         q = Queue()
-        flush_interval = 0.3
-        consumer = Consumer(q, 'testsecret', flush_at=10,
-                            flush_interval=flush_interval)
+        upload_interval = 0.3
+        consumer = Consumer(q, 'testsecret', upload_size=10,
+                            upload_interval=upload_interval)
         with mock.patch('analytics.consumer.post') as mock_post:
             consumer.start()
             for i in range(0, 3):
@@ -68,27 +68,27 @@ class TestConsumer(unittest.TestCase):
                     'userId': 'userId'
                 }
                 q.put(track)
-                time.sleep(flush_interval * 1.1)
+                time.sleep(upload_interval * 1.1)
             self.assertEqual(mock_post.call_count, 3)
 
     def test_multiple_uploads_per_interval(self):
-        # Put _flush_at*2_ items in the queue at once, then pause for
-        # _flush_interval_. The consumer should upload 2 times.
+        # Put _upload_size*2_ items in the queue at once, then pause for
+        # _upload_interval_. The consumer should upload 2 times.
         q = Queue()
-        flush_interval = 0.5
-        flush_at = 10
-        consumer = Consumer(q, 'testsecret', flush_at=flush_at,
-                            flush_interval=flush_interval)
+        upload_interval = 0.5
+        upload_size = 10
+        consumer = Consumer(q, 'testsecret', upload_size=upload_size,
+                            upload_interval=upload_interval)
         with mock.patch('analytics.consumer.post') as mock_post:
             consumer.start()
-            for i in range(0, flush_at * 2):
+            for i in range(0, upload_size * 2):
                 track = {
                     'type': 'track',
                     'event': 'python event %d' % i,
                     'userId': 'userId'
                 }
                 q.put(track)
-            time.sleep(flush_interval * 1.1)
+            time.sleep(upload_interval * 1.1)
             self.assertEqual(mock_post.call_count, 2)
 
     @classmethod
@@ -172,7 +172,7 @@ class TestConsumer(unittest.TestCase):
     def test_max_batch_size(self):
         q = Queue()
         consumer = Consumer(
-            q, 'testsecret', flush_at=100000, flush_interval=3)
+            q, 'testsecret', upload_size=100000, upload_interval=3)
         track = {
             'type': 'track',
             'event': 'python event',
