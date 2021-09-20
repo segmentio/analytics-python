@@ -26,6 +26,7 @@ jobs:
       - run: pip3 install dephell
       - run: pip3 install --user appdirs      
       - run: dephell deps convert --from=setup.py --to=requirements.txt
+      - run: pip3 install -r requirements.txt
       - run: curl -sL https://raw.githubusercontent.com/segmentio/snyk_helpers/master/initialization/snyk.sh | sh
 
   test_27: &test
