@@ -23,7 +23,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace: { at: . }
-      - run: pip install dephell
+      - run: pip3 install dephell
       - run: dephell deps convert --from=setup.py --to=requirements.txt
       - run: curl -sL https://raw.githubusercontent.com/segmentio/snyk_helpers/master/initialization/snyk.sh | sh
 
