@@ -10,7 +10,7 @@ jobs:
     steps:
       - checkout
       - run: pip install --user .
-      - run: sudo pip install pylint==1.9.3 flake8 mock==3.0.5
+      - run: sudo pip install pylint==2.7.0 flake8 mock==3.0.5
       - run: make test
       - store_artifacts:
           path: pylint.out
