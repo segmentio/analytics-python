@@ -52,9 +52,14 @@ jobs:
     docker:
       - image: circleci/python:3.8
 
+  test_39:
+    <<: *test
+    docker:
+      - image: circleci/python:3.9
+
   publish:
     docker:
-      - image: circleci/python:3.6
+      - image: circleci/python:3.9
     steps:
       - checkout
       - run: sudo pip install twine
@@ -76,12 +81,16 @@ workflows:
       - test_38:
           filters:
             <<: *taggedReleasesFilter
+      - test_39:
+          filters:
+            <<: *taggedReleasesFilter
       - publish:
           requires:
             - build
             - test_36
             - test_37
             - test_38
+            - test_39
           filters:
             <<: *taggedReleasesFilter
             branches:
