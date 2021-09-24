@@ -34,7 +34,7 @@ jobs:
       - image: circleci/python:3.6
     steps:
       - checkout
-      - run: pip install --user .[test]
+      - run: pip3 install --user .[test]
       - run:
           name: Linting with Flake8
           command: |
