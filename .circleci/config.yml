@@ -9,8 +9,8 @@ jobs:
       - image: circleci/python:3.8
     steps:
       - checkout
-      - run: pip install --user .
-      - run: sudo pip3 install pylint==2.7.0 flake8 mock==3.0.5
+      - run: pip3 install --user .
+      - run: sudo pip3 install pylint==2.7.8 flake8 mock==3.0.5
       - run: make test
       - store_artifacts:
           path: pylint.out
