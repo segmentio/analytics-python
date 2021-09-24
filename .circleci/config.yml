@@ -6,11 +6,11 @@ defaults:
 jobs:
   build:
     docker:
-      - image: circleci/python:2.7
+      - image: circleci/python:3.8
     steps:
       - checkout
       - run: pip install --user .
-      - run: sudo pip install pylint==1.9.3 flake8 mock==3.0.5
+      - run: sudo pip3 install pylint==2.7.8 flake8 mock==3.0.5
       - run: make test
       - store_artifacts:
           path: pylint.out
@@ -29,9 +29,9 @@ jobs:
       - run: pip3 install --user -r requirements.txt
       - run: curl -sL https://raw.githubusercontent.com/segmentio/snyk_helpers/master/initialization/snyk.sh | sh
 
-  test_27: &test
+  test_36: &test
     docker:
-      - image: circleci/python:2.7
+      - image: circleci/python:3.6
     steps:
       - checkout
       - run: pip install --user .[test]
@@ -41,16 +41,6 @@ jobs:
             git diff origin/master..HEAD analytics | flake8 --diff --max-complexity=10 analytics
       - run: make test
       - run: make e2e_test
-  
-  test_35:
-    <<: *test
-    docker:
-      - image: circleci/python:3.5
-
-  test_36:
-    <<: *test
-    docker:
-      - image: circleci/python:3.6
 
   test_37:
     <<: *test
@@ -77,12 +67,6 @@ workflows:
       - build:
           filters:
             <<: *taggedReleasesFilter
-      - test_27:
-          filters:
-            <<: *taggedReleasesFilter
-      - test_35:
-          filters:
-            <<: *taggedReleasesFilter
       - test_36:
           filters:
             <<: *taggedReleasesFilter
@@ -95,8 +79,6 @@ workflows:
       - publish:
           requires:
             - build
-            - test_27
-            - test_35
             - test_36
             - test_37
             - test_38
@@ -121,6 +103,6 @@ workflows:
                 - master
                 - scheduled_e2e_testing
     jobs:
-      - test_27
-      - test_35
-      - test_36
+      - test_36      
+      - test_37
+      - test_38
