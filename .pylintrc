@@ -49,7 +49,9 @@ confidence=
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
-disable=print-statement,
+disable=too-many-public-methods,
+        no-else-return,
+        print-statement,
         invalid-name,
         global-statement,
         too-many-arguments,
@@ -466,7 +468,7 @@ max-bool-expr=5
 max-branches=12
 
 # Maximum number of locals for function / method body
-max-locals=15
+max-locals=20
 
 # Maximum number of parents for a class (see R0901).
 max-parents=7

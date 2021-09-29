@@ -1,5 +1,9 @@
-# 1.4.0 / 2021-07-16
+# 1.5.0 / 2021-09-23
+==================
+- Update tests with latest dependencies
+- Remove unsupported python versions 2.7 & 3.5
 
+# 1.4.0 / 2021-07-16
 - Fix the missing `upload_size` parameter
 
 # 1.3.1 / 2021-05-12
