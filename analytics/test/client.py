@@ -10,7 +10,7 @@ from analytics.client import Client
 
 class TestClient(unittest.TestCase):
 
-    def fail(self, e, batch):
+    def fail(self):
         """Mark the failure handler"""
         self.failed = True
 
@@ -285,16 +285,10 @@ class TestClient(unittest.TestCase):
         client.flush()
         self.assertFalse(self.failed)
 
-    def test_unicode(self):
-        Client(six.u('unicode_key'))
-
     def test_numeric_user_id(self):
         self.client.track(1234, 'python event')
         self.client.flush()
         self.assertFalse(self.failed)
-
-    def test_debug(self):
-        Client('bad_key', debug=True)
 
     def test_identify_with_date_object(self):
         client = self.client
@@ -321,7 +315,7 @@ class TestClient(unittest.TestCase):
         client = Client('testsecret', on_error=self.fail,
                         upload_size=10, upload_interval=3)
 
-        def mock_post_fn(*args, **kwargs):
+        def mock_post_fn(**kwargs):
             self.assertEqual(len(kwargs['batch']), 10)
 
         # the post function should be called 2 times, with a batch size of 10

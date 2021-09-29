@@ -1,8 +1,9 @@
 import logging
 from threading import Thread
+import json
 import monotonic
 import backoff
-import json
+
 
 from analytics.request import post, APIError, DatetimeSerializer
 

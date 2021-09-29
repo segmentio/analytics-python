@@ -21,16 +21,17 @@ Documentation and more details at https://github.com/segmentio/analytics-python
 '''
 
 install_requires = [
-    "requests~=2.7",
-    "six~=1.5",
-    "monotonic~=1.5",
-    "backoff~=1.10",
-    "python-dateutil~=2.2"
+    "requests>=2.7,<3.0",
+    "six>=1.5",
+    "monotonic>=1.5",
+    "backoff==1.10.0",
+    "python-dateutil>2.1",
+    "appdirs"
 ]
 
 tests_require = [
     "mock==2.0.0",
-    "pylint==1.9.3",
+    "pylint==2.8.0",
     "flake8==3.7.9",
 ]
 
@@ -57,13 +58,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.2",
-        "Programming Language :: Python :: 3.3",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
