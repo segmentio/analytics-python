@@ -37,7 +37,7 @@ tests_require = [
 ]
 
 setup(
-    name='analytics-python',
+    name='segment-analytics-python',
     version=VERSION,
     url='https://github.com/segmentio/analytics-python',
     author='Segment',
@@ -45,7 +45,7 @@ setup(
     maintainer='Segment',
     maintainer_email='friends@segment.com',
     test_suite='analytics.test.all',
-    packages=['analytics', 'analytics.test'],
+    packages=['segment.analytics', 'analytics.test'],
     license='MIT License',
     install_requires=install_requires,
     extras_require={
