@@ -1,5 +1,9 @@
+# 1.6.0 / 2021-10-01
+
+- Update package name and namepace name
+
+
 # 1.5.0 / 2021-09-23
-==================
 - Update tests with latest dependencies
 - Remove unsupported python versions 2.7 & 3.5
 
