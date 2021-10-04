@@ -25,7 +25,7 @@ install_requires = [
     "six>=1.5",
     "monotonic>=1.5",
     "backoff==1.10.0",
-    "python-dateutil>2.1",
+    "python-dateutil",
     "appdirs"
 ]
 
