@@ -10,7 +10,7 @@ jobs:
     steps:
       - checkout
       - run: pip3 install --user .
-      - run: sudo pip3 install pylint==2.8.0 flake8 mock==3.0.5
+      - run: sudo pip3 install pylint==2.8.0 flake8 mock==3.0.5 python-dateutil
       - run: make test
       - store_artifacts:
           path: pylint.out
@@ -25,7 +25,6 @@ jobs:
       - attach_workspace: { at: . }
       - run: pip3 install dephell
       - run: pip3 install --user appdirs   
-      - run: pip3 install python-dateutil   
       - run: dephell deps convert --from=setup.py --to=requirements.txt
       - run: pip3 install --user -r requirements.txt
       - run: curl -sL https://raw.githubusercontent.com/segmentio/snyk_helpers/master/initialization/snyk.sh | sh
