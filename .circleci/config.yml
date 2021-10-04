@@ -24,7 +24,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace: { at: . }
-      - run: pip3 install dephell
+      - run: pip3 install dephell 
       - run: pip3 install --user appdirs   
       - run: dephell deps convert --from=setup.py --to=requirements.txt
       - run: pip3 install --user -r requirements.txt
@@ -35,6 +35,7 @@ jobs:
       - image: circleci/python:3.6
     steps:
       - checkout
+      - run: pip3 install python-dateutil backoff monotonic
       - run: pip3 install --user .[test]
       - run:
           name: Linting with Flake8
