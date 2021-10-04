@@ -4,7 +4,7 @@ import monotonic
 import backoff
 import json
 
-from analytics.request import post, APIError, DatetimeSerializer
+from segment.analytics.request import post, APIError, DatetimeSerializer
 
 try:
     from queue import Empty
