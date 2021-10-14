@@ -1,6 +1,6 @@
-# 1.6.0 / 2021-10-01
+# 2.0.0 / 2021-10-01
 
-- Update package name and namepace name
+- Update package name and namespace name
 
 
 # 1.5.0 / 2021-09-23
