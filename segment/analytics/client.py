@@ -7,10 +7,10 @@ import atexit
 from dateutil.tz import tzutc
 from six import string_types
 
-from analytics.utils import guess_timezone, clean
-from analytics.consumer import Consumer
-from analytics.request import post
-from analytics.version import VERSION
+from segment.analytics.utils import guess_timezone, clean
+from segment.analytics.consumer import Consumer
+from segment.analytics.request import post
+from segment.analytics.version import VERSION
 
 try:
     import queue

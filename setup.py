@@ -7,8 +7,9 @@ except ImportError:
     from distutils.core import setup
 
 # Don't import analytics-python module here, since deps may not be installed
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'segment'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'analytics'))
-from version import VERSION
+from analytics.version import VERSION
 
 long_description = '''
 Segment is the simplest way to integrate analytics into your application.
@@ -21,12 +22,11 @@ Documentation and more details at https://github.com/segmentio/analytics-python
 '''
 
 install_requires = [
-    "requests>=2.7,<3.0",
-    "six>=1.5",
-    "monotonic>=1.5",
-    "backoff==1.10.0",
-    "python-dateutil>2.1",
-    "appdirs"
+    "requests~=2.7",
+    "six~=1.5",
+    "monotonic~=1.5",
+    "backoff~=1.10",
+    "python-dateutil~=2.2"
 ]
 
 tests_require = [
@@ -36,7 +36,7 @@ tests_require = [
 ]
 
 setup(
-    name='analytics-python',
+    name='segment-analytics-python',
     version=VERSION,
     url='https://github.com/segmentio/analytics-python',
     author='Segment',
@@ -44,7 +44,7 @@ setup(
     maintainer='Segment',
     maintainer_email='friends@segment.com',
     test_suite='analytics.test.all',
-    packages=['analytics', 'analytics.test'],
+    packages=['segment.analytics', 'analytics.test'],
     license='MIT License',
     install_requires=install_requires,
     extras_require={
