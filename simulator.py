@@ -1,7 +1,7 @@
 import logging
 import argparse
 import json
-import analytics
+import segment.analytics as analytics
 
 __name__ = 'simulator.py'
 __version__ = '0.0.1'
