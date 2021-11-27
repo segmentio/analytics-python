@@ -118,7 +118,7 @@ class TestConsumer(unittest.TestCase):
                 'userId': 'userId'
             }
             # request() should succeed if the number of exceptions raised is
-            # less than the retries paramater.
+            # less than the retries parameter.
             if exception_count <= consumer.retries:
                 consumer.request([track])
             else:
