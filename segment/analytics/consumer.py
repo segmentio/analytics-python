@@ -105,6 +105,8 @@ class Consumer(Thread):
                     self.log.debug(
                         'hit batch size limit (size: %d)', total_size)
                     break
+            except Exception as e:
+                self.log.error('Exception: %s', e)
             except Empty:
                 break
 
