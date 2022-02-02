@@ -1,3 +1,4 @@
+from enum import Enum
 import logging
 import numbers
 
@@ -54,6 +55,8 @@ def clean(item):
         return _clean_list(item)
     elif isinstance(item, dict):
         return _clean_dict(item)
+    elif isinstance(item, Enum):
+        return clean(item.value)
     else:
         return _coerce_unicode(item)
 
