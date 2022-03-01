@@ -3,13 +3,14 @@ from uuid import uuid4
 import logging
 import numbers
 import atexit
+import json
 
 from dateutil.tz import tzutc
 from six import string_types
 
 from segment.analytics.utils import guess_timezone, clean
-from segment.analytics.consumer import Consumer
-from segment.analytics.request import post
+from segment.analytics.consumer import Consumer, MAX_MSG_SIZE
+from segment.analytics.request import post, DatetimeSerializer
 from segment.analytics.version import VERSION
 
 try:
@@ -37,7 +38,6 @@ class Client(object):
         thread = 1
         upload_interval = 0.5
         upload_size = 100
-        max_retries = 10
 
     """Create a new Segment client."""
     log = logging.getLogger('segment')
@@ -272,6 +272,11 @@ class Client(object):
 
         msg = clean(msg)
         self.log.debug('queueing: %s', msg)
+
+        # Check message size.
+        msg_size = len(json.dumps(msg, cls=DatetimeSerializer).encode())
+        if msg_size > MAX_MSG_SIZE:
+            raise RuntimeError('Message exceeds 32kb limit. (%s)', str(msg))
 
         # if send is False, return msg as if it was successfully queued
         if not self.send:
