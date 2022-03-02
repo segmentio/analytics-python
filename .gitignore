@@ -8,3 +8,5 @@ build
 .eggs
 *.bat
 .vscode/
+.idea/
+.python-version
