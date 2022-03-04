@@ -1,3 +1,10 @@
+# 2.1.0 / 2022-03-04
+
+- Raise exception on large message
+- Automatically coerce Enum values inside messages
+- Handle exceptions in the try catch and log them
+
+
 # 2.0.0 / 2021-10-01
 
 - Update package name and namespace name
