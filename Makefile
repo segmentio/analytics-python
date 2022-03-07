@@ -1,5 +1,5 @@
-install_dev:
-	pip install --edit .[dev]
+install:
+	pip install --edit .[test]
 
 test:
 	pylint --rcfile=.pylintrc --reports=y --exit-zero analytics | tee pylint.out
