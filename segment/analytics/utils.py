@@ -6,8 +6,6 @@ from decimal import Decimal
 from datetime import date, datetime
 from dateutil.tz import tzlocal, tzutc
 
-import six
-
 log = logging.getLogger('segment')
 
 
@@ -48,7 +46,7 @@ def remove_trailing_slash(host):
 def clean(item):
     if isinstance(item, Decimal):
         return float(item)
-    elif isinstance(item, (six.string_types, bool, numbers.Number, datetime,
+    elif isinstance(item, (str, bool, numbers.Number, datetime,
                            date, type(None))):
         return item
     elif isinstance(item, (set, list, tuple)):
@@ -67,7 +65,7 @@ def _clean_list(list_):
 
 def _clean_dict(dict_):
     data = {}
-    for k, v in six.iteritems(dict_):
+    for k, v in dict_.items():
         try:
             data[k] = clean(v)
         except TypeError:

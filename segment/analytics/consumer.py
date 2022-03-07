@@ -6,10 +6,7 @@ import json
 
 from segment.analytics.request import post, APIError, DatetimeSerializer
 
-try:
-    from queue import Empty
-except ImportError:
-    from Queue import Empty
+from queue import Empty
 
 MAX_MSG_SIZE = 32 << 10
 

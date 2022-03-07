@@ -3,7 +3,6 @@ from decimal import Decimal
 import unittest
 
 from dateutil.tz import tzutc
-import six
 
 from analytics import utils
 
@@ -25,7 +24,7 @@ class TestUtils(unittest.TestCase):
     def test_clean(self):
         simple = {
             'decimal': Decimal('0.142857'),
-            'unicode': six.u('woo'),
+            'unicode': 'woo',
             'date': datetime.now(),
             'long': 200000000,
             'integer': 1,
@@ -58,11 +57,7 @@ class TestUtils(unittest.TestCase):
 
     @classmethod
     def test_bytes(cls):
-        if six.PY3:
-            item = bytes(10)
-        else:
-            item = bytearray(10)
-
+        item = bytes(10)
         utils.clean(item)
 
     def test_clean_fn(self):

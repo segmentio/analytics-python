@@ -1,3 +1,7 @@
+# 2.2.0 / 2022-03-07
+- Remove Python 2 support
+- Remove six package
+
 # 2.1.0 / 2022-03-04
 
 - Raise exception on large message

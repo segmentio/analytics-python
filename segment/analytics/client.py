@@ -6,20 +6,15 @@ import atexit
 import json
 
 from dateutil.tz import tzutc
-from six import string_types
 
 from segment.analytics.utils import guess_timezone, clean
 from segment.analytics.consumer import Consumer, MAX_MSG_SIZE
 from segment.analytics.request import post, DatetimeSerializer
 from segment.analytics.version import VERSION
 
-try:
-    import queue
-except ImportError:
-    import Queue as queue
+import queue
 
-
-ID_TYPES = (numbers.Number, string_types)
+ID_TYPES = (numbers.Number, str)
 
 
 class Client(object):
