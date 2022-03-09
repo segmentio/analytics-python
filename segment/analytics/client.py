@@ -52,7 +52,7 @@ class Client(object):
                  thread=DefaultConfig.thread,
                  upload_size=DefaultConfig.upload_size,
                  upload_interval=DefaultConfig.upload_interval,):
-        require('write_key', write_key)
+        require('write_key', write_key, str)
 
         self.queue = queue.Queue(max_queue_size)
         self.write_key = write_key
