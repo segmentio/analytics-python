@@ -47,16 +47,16 @@ Analytics helps you measure your users, product, and business. It unlocks insigh
 Install `analytics-python` using pip:
 
 ```bash
-$ pip install analytics-python
+pip3 install analytics-python
 ```
 
 or you can clone this repo:
 ```bash
-$ git clone https://github.com/segmentio/analytics-python.git
+git clone https://github.com/segmentio/analytics-python.git
 
-$ cd analytics-python
+cd analytics-python
 
-$ sudo python3 setup.py install
+sudo python3 setup.py install
 ```
 
 Now inside your app, you'll want to **set your** `write_key` before making any analytics calls:
