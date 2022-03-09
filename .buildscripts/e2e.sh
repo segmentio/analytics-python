@@ -12,5 +12,3 @@ else
     ./tester_linux_amd64 -segment-write-key="${SEGMENT_WRITE_KEY}" -webhook-auth-username="${WEBHOOK_AUTH_USERNAME}" -webhook-bucket="${WEBHOOK_BUCKET}" -path='./e2e_test.sh'
     echo "End to end tests completed!"
 fi
-
-

@@ -1,7 +1,6 @@
 from datetime import date, datetime
 import unittest
 import time
-import six
 import mock
 
 from analytics.version import VERSION

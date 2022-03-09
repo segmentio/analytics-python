@@ -23,7 +23,6 @@ Documentation and more details at https://github.com/segmentio/analytics-python
 
 install_requires = [
     "requests~=2.7",
-    "six~=1.5",
     "monotonic~=1.5",
     "backoff~=1.10",
     "python-dateutil~=2.2"
@@ -45,6 +44,7 @@ setup(
     maintainer_email='friends@segment.com',
     test_suite='analytics.test.all',
     packages=['segment.analytics', 'analytics.test'],
+    python_requires='>=3.6.0',
     license='MIT License',
     install_requires=install_requires,
     extras_require={
