@@ -32,7 +32,6 @@ tests_require = [
     "mock==2.0.0",
     "pylint==2.8.0",
     "flake8==3.7.9",
-    "m2r2"
 ]
 
 setup(
