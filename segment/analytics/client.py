@@ -122,7 +122,7 @@ class Client(object):
         integrations = integrations or {}
         require('user_id or anonymous_id', user_id or anonymous_id, ID_TYPES)
         require('properties', properties, dict)
-        require('event', event, string_types)
+        require('event', event, str)
 
         msg = {
             'integrations': integrations,
@@ -191,9 +191,9 @@ class Client(object):
         require('properties', properties, dict)
 
         if name:
-            require('name', name, string_types)
+            require('name', name, str)
         if category:
-            require('category', category, string_types)
+            require('category', category, str)
 
         msg = {
             'integrations': integrations,
@@ -220,9 +220,9 @@ class Client(object):
         require('properties', properties, dict)
 
         if name:
-            require('name', name, string_types)
+            require('name', name, str)
         if category:
-            require('category', category, string_types)
+            require('category', category, str)
 
         msg = {
             'integrations': integrations,
@@ -249,7 +249,7 @@ class Client(object):
             message_id = uuid4()
 
         require('integrations', msg['integrations'], dict)
-        require('type', msg['type'], string_types)
+        require('type', msg['type'], str)
         require('timestamp', timestamp, datetime)
         require('context', msg['context'], dict)
 
@@ -328,6 +328,6 @@ def require(name, field, data_type):
 def stringify_id(val):
     if val is None:
         return None
-    if isinstance(val, string_types):
+    if isinstance(val, str):
         return val
     return str(val)
