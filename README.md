@@ -47,7 +47,7 @@ Analytics helps you measure your users, product, and business. It unlocks insigh
 Install `analytics-python` using pip:
 
 ```bash
-pip3 install analytics-python
+pip3 install segment-analytics-python
 ```
 
 or you can clone this repo:
