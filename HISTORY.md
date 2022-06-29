@@ -1,3 +1,7 @@
+# 2.2.1 / 2022-06-23
+- Empty Catch fix #217
+- Build Isolation fix #216
+
 # 2.2.0 / 2022-03-07
 - Remove Python 2 support
 - Remove six package
