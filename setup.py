@@ -10,11 +10,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'segment','analytics'
 from version import VERSION
 
 long_description = '''
-Segment is the simplest way to integrate analytics into your application.
-One API allows you to turn on any other analytics service. No more learning
-new APIs, repeated code, and wasted development time.
-
-This is the official python client that wraps the Segment REST API (https://segment.com).
+June SDK is the simplest way to integrate analytics into your application.
 
 Documentation and more details at https://github.com/segmentio/analytics-python
 '''
