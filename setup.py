@@ -22,7 +22,7 @@ Documentation and more details at https://github.com/segmentio/analytics-python
 install_requires = [
     "requests~=2.7",
     "monotonic~=1.5",
-    "backoff~=1.10",
+    "backoff>=1.10,<3.0",
     "python-dateutil~=2.2"
 ]
 
