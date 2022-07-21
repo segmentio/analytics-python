@@ -12,13 +12,13 @@ def json_hash(str):
     if str:
         return json.loads(str)
 
-# analytics -method=<method> -segment-write-key=<segmentWriteKey> [options]
+# analytics -method=<method> -june-write-key=<juneWriteKey> [options]
 
 
-parser = argparse.ArgumentParser(description='send a segment message')
+parser = argparse.ArgumentParser(description='send a June message')
 
-parser.add_argument('--writeKey', help='the Segment writeKey')
-parser.add_argument('--type', help='The Segment message type')
+parser.add_argument('--writeKey', help='the June writeKey')
+parser.add_argument('--type', help='The June message type')
 
 parser.add_argument('--userId', help='the user id to send the event as')
 parser.add_argument(
