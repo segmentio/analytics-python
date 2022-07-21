@@ -6,7 +6,7 @@ from decimal import Decimal
 from datetime import date, datetime
 from dateutil.tz import tzlocal, tzutc
 
-log = logging.getLogger('segment')
+log = logging.getLogger('june')
 
 
 def is_naive(dt):

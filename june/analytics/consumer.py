@@ -4,7 +4,7 @@ import monotonic
 import backoff
 import json
 
-from segment.analytics.request import post, APIError, DatetimeSerializer
+from june.analytics.request import post, APIError, DatetimeSerializer
 
 from queue import Empty
 
@@ -17,7 +17,7 @@ BATCH_SIZE_LIMIT = 475000
 
 class Consumer(Thread):
     """Consumes the messages from the client's queue."""
-    log = logging.getLogger('segment')
+    log = logging.getLogger('june')
 
     def __init__(self, queue, write_key, upload_size=100, host=None,
                  on_error=None, upload_interval=0.5, gzip=False, retries=10,

@@ -7,10 +7,10 @@ import json
 
 from dateutil.tz import tzutc
 
-from segment.analytics.utils import guess_timezone, clean
-from segment.analytics.consumer import Consumer, MAX_MSG_SIZE
-from segment.analytics.request import post, DatetimeSerializer
-from segment.analytics.version import VERSION
+from june.analytics.utils import guess_timezone, clean
+from june.analytics.consumer import Consumer, MAX_MSG_SIZE
+from june.analytics.request import post, DatetimeSerializer
+from june.analytics.version import VERSION
 
 import queue
 
@@ -35,7 +35,7 @@ class Client(object):
         upload_size = 100
 
     """Create a new Segment client."""
-    log = logging.getLogger('segment')
+    log = logging.getLogger('june')
 
     def __init__(self,
                  write_key=DefaultConfig.write_key,

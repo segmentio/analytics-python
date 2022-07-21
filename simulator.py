@@ -1,7 +1,7 @@
 import logging
 import argparse
 import json
-import segment.analytics as analytics
+import june.analytics as analytics
 
 __name__ = 'simulator.py'
 __version__ = '0.0.1'
@@ -78,7 +78,7 @@ analytics.write_key = options.writeKey
 analytics.on_error = failed
 analytics.debug = True
 
-log = logging.getLogger('segment')
+log = logging.getLogger('june')
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
 log.addHandler(ch)
