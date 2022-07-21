@@ -10,13 +10,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'segment','analytics'
 from version import VERSION
 
 long_description = '''
-Segment is the simplest way to integrate analytics into your application.
-One API allows you to turn on any other analytics service. No more learning
-new APIs, repeated code, and wasted development time.
+June SDK is the simplest way to integrate analytics into your application.
 
-This is the official python client that wraps the Segment REST API (https://segment.com).
-
-Documentation and more details at https://github.com/segmentio/analytics-python
+Documentation and more details at https://www.june.so/docs/python
 '''
 
 install_requires = [
@@ -33,15 +29,15 @@ tests_require = [
 ]
 
 setup(
-    name='segment-analytics-python',
+    name='juneso-analytics-python',
     version=VERSION,
-    url='https://github.com/segmentio/analytics-python',
-    author='Segment',
-    author_email='friends@segment.com',
-    maintainer='Segment',
-    maintainer_email='friends@segment.com',
+    url='https://github.com/juneHQ/analytics-python',
+    author='June',
+    author_email='work@june.so',
+    maintainer='June',
+    maintainer_email='work@june.so',
     test_suite='analytics.test.all',
-    packages=['segment.analytics', 'analytics.test'],
+    packages=['june.analytics', 'analytics.test'],
     python_requires='>=3.6.0',
     license='MIT License',
     install_requires=install_requires,
