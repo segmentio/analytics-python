@@ -30,7 +30,7 @@ tests_require = [
     "mock==2.0.0",
     "pylint==2.8.0",
     "flake8==3.7.9",
-    "backoff~=2.1",
+    "backoff~=1.11",
 ]
 
 setup(
@@ -43,7 +43,7 @@ setup(
     maintainer_email='friends@segment.com',
     test_suite='analytics.test.all',
     packages=['segment.analytics', 'analytics.test'],
-    python_requires='>=3.6.0',
+    python_requires='>=3.7.0',
     license='MIT License',
     install_requires=install_requires,
     extras_require={
@@ -57,7 +57,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
