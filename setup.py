@@ -22,7 +22,7 @@ Documentation and more details at https://github.com/segmentio/analytics-python
 install_requires = [
     "requests~=2.7",
     "monotonic~=1.5",
-    "backoff~=2.1",
+    "backoff>=1.11",
     "python-dateutil~=2.2"
 ]
 
@@ -30,7 +30,7 @@ tests_require = [
     "mock==2.0.0",
     "pylint==2.8.0",
     "flake8==3.7.9",
-    "backoff~=1.11",
+    "backoff>=1.11",
 ]
 
 setup(
