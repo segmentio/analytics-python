@@ -1,3 +1,8 @@
+# 2.3.0/ 2022-08-11
+- Remove support for Python 3.6 
+- Update Backoff dependecy requirement #229
+- Add MIT License #221
+
 # 2.2.1 / 2022-06-23
 - Empty Catch fix #217
 - Build Isolation fix #216
