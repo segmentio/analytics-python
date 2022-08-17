@@ -34,6 +34,10 @@ tests_require = [
     "urllib3~=1.26.11",
     "toml>=0.10.0",
     "idna>=3.3",
+    "six>=1.16",
+    "charset-normalizer~=2.0.12",
+    "typing-extensions~=4.1.0",
+    "wrapt~=1.12",
 ]
 
 setup(
