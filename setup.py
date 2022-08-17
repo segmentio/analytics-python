@@ -40,6 +40,8 @@ tests_require = [
     "wrapt~=1.12",
     "certifi~=2022.6.15",
     "requests~=2.27.1",
+    "pbr~=5.9.0",
+    "pip~=21.3.1",
 ]
 
 setup(
