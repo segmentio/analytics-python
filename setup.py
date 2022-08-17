@@ -23,7 +23,7 @@ install_requires = [
     "requests~=2.7",
     "monotonic~=1.5",
     "backoff>=1.11",
-    "python-dateutil~=2.2"
+    "python-dateutil~=2.8.2"
 ]
 
 tests_require = [
@@ -38,6 +38,8 @@ tests_require = [
     "charset-normalizer~=2.0.12",
     "typing-extensions~=4.1.0",
     "wrapt~=1.12",
+    "certifi~=2022.6.15",
+    "requests~=2.27.1",
 ]
 
 setup(
