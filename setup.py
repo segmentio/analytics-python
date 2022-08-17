@@ -33,6 +33,7 @@ tests_require = [
     "backoff>=1.11",
     "urllib3~=1.26.11",
     "toml>=0.10.0",
+    "idna>=3.3",
 ]
 
 setup(
