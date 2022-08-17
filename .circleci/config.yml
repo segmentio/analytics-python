@@ -32,7 +32,7 @@ jobs:
 
   test_37: &test
     docker:
-      - image: circleci/python:3.6
+      - image: circleci/python:3.7
     steps:
       - checkout
       - run: pip3 install python-dateutil backoff monotonic
