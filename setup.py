@@ -31,6 +31,8 @@ tests_require = [
     "pylint==2.8.0",
     "flake8==3.7.9",
     "backoff>=1.11",
+    "urllib3~=1.26.11",
+    "toml>=0.10.0",
 ]
 
 setup(
