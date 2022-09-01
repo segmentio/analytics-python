@@ -9,7 +9,7 @@ jobs:
       - image: circleci/python:3.8
     steps:
       - checkout
-      - run: pip3 install python-dateutil backoff monotonic
+      - run: pip3 install python-dateutil backoff==2.1.2 monotonic
       - run: pip3 install --user .
       - run: sudo pip3 install pylint==2.8.0 flake8 mock==3.0.5 python-dateutil
       - run: make test
