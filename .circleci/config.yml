@@ -75,7 +75,6 @@ workflows:
       - publish:
           requires:
             - build
-            - test_36
             - test_37
             - test_38
             - test_39
@@ -100,7 +99,6 @@ workflows:
                 - master
                 - scheduled_e2e_testing
     jobs:
-      - test_36
       - test_37
       - test_38
       - test_39
