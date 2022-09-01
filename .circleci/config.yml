@@ -24,9 +24,9 @@ jobs:
     steps:
       - checkout
       - attach_workspace: { at: . }
-      - run: pip3 install dephell
+      - run: pip3 install pipreqs
       - run: pip3 install --user appdirs
-      - run: dephell deps convert --from=setup.py --to=requirements.txt
+      - run: pipreqs .
       - run: pip3 install --user -r requirements.txt
       - run: curl -sL https://raw.githubusercontent.com/segmentio/snyk_helpers/master/initialization/snyk.sh | sh
 
