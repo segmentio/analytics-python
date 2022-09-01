@@ -60,9 +60,6 @@ workflows:
       - build:
           filters:
             <<: *taggedReleasesFilter
-      - test_36:
-          filters:
-            <<: *taggedReleasesFilter
       - test_37:
           filters:
             <<: *taggedReleasesFilter
