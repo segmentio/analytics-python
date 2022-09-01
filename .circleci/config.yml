@@ -30,10 +30,19 @@ jobs:
       - run: pip3 install --user -r requirements.txt
       - run: curl -sL https://raw.githubusercontent.com/segmentio/snyk_helpers/master/initialization/snyk.sh | sh
 
-  test_37:
-    <<: *test
+  test_37: &test
     docker:
       - image: circleci/python:3.7
+    steps:
+      - checkout
+      - run: pip3 install python-dateutil backoff monotonic
+      - run: pip3 install --user .[test]
+      - run:
+          name: Linting with Flake8
+          command: |
+            git diff origin/master..HEAD analytics | flake8 --diff --max-complexity=10 analytics
+      - run: make test
+      - run: make e2e_test
 
   test_38:
     <<: *test
