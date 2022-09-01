@@ -9,7 +9,7 @@ jobs:
       - image: circleci/python:3.8
     steps:
       - checkout
-      - run: pip3 install python-dateutil backoff==2.1.0 monotonic
+      - run: pip3 install python-dateutil backoff monotonic
       - run: pip3 install --user .
       - run: sudo pip3 install pylint==2.8.0 flake8 mock==3.0.5 python-dateutil
       - run: make test
@@ -29,20 +29,6 @@ jobs:
       - run: pipreqs .
       - run: pip3 install --user -r requirements.txt
       - run: curl -sL https://raw.githubusercontent.com/segmentio/snyk_helpers/master/initialization/snyk.sh | sh
-
-  test_36: &test
-    docker:
-      - image: circleci/python:3.6
-    steps:
-      - checkout
-      - run: pip3 install python-dateutil backoff==2.1.0 monotonic
-      - run: pip3 install --user .[test]
-      - run:
-          name: Linting with Flake8
-          command: |
-            git diff origin/master..HEAD analytics | flake8 --diff --max-complexity=10 analytics
-      - run: make test
-      - run: make e2e_test
 
   test_37:
     <<: *test
