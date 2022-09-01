@@ -35,7 +35,7 @@ jobs:
       - image: circleci/python:3.6
     steps:
       - checkout
-      - run: pip3 install python-dateutil backoff monotonic
+      - run: pip3 install python-dateutil backoff==2.1.0 monotonic
       - run: pip3 install --user .[test]
       - run:
           name: Linting with Flake8
