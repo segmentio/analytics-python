@@ -62,7 +62,7 @@ sudo python3 setup.py install
 Now inside your app, you'll want to **set your** `write_key` before making any analytics calls:
 
 ```python
-import analytics
+import segment.analytics as analytics
 
 analytics.write_key = 'YOUR_WRITE_KEY'
 ```
