@@ -1,3 +1,6 @@
+# 2.2.2 / 2022-11-29
+- Specifying milliseconds as the isoformat rather than the default microseconds in timestamp
+
 # 2.2.1 / 2022-06-23
 - Empty Catch fix #217
 - Build Isolation fix #216
