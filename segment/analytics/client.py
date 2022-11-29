@@ -255,7 +255,7 @@ class Client(object):
 
         # add common
         timestamp = guess_timezone(timestamp)
-        msg['timestamp'] = timestamp.isoformat()
+        msg['timestamp'] = timestamp.isoformat(timespec='milliseconds')
         msg['messageId'] = stringify_id(message_id)
         msg['context']['library'] = {
             'name': 'analytics-python',
