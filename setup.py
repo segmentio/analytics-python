@@ -11,6 +11,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'analytics'))
 from version import VERSION
 
 long_description = '''
+This library was renamed due to a naming conflict with an official python library. 
+Please use the new listing at https://pypi.org/project/segment-analytics-python/
+
 Segment is the simplest way to integrate analytics into your application.
 One API allows you to turn on any other analytics service. No more learning
 new APIs, repeated code, and wasted development time.
