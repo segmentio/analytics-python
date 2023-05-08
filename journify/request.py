@@ -7,8 +7,8 @@ from dateutil.tz import tzutc
 from requests.auth import HTTPBasicAuth
 from requests import sessions
 
-from segment.analytics.version import VERSION
-from segment.analytics.utils import remove_trailing_slash
+from journify.version import VERSION
+from journify.utils import remove_trailing_slash
 
 _session = sessions.Session()
 

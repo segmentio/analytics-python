@@ -4,7 +4,7 @@ import unittest
 
 from dateutil.tz import tzutc
 
-from analytics import utils
+from journify import utils
 
 
 class TestUtils(unittest.TestCase):

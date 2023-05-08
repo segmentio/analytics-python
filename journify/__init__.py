@@ -1,6 +1,6 @@
 
-from segment.analytics.version import VERSION
-from segment.analytics.client import Client
+from journify.version import VERSION
+from journify.client import Client
 
 __version__ = VERSION
 

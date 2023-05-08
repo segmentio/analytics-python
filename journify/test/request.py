@@ -3,7 +3,7 @@ import unittest
 import json
 import requests
 
-from analytics.request import post, DatetimeSerializer
+from journify.request import post, DatetimeSerializer
 
 
 class TestRequests(unittest.TestCase):

@@ -7,10 +7,10 @@ import json
 
 from dateutil.tz import tzutc
 
-from segment.analytics.utils import guess_timezone, clean
-from segment.analytics.consumer import Consumer, MAX_MSG_SIZE
-from segment.analytics.request import post, DatetimeSerializer
-from segment.analytics.version import VERSION
+from journify.utils import guess_timezone, clean
+from journify.consumer import Consumer, MAX_MSG_SIZE
+from journify.request import post, DatetimeSerializer
+from journify.version import VERSION
 
 import queue
 

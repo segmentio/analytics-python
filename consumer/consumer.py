@@ -1,10 +1,11 @@
 import logging
 from threading import Thread
+import json
 import monotonic
 import backoff
-import json
 
-from segment.analytics.request import post, APIError, DatetimeSerializer
+
+from journify.request import post, APIError, DatetimeSerializer
 
 from queue import Empty
 
@@ -104,8 +105,6 @@ class Consumer(Thread):
                     break
             except Empty:
                 break
-            except Exception as e:
-                self.log.exception('Exception: %s', e)
 
         return items
 

@@ -8,8 +8,8 @@ try:
 except ImportError:
     from Queue import Queue
 
-from analytics.consumer import Consumer, MAX_MSG_SIZE
-from analytics.request import APIError
+from journify.consumer import Consumer, MAX_MSG_SIZE
+from journify.request import APIError
 
 
 class TestConsumer(unittest.TestCase):
