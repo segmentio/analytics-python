@@ -1,12 +1,13 @@
 import logging
 from threading import Thread
-import monotonic
-import backoff
 import json
 
-from journify.request import post, APIError, DatetimeSerializer
-
 from queue import Empty
+
+import monotonic
+import backoff
+
+from journify.request import post, APIError, DatetimeSerializer
 
 MAX_MSG_SIZE = 32 << 10
 
@@ -118,9 +119,10 @@ class Consumer(Thread):
                 # with 429 status code (rate limited),
                 # don't retry on other client errors
                 return (400 <= exc.status < 500) and exc.status != 429
-            else:
-                # retry on all other errors (eg. network)
-                return False
+
+            # retry on all other errors (eg. network)
+            return False
+
 
         @backoff.on_exception(
             backoff.expo,

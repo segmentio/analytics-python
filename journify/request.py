@@ -3,8 +3,6 @@ from io import BytesIO
 from gzip import GzipFile
 import logging
 import json
-from dateutil.tz import tzutc
-from requests.auth import HTTPBasicAuth
 from requests import sessions
 
 from journify.version import VERSION
@@ -60,8 +58,8 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, **kwargs):
         payload = res.json()
         log.debug('received response: %s', payload)
         raise APIError(res.status_code, payload['code'], payload['message'])
-    except ValueError:
-        raise APIError(res.status_code, 'unknown', res.text)
+    except ValueError as e:
+        raise APIError(res.status_code, 'unknown', res.text) from e
 
 
 class APIError(Exception):
@@ -77,8 +75,8 @@ class APIError(Exception):
 
 
 class DatetimeSerializer(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, (date, datetime)):
-            return obj.isoformat()
+    def default(self, o):
+        if isinstance(o, (date, datetime)):
+            return o.isoformat()
 
-        return json.JSONEncoder.default(self, obj)
+        return json.JSONEncoder.default(self, o)

@@ -1,4 +1,4 @@
-
+"""Initialization module."""
 from journify.version import VERSION
 from journify.client import Client
 
@@ -66,7 +66,7 @@ def shutdown():
 
 
 def _proxy(method, *args, **kwargs):
-    """Create an analytics client if one doesn't exist and send to it."""
+    """Create a client if one doesn't exist and send to it."""
     global default_client
     if not default_client:
         default_client = Client(write_key, host=host, debug=debug,

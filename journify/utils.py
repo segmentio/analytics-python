@@ -46,17 +46,20 @@ def remove_trailing_slash(host):
 def clean(item):
     if isinstance(item, Decimal):
         return float(item)
-    elif isinstance(item, (str, bool, numbers.Number, datetime,
-                           date, type(None))):
+
+    if isinstance(item, (str, bool, numbers.Number, datetime, date, type(None))):
         return item
-    elif isinstance(item, (set, list, tuple)):
+
+    if isinstance(item, (set, list, tuple)):
         return _clean_list(item)
-    elif isinstance(item, dict):
+
+    if isinstance(item, dict):
         return _clean_dict(item)
-    elif isinstance(item, Enum):
+
+    if isinstance(item, Enum):
         return clean(item.value)
-    else:
-        return _coerce_unicode(item)
+
+    return _coerce_unicode(item)
 
 
 def _clean_list(list_):

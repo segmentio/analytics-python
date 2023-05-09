@@ -1,3 +1,4 @@
+"""Journify client."""
 from datetime import datetime
 from uuid import uuid4
 import logging
@@ -5,21 +6,20 @@ import numbers
 import atexit
 import json
 import hashlib
+import queue
 
 from dateutil.tz import tzutc
-
 from journify.utils import guess_timezone, clean
 from journify.consumer import Consumer, MAX_MSG_SIZE
 from journify.request import post, DatetimeSerializer
 from journify.version import VERSION
 
-import queue
-
 ID_TYPES = (numbers.Number, str)
 
-
-class Client(object):
-    class DefaultConfig(object):
+class Client:
+    """Class representing a Journify client"""
+    class DefaultConfig:
+        """Class representing default config for a Journify client"""
         write_key = None
         host = None
         on_error = None
@@ -35,7 +35,7 @@ class Client(object):
         upload_interval = 0.5
         upload_size = 100
 
-    """Create a new Journify client."""
+    # Create a new Journify client.
     log = logging.getLogger('journify')
 
     def __init__(self,
@@ -188,7 +188,8 @@ class Client(object):
             timestamp = datetime.utcnow().replace(tzinfo=tzutc())
         message_id = msg.get('messageId')
         if message_id is None:
-            message_id = f"python-{hashlib.md5(json.dumps(msg).encode('utf-8')).hexdigest()}-{uuid4()}"
+            message_id = f"python-{hashlib.md5(json.dumps(msg).encode('utf-8')).hexdigest()}-" \
+                         f"{uuid4()}"
 
         require('type', msg['type'], str)
         require('timestamp', timestamp, datetime)
@@ -213,7 +214,8 @@ class Client(object):
         # Check message size.
         msg_size = len(json.dumps(msg, cls=DatetimeSerializer).encode())
         if msg_size > MAX_MSG_SIZE:
-            raise RuntimeError('Message exceeds %skb limit. (%s)', str(int(MAX_MSG_SIZE / 1024)), str(msg))
+            msg = f'Message exceeds {MAX_MSG_SIZE}kb limit. ({msg})'
+            raise RuntimeError(msg)
 
         # if send is False, return msg as if it was successfully queued
         if not self.send:
@@ -236,9 +238,9 @@ class Client(object):
 
     def flush(self):
         """Forces a flush from the internal queue to the server"""
-        queue = self.queue
-        size = queue.qsize()
-        queue.join()
+        local_queue = self.queue
+        size = local_queue.qsize()
+        local_queue.join()
         # Note that this message may not be precise, because of threading.
         self.log.debug('successfully flushed about %s items.', size)
 
@@ -263,7 +265,7 @@ class Client(object):
 def require(name, field, data_type):
     """Require that the named `field` has the right `data_type`"""
     if not isinstance(field, data_type):
-        msg = '{0} must have {1}, got: {2}'.format(name, data_type, field)
+        msg = f'{name} must be a {data_type}, got: {field}'
         raise AssertionError(msg)
 
 
