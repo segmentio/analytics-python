@@ -79,7 +79,7 @@ class TestClient(unittest.TestCase):
         self.assertEqual(msg['event'], 'python test event')
         self.assertEqual(msg['anonymousId'], 'anonymousId')
         self.assertEqual(msg['context']['library'], {
-            'name': 'analytics-python',
+            'name': 'journify-python-sdk',
             'version': VERSION
         })
         self.assertEqual(msg['messageId'], 'messageId')
@@ -114,7 +114,7 @@ class TestClient(unittest.TestCase):
         self.assertEqual(msg['traits'], {'trait': 'value'})
         self.assertEqual(msg['anonymousId'], 'anonymousId')
         self.assertEqual(msg['context']['library'], {
-            'name': 'analytics-python',
+            'name': 'journify-python-sdk',
             'version': VERSION
         })
         self.assertTrue(isinstance(msg['timestamp'], str))
@@ -148,22 +148,13 @@ class TestClient(unittest.TestCase):
         self.assertEqual(msg['traits'], {'trait': 'value'})
         self.assertEqual(msg['anonymousId'], 'anonymousId')
         self.assertEqual(msg['context']['library'], {
-            'name': 'analytics-python',
+            'name': 'journify-python-sdk',
             'version': VERSION
         })
         self.assertTrue(isinstance(msg['timestamp'], str))
         self.assertEqual(msg['messageId'], 'messageId')
         self.assertEqual(msg['userId'], 'userId')
         self.assertEqual(msg['type'], 'group')
-
-    def test_basic_alias(self):
-        client = self.client
-        success, msg = client.alias('previousId', 'userId')
-        client.flush()
-        self.assertTrue(success)
-        self.assertFalse(self.failed)
-        self.assertEqual(msg['previousId'], 'previousId')
-        self.assertEqual(msg['userId'], 'userId')
 
     def test_basic_page(self):
         client = self.client
@@ -190,7 +181,7 @@ class TestClient(unittest.TestCase):
         self.assertEqual(msg['properties'], {'property': 'value'})
         self.assertEqual(msg['anonymousId'], 'anonymousId')
         self.assertEqual(msg['context']['library'], {
-            'name': 'analytics-python',
+            'name': 'journify-python-sdk',
             'version': VERSION
         })
         self.assertEqual(msg['category'], 'category')
@@ -198,40 +189,6 @@ class TestClient(unittest.TestCase):
         self.assertEqual(msg['messageId'], 'messageId')
         self.assertEqual(msg['userId'], 'userId')
         self.assertEqual(msg['type'], 'page')
-        self.assertEqual(msg['name'], 'name')
-
-    def test_basic_screen(self):
-        client = self.client
-        success, msg = client.screen('userId', name='name')
-        client.flush()
-        self.assertTrue(success)
-        self.assertEqual(msg['userId'], 'userId')
-        self.assertEqual(msg['type'], 'screen')
-        self.assertEqual(msg['name'], 'name')
-
-    def test_advanced_screen(self):
-        client = self.client
-        success, msg = client.screen(
-            'userId', 'category', 'name', {'property': 'value'},
-            {'ip': '192.168.0.1'}, datetime(2014, 9, 3), 'anonymousId',
-            {'Amplitude': True}, 'messageId')
-
-        self.assertTrue(success)
-
-        self.assertEqual(msg['timestamp'], '2014-09-03T00:00:00+00:00')
-        self.assertEqual(msg['integrations'], {'Amplitude': True})
-        self.assertEqual(msg['context']['ip'], '192.168.0.1')
-        self.assertEqual(msg['properties'], {'property': 'value'})
-        self.assertEqual(msg['anonymousId'], 'anonymousId')
-        self.assertEqual(msg['context']['library'], {
-            'name': 'analytics-python',
-            'version': VERSION
-        })
-        self.assertTrue(isinstance(msg['timestamp'], str))
-        self.assertEqual(msg['messageId'], 'messageId')
-        self.assertEqual(msg['category'], 'category')
-        self.assertEqual(msg['userId'], 'userId')
-        self.assertEqual(msg['type'], 'screen')
         self.assertEqual(msg['name'], 'name')
 
     def test_flush(self):
@@ -325,7 +282,7 @@ class TestClient(unittest.TestCase):
 
         # the post function should be called 2 times, with a batch size of 10
         # each time.
-        with mock.patch('analytics.consumer.post', side_effect=mock_post_fn) \
+        with mock.patch('journify.consumer.post', side_effect=mock_post_fn) \
                 as mock_post:
             for _ in range(20):
                 client.identify('userId', {'trait': 'value'})

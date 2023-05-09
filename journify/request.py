@@ -15,17 +15,23 @@ _session = sessions.Session()
 
 def post(write_key, host=None, gzip=False, timeout=15, proxies=None, **kwargs):
     """Post the `kwargs` to the API"""
-    log = logging.getLogger('segment')
+    log = logging.getLogger('journify')
     body = kwargs
-    body["sentAt"] = datetime.utcnow().replace(tzinfo=tzutc()).isoformat()
-    url = remove_trailing_slash(host or 'https://api.segment.io') + '/v1/batch'
-    auth = HTTPBasicAuth(write_key, '')
+    body['writeKey'] = write_key
+    body['context'] = {
+        'library': {
+            'name': 'journify-python-sdk',
+            'version': VERSION,
+        }
+    }
+
+    url = remove_trailing_slash(host or 'https://t.journify.io') + '/v1/batch'
     data = json.dumps(body, cls=DatetimeSerializer)
     log.debug('making request: %s', data)
     headers = {
         'Content-Type': 'application/json',
-        'User-Agent': 'analytics-python/' + VERSION
     }
+
     if gzip:
         headers['Content-Encoding'] = 'gzip'
         buf = BytesIO()
@@ -37,7 +43,6 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, **kwargs):
 
     kwargs = {
         "data": data,
-        "auth": auth,
         "headers": headers,
         "timeout": 15,
     }
@@ -45,8 +50,7 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, **kwargs):
     if proxies:
         kwargs['proxies'] = proxies
 
-    res = _session.post(url, data=data, auth=auth,
-                        headers=headers, timeout=timeout)
+    res = _session.post(url, data=data, headers=headers, timeout=timeout)
 
     if res.status_code == 200:
         log.debug('data uploaded successfully')
@@ -68,7 +72,7 @@ class APIError(Exception):
         self.code = code
 
     def __str__(self):
-        msg = "[Segment] {0}: {1} ({2})"
+        msg = "[Journify] {0}: {1} ({2})"
         return msg.format(self.code, self.message, self.status)
 
 

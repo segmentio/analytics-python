@@ -18,11 +18,11 @@ class TestRequests(unittest.TestCase):
 
     def test_invalid_request_error(self):
         self.assertRaises(Exception, post, 'testsecret',
-                          'https://api.segment.io', False, '[{]')
+                          'https://t.journify.io', False, '[{]')
 
     def test_invalid_host(self):
         self.assertRaises(Exception, post, 'testsecret',
-                          'api.segment.io/', batch=[])
+                          't.journify.io/', batch=[])
 
     def test_datetime_serialization(self):
         data = {'created': datetime(2012, 3, 4, 5, 6, 7, 891011)}

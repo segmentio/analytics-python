@@ -4,6 +4,7 @@ import logging
 import numbers
 import atexit
 import json
+import hashlib
 
 from dateutil.tz import tzutc
 
@@ -34,8 +35,8 @@ class Client(object):
         upload_interval = 0.5
         upload_size = 100
 
-    """Create a new Segment client."""
-    log = logging.getLogger('segment')
+    """Create a new Journify client."""
+    log = logging.getLogger('journify')
 
     def __init__(self,
                  write_key=DefaultConfig.write_key,
@@ -94,15 +95,13 @@ class Client(object):
                     consumer.start()
 
     def identify(self, user_id=None, traits=None, context=None, timestamp=None,
-                 anonymous_id=None, integrations=None, message_id=None):
+                 anonymous_id=None, message_id=None):
         traits = traits or {}
         context = context or {}
-        integrations = integrations or {}
         require('user_id or anonymous_id', user_id or anonymous_id, ID_TYPES)
         require('traits', traits, dict)
 
         msg = {
-            'integrations': integrations,
             'anonymousId': anonymous_id,
             'timestamp': timestamp,
             'context': context,
@@ -115,17 +114,14 @@ class Client(object):
         return self._enqueue(msg)
 
     def track(self, user_id=None, event=None, properties=None, context=None,
-              timestamp=None, anonymous_id=None, integrations=None,
-              message_id=None):
+              timestamp=None, anonymous_id=None, message_id=None):
         properties = properties or {}
         context = context or {}
-        integrations = integrations or {}
         require('user_id or anonymous_id', user_id or anonymous_id, ID_TYPES)
         require('properties', properties, dict)
         require('event', event, str)
 
         msg = {
-            'integrations': integrations,
             'anonymousId': anonymous_id,
             'properties': properties,
             'timestamp': timestamp,
@@ -138,37 +134,15 @@ class Client(object):
 
         return self._enqueue(msg)
 
-    def alias(self, previous_id=None, user_id=None, context=None,
-              timestamp=None, integrations=None, message_id=None):
-        context = context or {}
-        integrations = integrations or {}
-        require('previous_id', previous_id, ID_TYPES)
-        require('user_id', user_id, ID_TYPES)
-
-        msg = {
-            'integrations': integrations,
-            'previousId': previous_id,
-            'timestamp': timestamp,
-            'context': context,
-            'userId': user_id,
-            'type': 'alias',
-            'messageId': message_id,
-        }
-
-        return self._enqueue(msg)
-
     def group(self, user_id=None, group_id=None, traits=None, context=None,
-              timestamp=None, anonymous_id=None, integrations=None,
-              message_id=None):
+              timestamp=None, anonymous_id=None, message_id=None):
         traits = traits or {}
         context = context or {}
-        integrations = integrations or {}
         require('user_id or anonymous_id', user_id or anonymous_id, ID_TYPES)
         require('group_id', group_id, ID_TYPES)
         require('traits', traits, dict)
 
         msg = {
-            'integrations': integrations,
             'anonymousId': anonymous_id,
             'timestamp': timestamp,
             'groupId': group_id,
@@ -182,11 +156,9 @@ class Client(object):
         return self._enqueue(msg)
 
     def page(self, user_id=None, category=None, name=None, properties=None,
-             context=None, timestamp=None, anonymous_id=None,
-             integrations=None, message_id=None):
+             context=None, timestamp=None, anonymous_id=None, message_id=None):
         properties = properties or {}
         context = context or {}
-        integrations = integrations or {}
         require('user_id or anonymous_id', user_id or anonymous_id, ID_TYPES)
         require('properties', properties, dict)
 
@@ -196,7 +168,6 @@ class Client(object):
             require('category', category, str)
 
         msg = {
-            'integrations': integrations,
             'anonymousId': anonymous_id,
             'properties': properties,
             'timestamp': timestamp,
@@ -210,35 +181,6 @@ class Client(object):
 
         return self._enqueue(msg)
 
-    def screen(self, user_id=None, category=None, name=None, properties=None,
-               context=None, timestamp=None, anonymous_id=None,
-               integrations=None, message_id=None):
-        properties = properties or {}
-        context = context or {}
-        integrations = integrations or {}
-        require('user_id or anonymous_id', user_id or anonymous_id, ID_TYPES)
-        require('properties', properties, dict)
-
-        if name:
-            require('name', name, str)
-        if category:
-            require('category', category, str)
-
-        msg = {
-            'integrations': integrations,
-            'anonymousId': anonymous_id,
-            'properties': properties,
-            'timestamp': timestamp,
-            'category': category,
-            'context': context,
-            'userId': user_id,
-            'type': 'screen',
-            'name': name,
-            'messageId': message_id,
-        }
-
-        return self._enqueue(msg)
-
     def _enqueue(self, msg):
         """Push a new `msg` onto the queue, return `(success, msg)`"""
         timestamp = msg['timestamp']
@@ -246,9 +188,8 @@ class Client(object):
             timestamp = datetime.utcnow().replace(tzinfo=tzutc())
         message_id = msg.get('messageId')
         if message_id is None:
-            message_id = uuid4()
+            message_id = f"python-{hashlib.md5(json.dumps(msg).encode('utf-8')).hexdigest()}-{uuid4()}"
 
-        require('integrations', msg['integrations'], dict)
         require('type', msg['type'], str)
         require('timestamp', timestamp, datetime)
         require('context', msg['context'], dict)
@@ -257,8 +198,9 @@ class Client(object):
         timestamp = guess_timezone(timestamp)
         msg['timestamp'] = timestamp.isoformat(timespec='milliseconds')
         msg['messageId'] = stringify_id(message_id)
+        msg['writeKey'] = self.write_key
         msg['context']['library'] = {
-            'name': 'analytics-python',
+            'name': 'journify-python-sdk',
             'version': VERSION
         }
 
@@ -289,7 +231,7 @@ class Client(object):
             self.log.debug('enqueued %s.', msg['type'])
             return True, msg
         except queue.Full:
-            self.log.warning('analytics-python queue is full')
+            self.log.warning('journify-python-sdk queue is full')
             return False, msg
 
     def flush(self):
