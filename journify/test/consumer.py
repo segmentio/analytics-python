@@ -1,7 +1,7 @@
 import unittest
 import json
 import time
-import mock
+from unittest import mock
 
 try:
     from queue import Queue
@@ -11,6 +11,9 @@ except ImportError:
 from journify.consumer import Consumer, MAX_MSG_SIZE
 from journify.request import APIError
 
+
+if __name__ == '__main__':
+    unittest.main()
 
 class TestConsumer(unittest.TestCase):
 

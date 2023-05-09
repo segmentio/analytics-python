@@ -1,10 +1,13 @@
 from datetime import date, datetime
 import unittest
 import time
-import mock
+from unittest import mock
 
-from journify.version import VERSION
 from journify.client import Client
+from journify.version import VERSION
+
+if __name__ == '__main__':
+    unittest.main()
 
 
 class TestClient(unittest.TestCase):
@@ -15,7 +18,7 @@ class TestClient(unittest.TestCase):
 
     def setUp(self):
         self.failed = False
-        self.client = Client('testsecret', on_error=self.fail)
+        self.client = Client('testsecret', on_error=self.fail, debug=True)
 
     def test_requires_write_key(self):
         self.assertRaises(AssertionError, Client)

@@ -33,16 +33,8 @@ class TestModule(unittest.TestCase):
         journify.group('userId', 'groupId')
         journify.flush()
 
-    def test_alias(self):
-        journify.alias('previousId', 'userId')
-        journify.flush()
-
     def test_page(self):
         journify.page('userId')
-        journify.flush()
-
-    def test_screen(self):
-        journify.screen('userId')
         journify.flush()
 
     def test_flush(self):

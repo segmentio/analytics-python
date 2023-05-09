@@ -11,15 +11,16 @@ from journify.utils import remove_trailing_slash
 _session = sessions.Session()
 
 
-def post(write_key, host=None, gzip=False, timeout=15, proxies=None, **kwargs):
-    """Post the `kwargs` to the API"""
+def post(write_key, host=None, gzip=False, timeout=15, proxies=None, batch=None):
     log = logging.getLogger('journify')
-    body = kwargs
-    body['writeKey'] = write_key
-    body['context'] = {
-        'library': {
-            'name': 'journify-python-sdk',
-            'version': VERSION,
+    body = {
+        'batch': batch,
+        'writeKey': write_key,
+        'context': {
+            'library': {
+                'name': 'journify-python-sdk',
+                'version': VERSION,
+            }
         }
     }
 
@@ -57,7 +58,7 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, **kwargs):
     try:
         payload = res.json()
         log.debug('received response: %s', payload)
-        raise APIError(res.status_code, payload['code'], payload['message'])
+        raise APIError(res.status_code, res.status_code, payload)
     except ValueError as e:
         raise APIError(res.status_code, 'unknown', res.text) from e
 
