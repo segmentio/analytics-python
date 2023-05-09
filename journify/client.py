@@ -16,6 +16,7 @@ from journify.version import VERSION
 
 ID_TYPES = (numbers.Number, str)
 
+
 class Client:
     """Class representing a Journify client"""
     class DefaultConfig:
@@ -188,8 +189,8 @@ class Client:
             timestamp = datetime.utcnow().replace(tzinfo=tzutc())
         message_id = msg.get('messageId')
         if message_id is None:
-            message_id = f"python-{hashlib.md5(json.dumps(msg).encode('utf-8')).hexdigest()}-" \
-                         f"{uuid4()}"
+            body_hash = hashlib.md5(json.dumps(msg).encode('utf-8')).hexdigest()
+            message_id = f"python-{body_hash}-{uuid4()}"
 
         require('type', msg['type'], str)
         require('timestamp', timestamp, datetime)

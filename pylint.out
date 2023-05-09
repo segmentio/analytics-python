@@ -25,6 +25,26 @@ Statistics by type
 
 
 
+External dependencies
+---------------------
+::
+
+    Queue (journify.test.consumer)
+    backoff (journify.consumer)
+    dateutil 
+      \-tz (journify.client,journify.test.utils,journify.utils)
+    journify (journify.test,journify.test.module)
+      \-client (journify.test.client)
+      \-consumer (journify.test.consumer)
+      \-request (journify.test.consumer,journify.test.request)
+      \-utils (journify.test.utils)
+      \-version (journify.test.client)
+    monotonic (journify.consumer)
+    requests (journify.test.request)
+      \-sessions (journify.request)
+
+
+
 1460 lines have been analyzed
 
 Raw metrics
