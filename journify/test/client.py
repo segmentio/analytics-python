@@ -9,7 +9,7 @@ from journify.client import Client
 
 class TestClient(unittest.TestCase):
 
-    def fail(self, e, batch):
+    def fail(self, msg=None):
         """Mark the failure handler"""
         self.failed = True
 
@@ -65,16 +65,13 @@ class TestClient(unittest.TestCase):
 
     def test_advanced_track(self):
         client = self.client
-        success, msg = client.track(
-            'userId', 'python test event', {'property': 'value'},
-            {'ip': '192.168.0.1'}, datetime(2014, 9, 3), 'anonymousId',
-            {'Amplitude': True}, 'messageId')
+        success, msg = client.track('userId', 'python test event', {'property': 'value'},
+            {'ip': '192.168.0.1'}, datetime(2014, 9, 3), 'anonymousId', 'messageId')
 
         self.assertTrue(success)
 
         self.assertEqual(msg['timestamp'], '2014-09-03T00:00:00+00:00')
         self.assertEqual(msg['properties'], {'property': 'value'})
-        self.assertEqual(msg['integrations'], {'Amplitude': True})
         self.assertEqual(msg['context']['ip'], '192.168.0.1')
         self.assertEqual(msg['event'], 'python test event')
         self.assertEqual(msg['anonymousId'], 'anonymousId')
@@ -103,13 +100,11 @@ class TestClient(unittest.TestCase):
         client = self.client
         success, msg = client.identify(
             'userId', {'trait': 'value'}, {'ip': '192.168.0.1'},
-            datetime(2014, 9, 3), 'anonymousId', {'Amplitude': True},
-            'messageId')
+            datetime(2014, 9, 3), 'anonymousId', 'messageId')
 
         self.assertTrue(success)
 
         self.assertEqual(msg['timestamp'], '2014-09-03T00:00:00+00:00')
-        self.assertEqual(msg['integrations'], {'Amplitude': True})
         self.assertEqual(msg['context']['ip'], '192.168.0.1')
         self.assertEqual(msg['traits'], {'trait': 'value'})
         self.assertEqual(msg['anonymousId'], 'anonymousId')
@@ -137,13 +132,11 @@ class TestClient(unittest.TestCase):
         client = self.client
         success, msg = client.group(
             'userId', 'groupId', {'trait': 'value'}, {'ip': '192.168.0.1'},
-            datetime(2014, 9, 3), 'anonymousId', {'Amplitude': True},
-            'messageId')
+            datetime(2014, 9, 3), 'anonymousId', 'messageId')
 
         self.assertTrue(success)
 
         self.assertEqual(msg['timestamp'], '2014-09-03T00:00:00+00:00')
-        self.assertEqual(msg['integrations'], {'Amplitude': True})
         self.assertEqual(msg['context']['ip'], '192.168.0.1')
         self.assertEqual(msg['traits'], {'trait': 'value'})
         self.assertEqual(msg['anonymousId'], 'anonymousId')
@@ -170,13 +163,11 @@ class TestClient(unittest.TestCase):
         client = self.client
         success, msg = client.page(
             'userId', 'category', 'name', {'property': 'value'},
-            {'ip': '192.168.0.1'}, datetime(2014, 9, 3), 'anonymousId',
-            {'Amplitude': True}, 'messageId')
+            {'ip': '192.168.0.1'}, datetime(2014, 9, 3), 'anonymousId', 'messageId')
 
         self.assertTrue(success)
 
         self.assertEqual(msg['timestamp'], '2014-09-03T00:00:00+00:00')
-        self.assertEqual(msg['integrations'], {'Amplitude': True})
         self.assertEqual(msg['context']['ip'], '192.168.0.1')
         self.assertEqual(msg['properties'], {'property': 'value'})
         self.assertEqual(msg['anonymousId'], 'anonymousId')
@@ -277,7 +268,7 @@ class TestClient(unittest.TestCase):
         client = Client('testsecret', on_error=self.fail,
                         upload_size=10, upload_interval=3)
 
-        def mock_post_fn(*args, **kwargs):
+        def mock_post_fn(_, **kwargs):
             self.assertEqual(len(kwargs['batch']), 10)
 
         # the post function should be called 2 times, with a batch size of 10
@@ -301,5 +292,5 @@ class TestClient(unittest.TestCase):
 
     def test_proxies(self):
         client = Client('testsecret', proxies='203.243.63.16:80')
-        success, msg = client.identify('userId', {'trait': 'value'})
+        success, _ = client.identify('userId', {'trait': 'value'})
         self.assertTrue(success)

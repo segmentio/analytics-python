@@ -33,7 +33,7 @@ class TestRequests(unittest.TestCase):
         today = date.today()
         data = {'created': today}
         result = json.dumps(data, cls=DatetimeSerializer)
-        expected = '{"created": "%s"}' % today.isoformat()
+        expected = f'{{"created": "{today.isoformat()}"}}'
         self.assertEqual(result, expected)
 
     def test_should_not_timeout(self):

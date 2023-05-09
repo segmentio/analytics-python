@@ -1,7 +1,7 @@
 import unittest
-import mock
-import time
 import json
+import time
+import mock
 
 try:
     from queue import Queue
@@ -104,7 +104,7 @@ class TestConsumer(unittest.TestCase):
     def _test_request_retry(self, consumer,
                             expected_exception, exception_count):
 
-        def mock_post(*args, **kwargs):
+        def mock_post():
             mock_post.call_count += 1
             if mock_post.call_count <= exception_count:
                 raise expected_exception
@@ -182,7 +182,7 @@ class TestConsumer(unittest.TestCase):
         # number of messages in a maximum-size batch
         n_msgs = int(475000 / msg_size)
 
-        def mock_post_fn(_, data, **kwargs):
+        def mock_post_fn(_, data):
             res = mock.Mock()
             res.status_code = 200
             self.assertTrue(len(data.encode()) < 500000,
