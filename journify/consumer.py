@@ -45,7 +45,7 @@ class Consumer(Thread):
 
     def run(self):
         """Runs the consumer."""
-        self.log.debug('consumer is running...')
+        self.log.error('consumer is running...')
         while self.running:
             self.upload()
 
@@ -75,12 +75,10 @@ class Consumer(Thread):
                 self.on_error(e, batch)
         finally:
             # mark items as acknowledged from queue
-            self.log.error('mark items as acknowledged from queue')
             i = 0
             for _ in batch:
                 self.queue.task_done()
                 i += 1
-                self.log.error('Mark item %d as done', i)
             return success
 
     def next(self):

@@ -49,7 +49,9 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, batch=None)
     if proxies:
         kwargs['proxies'] = proxies
 
+    log.error("Making request")
     res = _session.post(url, data=data, headers=headers, timeout=timeout)
+    log.debug(f"res.status_code: {res.status_code}")
 
     if 200 <= res.status_code <= 299:
         log.debug('data uploaded successfully')
