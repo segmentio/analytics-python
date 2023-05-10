@@ -6,7 +6,7 @@ lint:
 	flake8 --max-complexity=10 --statistics journify > flake8.out || true
 
 test:
-	python3 -m unittest discover journify/test -v --pattern '*.py'
+	python3 -m unittest discover -v journify/test --pattern '*.py'
 
 release:
 	python setup.py sdist bdist_wheel

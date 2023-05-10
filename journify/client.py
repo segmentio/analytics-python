@@ -67,8 +67,8 @@ class Client:
         self.timeout = timeout
         self.proxies = proxies
 
-        # if debug:
-        #     self.log.setLevel(logging.DEBUG)
+        if self.debug:
+            self.log.setLevel(logging.DEBUG)
 
         if sync_mode:
             self.consumers = None
@@ -241,10 +241,10 @@ class Client:
         """Forces a flush from the internal queue to the server"""
         local_queue = self.queue
         size = local_queue.qsize()
-        self.log.debug('trying to flush %s items', size)
+        self.log.error('trying to flush %s items', size)
         local_queue.join()
         # Note that this message may not be precise, because of threading.
-        self.log.debug('successfully flushed about %s items.', size)
+        self.log.error('successfully flushed about %s items.', size)
 
     def join(self):
         """Ends the consumer thread once the queue is empty.

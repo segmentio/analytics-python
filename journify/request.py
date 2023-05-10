@@ -51,7 +51,7 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, batch=None)
 
     res = _session.post(url, data=data, headers=headers, timeout=timeout)
 
-    if res.status_code == 200:
+    if 200 <= res.status_code <= 299:
         log.debug('data uploaded successfully')
         return res
 

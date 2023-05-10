@@ -60,10 +60,13 @@ class Consumer(Thread):
         success = False
         batch = self.next()
         if len(batch) == 0:
+            #self.log.error('success = False')
             return False
 
         try:
+            self.log.error('Entering try block')
             self.request(batch)
+            self.log.error('Finished request')
             success = True
         except Exception as e:
             self.log.error('error uploading: %s', e)
@@ -72,8 +75,12 @@ class Consumer(Thread):
                 self.on_error(e, batch)
         finally:
             # mark items as acknowledged from queue
+            self.log.error('mark items as acknowledged from queue')
+            i = 0
             for _ in batch:
                 self.queue.task_done()
+                i += 1
+                self.log.error('Mark item %d as done', i)
             return success
 
     def next(self):
@@ -85,12 +92,14 @@ class Consumer(Thread):
         total_size = 0
 
         while len(items) < self.upload_size:
-            elapsed = monotonic.monotonic() - start_time
+            now = monotonic.monotonic()
+            elapsed = now - start_time
             if elapsed >= self.upload_interval:
                 break
             try:
                 item = queue.get(
                     block=True, timeout=self.upload_interval - elapsed)
+
                 item_size = len(json.dumps(
                     item, cls=DatetimeSerializer).encode())
                 if item_size > MAX_MSG_SIZE:
