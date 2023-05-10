@@ -45,7 +45,7 @@ class Consumer(Thread):
 
     def run(self):
         """Runs the consumer."""
-        self.log.error('consumer is running...')
+        self.log.debug('consumer is running...')
         while self.running:
             self.upload()
 
@@ -60,13 +60,10 @@ class Consumer(Thread):
         success = False
         batch = self.next()
         if len(batch) == 0:
-            #self.log.error('success = False')
             return False
 
         try:
-            self.log.error('Entering try block')
             self.request(batch)
-            self.log.error('Finished request')
             success = True
         except Exception as e:
             self.log.error('error uploading: %s', e)
