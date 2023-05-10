@@ -19,7 +19,7 @@ class TestInit(unittest.TestCase):
     def test_writeKey(self):
         self.assertIsNone(journify.default_client)
         journify.flush()
-        self.assertEqual(journify.default_client.write_key, 'test-init')
+        self.assertEqual(journify.default_client.write_key, 'wk_test_2N0WZTEtnQZxBwdvrdMUJwFyIa1')
 
     def test_debug(self):
         self.assertIsNone(journify.default_client)
@@ -41,12 +41,6 @@ class TestInit(unittest.TestCase):
         journify.flush()
         self.assertFalse(journify.default_client.gzip)
 
-    def test_host(self):
-        self.assertIsNone(journify.default_client)
-        journify.host = 'test-host'
-        journify.flush()
-        self.assertEqual(journify.default_client.host, 'test-host')
-
     def test_max_queue_size(self):
         self.assertIsNone(journify.default_client)
         journify.max_queue_size = 1337
@@ -55,7 +49,7 @@ class TestInit(unittest.TestCase):
 
     def test_max_retries(self):
         self.assertIsNone(journify.default_client)
-        client = journify.Client('testsecret', max_retries=42)
+        client = journify.Client('wk_test_2N0WZTEtnQZxBwdvrdMUJwFyIa1', max_retries=42)
         for consumer in client.consumers:
             self.assertEqual(consumer.retries, 42)
 
@@ -76,5 +70,5 @@ class TestInit(unittest.TestCase):
         self.assertEqual(journify.default_client.timeout, 1.234)
 
     def setUp(self):
-        journify.write_key = 'test-init'
+        journify.write_key = 'wk_test_2N0WZTEtnQZxBwdvrdMUJwFyIa1'
         journify.default_client = None

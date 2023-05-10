@@ -18,11 +18,11 @@ class TestRequests(unittest.TestCase):
         self.assertEqual(res.status_code, 202)
 
     def test_invalid_request_error(self):
-        self.assertRaises(Exception, post, 'testsecret',
+        self.assertRaises(Exception, post, 'wk_test_2N0WZTEtnQZxBwdvrdMUJwFyIa1',
                           'https://t.journify.io', False, '[{]')
 
     def test_invalid_host(self):
-        self.assertRaises(Exception, post, 'testsecret',
+        self.assertRaises(Exception, post, 'wk_test_2N0WZTEtnQZxBwdvrdMUJwFyIa1',
                           't.journify.io/', batch=[])
 
     def test_datetime_serialization(self):
@@ -38,26 +38,21 @@ class TestRequests(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_should_not_timeout(self):
-        res = post('testsecret', batch=[{
-            'userId': 'userId',
-            'event': 'python event',
-            'type': 'track'
-        }], timeout=15)
-        self.assertEqual(res.status_code, 200)
-
-    def test_should_timeout(self):
-        with self.assertRaises(requests.ReadTimeout):
-            post('testsecret', batch=[{
-                'userId': 'userId',
-                'event': 'python event',
-                'type': 'track'
-            }], timeout=0.0001)
-
-    def test_proxies(self):
-        res = post('testsecret', batch=[{
+        res = post('wk_test_2N0WZTEtnQZxBwdvrdMUJwFyIa1', batch=[{
             'userId': 'userId',
             'event': 'python event',
             'type': 'track',
-            'proxies': '203.243.63.16:80'
-        }])
-        self.assertEqual(res.status_code, 200)
+            'messageId': 'messageId',
+            'timestamp': '2002-10-02T10:00:00-05:00'
+        }], timeout=15)
+        self.assertEqual(res.status_code, 202)
+
+    def test_should_timeout(self):
+        with self.assertRaises(requests.ReadTimeout):
+            post('wk_test_2N0WZTEtnQZxBwdvrdMUJwFyIa1', batch=[{
+                'userId': 'userId',
+                'event': 'python event',
+                'type': 'track',
+                'messageId': 'messageId',
+                'timestamp': '2002-10-02T10:00:00-05:00'
+            }], timeout=0.0001)
