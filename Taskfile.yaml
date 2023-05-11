@@ -10,7 +10,7 @@ tasks:
   lint:
     desc: Lint code
     cmds:
-      - pylint --rcfile=.pylintrc --reports=y --exit-zero journify | tee pylint.out
+      - pylint --fail-under=10.0 --rcfile=.pylintrc --reports=y --exit-zero journify | tee pylint.out
 
   test:
     desc: Test code
