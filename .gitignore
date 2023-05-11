@@ -10,3 +10,5 @@ build
 .vscode/
 .idea/
 .python-version
+pylint.out
+journify-python-sdk-*

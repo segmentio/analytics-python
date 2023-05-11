@@ -26,7 +26,6 @@ install_requires = [
 
 tests_require = [
     "pylint==2.8.0",
-    "flake8==3.7.9",
 ]
 
 setup(
