@@ -87,4 +87,4 @@ jobs:
         run: |
           tag_name="v${{ steps.next_version.outputs.version }}"
           git tag -a $tag_name -m "New version $tag_name"
-          git push origin $tag_name
+          git push --tags

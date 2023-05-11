@@ -21,10 +21,7 @@ install_requires = [
     "requests~=2.7",
     "monotonic~=1.5",
     "backoff~=2.1",
-    "python-dateutil~=2.2"
-]
-
-tests_require = [
+    "python-dateutil~=2.2",
     "pylint==2.8.0",
 ]
 
@@ -41,9 +38,6 @@ setup(
     python_requires='>=3.6.0',
     license='MIT License',
     install_requires=install_requires,
-    extras_require={
-        'test': tests_require
-    },
     description='The hassle-free way to integrate Journify into any python application.',
     long_description=long_description,
     classifiers=[
