@@ -15,7 +15,7 @@ tasks:
   test:
     desc: Test code
     cmds:
-      - python -m unittest discover -v --pattern '*.py'
+      - python setup.py test
 
   release:
     desc: Release to PyPI
