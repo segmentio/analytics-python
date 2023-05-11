@@ -5,7 +5,7 @@ tasks:
      desc: Install dependencies
      cmds:
        - pip install twine
-       - python3 setup.py install
+       - python setup.py install
 
   lint:
     desc: Lint code
