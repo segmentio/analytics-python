@@ -255,7 +255,7 @@ class TestClient(unittest.TestCase):
 
     def test_user_defined_upload_size(self):
         client = Client('wk_test_2N0WZTEtnQZxBwdvrdMUJwFyIa1', on_error=self.fail,
-                        upload_size=10, upload_interval=3)
+                        upload_size=10, upload_interval=30)
 
         def mock_post_fn(_, **kwargs):
             self.assertEqual(len(kwargs['batch']), 10)
