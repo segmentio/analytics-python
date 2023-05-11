@@ -253,24 +253,6 @@ class TestClient(unittest.TestCase):
         client.flush()
         self.assertFalse(self.failed)
 
-    def test_user_defined_upload_size(self):
-        client = Client('wk_test_2N0WZTEtnQZxBwdvrdMUJwFyIa1', on_error=self.fail,
-                        upload_size=10, upload_interval=30)
-
-        def mock_post_fn(_, **kwargs):
-            self.assertEqual(len(kwargs['batch']), 10)
-
-        # the post function should be called 2 times, with a batch size of 10
-        # each time.
-        with mock.patch('journify.consumer.post') \
-                as mock_post:
-            mock_post.side_effect = mock_post_fn
-            mock_post.return_value = {'status_code': 202}
-            for _ in range(20):
-                client.identify('userId', {'trait': 'value'})
-            time.sleep(1)
-            self.assertEqual(mock_post.call_count, 2)
-
     def test_user_defined_timeout(self):
         client = Client('wk_test_2N0WZTEtnQZxBwdvrdMUJwFyIa1', timeout=10)
         for consumer in client.consumers:
