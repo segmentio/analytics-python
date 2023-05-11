@@ -3,29 +3,34 @@ from io import BytesIO
 from gzip import GzipFile
 import logging
 import json
-from dateutil.tz import tzutc
-from requests.auth import HTTPBasicAuth
 from requests import sessions
 
-from segment.analytics.version import VERSION
-from segment.analytics.utils import remove_trailing_slash
+from journify.version import VERSION
+from journify.utils import remove_trailing_slash
 
 _session = sessions.Session()
 
 
-def post(write_key, host=None, gzip=False, timeout=15, proxies=None, **kwargs):
-    """Post the `kwargs` to the API"""
-    log = logging.getLogger('segment')
-    body = kwargs
-    body["sentAt"] = datetime.utcnow().replace(tzinfo=tzutc()).isoformat()
-    url = remove_trailing_slash(host or 'https://api.segment.io') + '/v1/batch'
-    auth = HTTPBasicAuth(write_key, '')
+def post(write_key, host=None, gzip=False, timeout=15, proxies=None, batch=None):
+    log = logging.getLogger('journify')
+    body = {
+        'batch': batch,
+        'writeKey': write_key,
+        'context': {
+            'library': {
+                'name': 'journify-python-sdk',
+                'version': VERSION,
+            }
+        }
+    }
+
+    url = remove_trailing_slash(host or 'https://t.journify.io') + '/v1/batch'
     data = json.dumps(body, cls=DatetimeSerializer)
     log.debug('making request: %s', data)
     headers = {
         'Content-Type': 'application/json',
-        'User-Agent': 'analytics-python/' + VERSION
     }
+
     if gzip:
         headers['Content-Encoding'] = 'gzip'
         buf = BytesIO()
@@ -37,7 +42,6 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, **kwargs):
 
     kwargs = {
         "data": data,
-        "auth": auth,
         "headers": headers,
         "timeout": 15,
     }
@@ -45,19 +49,18 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, **kwargs):
     if proxies:
         kwargs['proxies'] = proxies
 
-    res = _session.post(url, data=data, auth=auth,
-                        headers=headers, timeout=timeout)
+    res = _session.post(url, data=data, headers=headers, timeout=timeout)
 
-    if res.status_code == 200:
+    if 200 <= res.status_code <= 299:
         log.debug('data uploaded successfully')
         return res
 
     try:
         payload = res.json()
         log.debug('received response: %s', payload)
-        raise APIError(res.status_code, payload['code'], payload['message'])
-    except ValueError:
-        raise APIError(res.status_code, 'unknown', res.text)
+        raise APIError(res.status_code, res.status_code, payload)
+    except ValueError as e:
+        raise APIError(res.status_code, 'unknown', res.text) from e
 
 
 class APIError(Exception):
@@ -68,13 +71,13 @@ class APIError(Exception):
         self.code = code
 
     def __str__(self):
-        msg = "[Segment] {0}: {1} ({2})"
+        msg = "[Journify] {0}: {1} ({2})"
         return msg.format(self.code, self.message, self.status)
 
 
 class DatetimeSerializer(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, (date, datetime)):
-            return obj.isoformat()
+    def default(self, o):
+        if isinstance(o, (date, datetime)):
+            return o.isoformat()
 
-        return json.JSONEncoder.default(self, obj)
+        return json.JSONEncoder.default(self, o)

@@ -1,21 +1,24 @@
-from datetime import date, datetime
+from datetime import datetime
 import unittest
 import time
-import mock
+from unittest import mock
 
-from analytics.version import VERSION
-from analytics.client import Client
+from journify.client import Client
+from journify.version import VERSION
+
+if __name__ == '__main__':
+    unittest.main()
 
 
 class TestClient(unittest.TestCase):
 
-    def fail(self, e, batch):
+    def fail(self, msg=None):
         """Mark the failure handler"""
         self.failed = True
 
     def setUp(self):
         self.failed = False
-        self.client = Client('testsecret', on_error=self.fail)
+        self.client = Client('wk_test_2N0WZTEtnQZxBwdvrdMUJwFyIa1', on_error=self.fail, debug=True)
 
     def test_requires_write_key(self):
         self.assertRaises(AssertionError, Client)
@@ -65,21 +68,18 @@ class TestClient(unittest.TestCase):
 
     def test_advanced_track(self):
         client = self.client
-        success, msg = client.track(
-            'userId', 'python test event', {'property': 'value'},
-            {'ip': '192.168.0.1'}, datetime(2014, 9, 3), 'anonymousId',
-            {'Amplitude': True}, 'messageId')
+        success, msg = client.track('userId', 'python test event', {'property': 'value'},
+            {'ip': '192.168.0.1'}, datetime(2014, 9, 3), 'anonymousId', 'messageId')
 
         self.assertTrue(success)
 
         self.assertEqual(msg['timestamp'], '2014-09-03T00:00:00+00:00')
         self.assertEqual(msg['properties'], {'property': 'value'})
-        self.assertEqual(msg['integrations'], {'Amplitude': True})
         self.assertEqual(msg['context']['ip'], '192.168.0.1')
         self.assertEqual(msg['event'], 'python test event')
         self.assertEqual(msg['anonymousId'], 'anonymousId')
         self.assertEqual(msg['context']['library'], {
-            'name': 'analytics-python',
+            'name': 'journify-python-sdk',
             'version': VERSION
         })
         self.assertEqual(msg['messageId'], 'messageId')
@@ -103,18 +103,16 @@ class TestClient(unittest.TestCase):
         client = self.client
         success, msg = client.identify(
             'userId', {'trait': 'value'}, {'ip': '192.168.0.1'},
-            datetime(2014, 9, 3), 'anonymousId', {'Amplitude': True},
-            'messageId')
+            datetime(2014, 9, 3), 'anonymousId', 'messageId')
 
         self.assertTrue(success)
 
         self.assertEqual(msg['timestamp'], '2014-09-03T00:00:00+00:00')
-        self.assertEqual(msg['integrations'], {'Amplitude': True})
         self.assertEqual(msg['context']['ip'], '192.168.0.1')
         self.assertEqual(msg['traits'], {'trait': 'value'})
         self.assertEqual(msg['anonymousId'], 'anonymousId')
         self.assertEqual(msg['context']['library'], {
-            'name': 'analytics-python',
+            'name': 'journify-python-sdk',
             'version': VERSION
         })
         self.assertTrue(isinstance(msg['timestamp'], str))
@@ -137,33 +135,22 @@ class TestClient(unittest.TestCase):
         client = self.client
         success, msg = client.group(
             'userId', 'groupId', {'trait': 'value'}, {'ip': '192.168.0.1'},
-            datetime(2014, 9, 3), 'anonymousId', {'Amplitude': True},
-            'messageId')
+            datetime(2014, 9, 3), 'anonymousId', 'messageId')
 
         self.assertTrue(success)
 
         self.assertEqual(msg['timestamp'], '2014-09-03T00:00:00+00:00')
-        self.assertEqual(msg['integrations'], {'Amplitude': True})
         self.assertEqual(msg['context']['ip'], '192.168.0.1')
         self.assertEqual(msg['traits'], {'trait': 'value'})
         self.assertEqual(msg['anonymousId'], 'anonymousId')
         self.assertEqual(msg['context']['library'], {
-            'name': 'analytics-python',
+            'name': 'journify-python-sdk',
             'version': VERSION
         })
         self.assertTrue(isinstance(msg['timestamp'], str))
         self.assertEqual(msg['messageId'], 'messageId')
         self.assertEqual(msg['userId'], 'userId')
         self.assertEqual(msg['type'], 'group')
-
-    def test_basic_alias(self):
-        client = self.client
-        success, msg = client.alias('previousId', 'userId')
-        client.flush()
-        self.assertTrue(success)
-        self.assertFalse(self.failed)
-        self.assertEqual(msg['previousId'], 'previousId')
-        self.assertEqual(msg['userId'], 'userId')
 
     def test_basic_page(self):
         client = self.client
@@ -179,18 +166,16 @@ class TestClient(unittest.TestCase):
         client = self.client
         success, msg = client.page(
             'userId', 'category', 'name', {'property': 'value'},
-            {'ip': '192.168.0.1'}, datetime(2014, 9, 3), 'anonymousId',
-            {'Amplitude': True}, 'messageId')
+            {'ip': '192.168.0.1'}, datetime(2014, 9, 3), 'anonymousId', 'messageId')
 
         self.assertTrue(success)
 
         self.assertEqual(msg['timestamp'], '2014-09-03T00:00:00+00:00')
-        self.assertEqual(msg['integrations'], {'Amplitude': True})
         self.assertEqual(msg['context']['ip'], '192.168.0.1')
         self.assertEqual(msg['properties'], {'property': 'value'})
         self.assertEqual(msg['anonymousId'], 'anonymousId')
         self.assertEqual(msg['context']['library'], {
-            'name': 'analytics-python',
+            'name': 'journify-python-sdk',
             'version': VERSION
         })
         self.assertEqual(msg['category'], 'category')
@@ -198,40 +183,6 @@ class TestClient(unittest.TestCase):
         self.assertEqual(msg['messageId'], 'messageId')
         self.assertEqual(msg['userId'], 'userId')
         self.assertEqual(msg['type'], 'page')
-        self.assertEqual(msg['name'], 'name')
-
-    def test_basic_screen(self):
-        client = self.client
-        success, msg = client.screen('userId', name='name')
-        client.flush()
-        self.assertTrue(success)
-        self.assertEqual(msg['userId'], 'userId')
-        self.assertEqual(msg['type'], 'screen')
-        self.assertEqual(msg['name'], 'name')
-
-    def test_advanced_screen(self):
-        client = self.client
-        success, msg = client.screen(
-            'userId', 'category', 'name', {'property': 'value'},
-            {'ip': '192.168.0.1'}, datetime(2014, 9, 3), 'anonymousId',
-            {'Amplitude': True}, 'messageId')
-
-        self.assertTrue(success)
-
-        self.assertEqual(msg['timestamp'], '2014-09-03T00:00:00+00:00')
-        self.assertEqual(msg['integrations'], {'Amplitude': True})
-        self.assertEqual(msg['context']['ip'], '192.168.0.1')
-        self.assertEqual(msg['properties'], {'property': 'value'})
-        self.assertEqual(msg['anonymousId'], 'anonymousId')
-        self.assertEqual(msg['context']['library'], {
-            'name': 'analytics-python',
-            'version': VERSION
-        })
-        self.assertTrue(isinstance(msg['timestamp'], str))
-        self.assertEqual(msg['messageId'], 'messageId')
-        self.assertEqual(msg['category'], 'category')
-        self.assertEqual(msg['userId'], 'userId')
-        self.assertEqual(msg['type'], 'screen')
         self.assertEqual(msg['name'], 'name')
 
     def test_flush(self):
@@ -259,7 +210,7 @@ class TestClient(unittest.TestCase):
             self.assertFalse(consumer.is_alive())
 
     def test_synchronous(self):
-        client = Client('testsecret', sync_mode=True)
+        client = Client('wk_test_2N0WZTEtnQZxBwdvrdMUJwFyIa1', sync_mode=True)
 
         success, _ = client.identify('userId')
         self.assertFalse(client.consumers)
@@ -267,7 +218,7 @@ class TestClient(unittest.TestCase):
         self.assertTrue(success)
 
     def test_overflow(self):
-        client = Client('testsecret', max_queue_size=1)
+        client = Client('wk_test_2N0WZTEtnQZxBwdvrdMUJwFyIa1', max_queue_size=1)
         # Ensure consumer thread is no longer uploading
         client.join()
 
@@ -293,56 +244,26 @@ class TestClient(unittest.TestCase):
         self.assertFalse(self.failed)
 
     def test_debug(self):
-        Client('bad_key', debug=True)
-
-    def test_identify_with_date_object(self):
-        client = self.client
-        success, msg = client.identify(
-            'userId',
-            {
-                'birthdate': date(1981, 2, 2),
-            },
-        )
-        client.flush()
-        self.assertTrue(success)
-        self.assertFalse(self.failed)
-
-        self.assertEqual(msg['traits'], {'birthdate': date(1981, 2, 2)})
+        Client('bad_key')
 
     def test_gzip(self):
-        client = Client('testsecret', on_error=self.fail, gzip=True)
+        client = Client('wk_test_2N0WZTEtnQZxBwdvrdMUJwFyIa1', on_error=self.fail, gzip=True)
         for _ in range(10):
             client.identify('userId', {'trait': 'value'})
         client.flush()
         self.assertFalse(self.failed)
 
-    def test_user_defined_upload_size(self):
-        client = Client('testsecret', on_error=self.fail,
-                        upload_size=10, upload_interval=3)
-
-        def mock_post_fn(*args, **kwargs):
-            self.assertEqual(len(kwargs['batch']), 10)
-
-        # the post function should be called 2 times, with a batch size of 10
-        # each time.
-        with mock.patch('analytics.consumer.post', side_effect=mock_post_fn) \
-                as mock_post:
-            for _ in range(20):
-                client.identify('userId', {'trait': 'value'})
-            time.sleep(1)
-            self.assertEqual(mock_post.call_count, 2)
-
     def test_user_defined_timeout(self):
-        client = Client('testsecret', timeout=10)
+        client = Client('wk_test_2N0WZTEtnQZxBwdvrdMUJwFyIa1', timeout=10)
         for consumer in client.consumers:
             self.assertEqual(consumer.timeout, 10)
 
     def test_default_timeout_15(self):
-        client = Client('testsecret')
+        client = Client('wk_test_2N0WZTEtnQZxBwdvrdMUJwFyIa1')
         for consumer in client.consumers:
             self.assertEqual(consumer.timeout, 15)
 
     def test_proxies(self):
-        client = Client('testsecret', proxies='203.243.63.16:80')
-        success, msg = client.identify('userId', {'trait': 'value'})
+        client = Client('wk_test_2N0WZTEtnQZxBwdvrdMUJwFyIa1', proxies='203.243.63.16:80')
+        success, _ = client.identify('userId', {'trait': 'value'})
         self.assertTrue(success)

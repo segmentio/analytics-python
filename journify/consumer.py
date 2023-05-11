@@ -1,12 +1,13 @@
 import logging
 from threading import Thread
-import monotonic
-import backoff
 import json
 
-from segment.analytics.request import post, APIError, DatetimeSerializer
-
 from queue import Empty
+
+import monotonic
+import backoff
+
+from journify.request import post, APIError, DatetimeSerializer
 
 MAX_MSG_SIZE = 32 << 10
 
@@ -17,7 +18,7 @@ BATCH_SIZE_LIMIT = 475000
 
 class Consumer(Thread):
     """Consumes the messages from the client's queue."""
-    log = logging.getLogger('segment')
+    log = logging.getLogger('journify')
 
     def __init__(self, queue, write_key, upload_size=100, host=None,
                  on_error=None, upload_interval=0.5, gzip=False, retries=10,
@@ -71,8 +72,10 @@ class Consumer(Thread):
                 self.on_error(e, batch)
         finally:
             # mark items as acknowledged from queue
+            i = 0
             for _ in batch:
                 self.queue.task_done()
+                i += 1
             return success
 
     def next(self):
@@ -84,12 +87,14 @@ class Consumer(Thread):
         total_size = 0
 
         while len(items) < self.upload_size:
-            elapsed = monotonic.monotonic() - start_time
+            now = monotonic.monotonic()
+            elapsed = now - start_time
             if elapsed >= self.upload_interval:
                 break
             try:
                 item = queue.get(
                     block=True, timeout=self.upload_interval - elapsed)
+
                 item_size = len(json.dumps(
                     item, cls=DatetimeSerializer).encode())
                 if item_size > MAX_MSG_SIZE:
@@ -118,9 +123,10 @@ class Consumer(Thread):
                 # with 429 status code (rate limited),
                 # don't retry on other client errors
                 return (400 <= exc.status < 500) and exc.status != 429
-            else:
-                # retry on all other errors (eg. network)
-                return False
+
+            # retry on all other errors (eg. network)
+            return False
+
 
         @backoff.on_exception(
             backoff.expo,
