@@ -22,7 +22,7 @@ install_requires = [
     "monotonic~=1.5",
     "backoff~=2.1",
     "python-dateutil~=2.2",
-    "pylint==2.8.0",
+    "pylint==2.17.4",
 ]
 
 setup(
