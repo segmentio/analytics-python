@@ -15,7 +15,7 @@ tasks:
   test:
     desc: Test code
     cmds:
-      - python setup.py test
+      - python -m unittest discover journify/test -v --pattern '*.py'
 
   release:
     desc: Release to PyPI

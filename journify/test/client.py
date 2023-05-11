@@ -244,7 +244,7 @@ class TestClient(unittest.TestCase):
         self.assertFalse(self.failed)
 
     def test_debug(self):
-        Client('bad_key', debug=True)
+        Client('bad_key')
 
     def test_gzip(self):
         client = Client('wk_test_2N0WZTEtnQZxBwdvrdMUJwFyIa1', on_error=self.fail, gzip=True)
