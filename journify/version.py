@@ -1,2 +1,2 @@
 # this file is generated automatically
-VERSION = '2.2.2'
+VERSION = '2.2.3'

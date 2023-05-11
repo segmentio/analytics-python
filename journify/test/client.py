@@ -1,7 +1,5 @@
 from datetime import datetime
 import unittest
-import time
-from unittest import mock
 
 from journify.client import Client
 from journify.version import VERSION
