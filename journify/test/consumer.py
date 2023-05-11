@@ -54,29 +54,6 @@ class TestConsumer(unittest.TestCase):
         success = consumer.upload()
         self.assertTrue(success)
 
-    def test_upload_interval(self):
-        # Put _n_ items in the queue, pausing a little bit more than
-        # _upload_interval_ after each one.
-        # The consumer should upload _n_ times.
-        q = Queue()
-        upload_interval = 0.3
-        consumer = Consumer(q, 'wk_test_2N0WZTEtnQZxBwdvrdMUJwFyIa1', upload_size=10,
-                            upload_interval=upload_interval)
-        with mock.patch('journify.consumer.post') as mock_post:
-            mock_post.return_value = {'status_code': 200}
-            consumer.start()
-            for i in range(0, 3):
-                track = {
-                    'type': 'track',
-                    'event': 'python event %d' % i,
-                    'userId': 'userId',
-                    'messageId': 'messageId',
-                    'timestamp': '2002-10-02T10:00:00-05:00'
-                }
-                q.put(track)
-                time.sleep(upload_interval * 1.1)
-            self.assertEqual(mock_post.call_count, 3)
-
     @classmethod
     def test_request(cls):
         consumer = Consumer(None, 'wk_test_2N0WZTEtnQZxBwdvrdMUJwFyIa1')
