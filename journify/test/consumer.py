@@ -1,6 +1,4 @@
 import unittest
-import time
-from unittest import mock
 
 try:
     from queue import Queue
