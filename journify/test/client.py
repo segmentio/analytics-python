@@ -262,8 +262,10 @@ class TestClient(unittest.TestCase):
 
         # the post function should be called 2 times, with a batch size of 10
         # each time.
-        with mock.patch('journify.consumer.post', side_effect=mock_post_fn) \
+        with mock.patch('journify.consumer.post') \
                 as mock_post:
+            mock_post.side_effect = mock_post_fn
+            mock_post.return_value = {'status_code': 202}
             for _ in range(20):
                 client.identify('userId', {'trait': 'value'})
             time.sleep(1)
