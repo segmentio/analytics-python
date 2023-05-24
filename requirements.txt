@@ -61,7 +61,6 @@ requests-toolbelt==0.9.1
 rfc3986==2.0.0
 ruamel.yaml==0.17.16
 ruamel.yaml.clib==0.2.6
-segment-analytics-python==1.6.0
 shellingham==1.4.0
 six==1.15.0
 termcolor==1.1.0
