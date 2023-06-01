@@ -1,32 +1,30 @@
-#name: Run Python Tests
-#on:
-#  push:
-#    branches:
-#      - master
-#  pull_request:
-#    branches:
-#      - master#
-
-#jobs:#
-
-#  build:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v3
-#      - name: Install Python 3
-#        uses: actions/setup-python@v1
-#        with:
-#          python-version: 3.7
-#      - name: Install dependencies
-#        run: |
-#          python -m pip3 install --upgrade pip
-#          pip3 install -r requirements.txt
-#          pip3 install python-dateutil backoff monotonic
-#          pip3 install --user .
-#          sudo pip3 install pylint==2.8.0 flake8 mock==3.0.5 python-dateutil
-#      - name: Run tests
-#        run: make test
-#        run: make e2e_test#
+name: Run Python Tests
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Python 3
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+      - name: Install dependencies
+        run: |
+          python -m pip3 install --upgrade pip
+          pip3 install -r requirements.txt
+          pip3 install python-dateutil backoff monotonic
+          pip3 install --user .
+          sudo pip3 install pylint==2.8.0 flake8 mock==3.0.5 python-dateutil
+      - name: Run tests
+        run: make test
+        run: make e2e_test#
 
 #  snyk:
 #    runs-on: ubuntu-latest
