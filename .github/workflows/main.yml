@@ -23,8 +23,7 @@ jobs:
           pip3 install --user .
           sudo pip3 install pylint==2.8.0 flake8 mock==3.0.5 python-dateutil
       - name: Run tests
-        run: make test
-        run: make e2e_test#
+        run: make e2e_test
 
 #  snyk:
 #    runs-on: ubuntu-latest
