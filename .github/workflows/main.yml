@@ -31,8 +31,8 @@ jobs:
   snyk:
     runs-on: ubuntu-latest
     steps:
-      - checkout
-      - attach_workspace: { at: . }
+      - uses: actions/checkout@v2
+      #- attach_workspace: { at: . }
       - run: pip3 install pipreqs
       - run: pip3 install --user appdirs
       - run: pipreqs .
