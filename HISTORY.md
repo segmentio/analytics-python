@@ -1,3 +1,7 @@
+# 2.2.3 / 2023-06-12
+- Support for Python 3.10 and 3.11
+- Return values for function calls via the proxy
+
 # 2.2.2 / 2022-11-29
 - Specifying milliseconds as the isoformat rather than the default microseconds in timestamp
 
