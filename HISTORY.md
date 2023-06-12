@@ -1,3 +1,7 @@
+# 2.3.0 / 2023-06-12
+- Update project to use github actions
+- Update python versions to support 3.10 or 3.11
+
 # 2.2.2 / 2022-11-29
 - Specifying milliseconds as the isoformat rather than the default microseconds in timestamp
 
