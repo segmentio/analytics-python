@@ -1,4 +1,5 @@
-# 2.2.3 / 2023-06-12
+# 2.3.2 / 2023-06-12
+- Update project to use github actions
 - Support for Python 3.10 and 3.11
 - Return values for function calls via the proxy
 
