@@ -72,5 +72,5 @@ urllib3==1.26.6
 webencodings==0.5.1
 wrapt==1.12.1
 yarl==1.6.3
-yaspin==2.1.0
+yaspin==2.3.0
 zipp==3.7.0
