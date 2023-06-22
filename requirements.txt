@@ -20,7 +20,7 @@ dephell-licenses==0.1.7
 dephell-links==0.1.5
 dephell-markers==1.0.3
 dephell-pythons==0.1.15
-dephell-setuptools==0.2.4
+dephell-setuptools==0.2.5
 dephell-shells==0.1.5
 dephell-specifier==0.2.2
 dephell-venvs==0.1.18
