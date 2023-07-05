@@ -50,7 +50,7 @@ pkginfo==1.8.2
 protobuf==4.23.3
 ptyprocess==0.7.0
 pycodestyle==2.5.0
-pyflakes==2.1.1
+pyflakes==3.0.1
 Pygments==2.15.1
 pylint==1.9.3
 pyparsing==2.4.7
