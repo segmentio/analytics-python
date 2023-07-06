@@ -60,7 +60,7 @@ requests==2.31.0
 requests-toolbelt==1.0.0
 rfc3986==2.0.0
 ruamel.yaml==0.17.16
-ruamel.yaml.clib==0.2.6
+ruamel.yaml.clib==0.2.7
 shellingham==1.4.0
 six==1.15.0
 termcolor==1.1.0
