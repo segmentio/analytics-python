@@ -53,7 +53,7 @@ pycodestyle==2.5.0
 pyflakes==2.1.1
 Pygments==2.15.1
 pylint==1.9.3
-pyparsing==2.4.7
+pyparsing==3.1.1
 python-dateutil==2.8.2
 readme-renderer==32.0
 requests==2.31.0
