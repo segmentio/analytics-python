@@ -71,6 +71,6 @@ typing-extensions==3.10.0.2
 urllib3==1.26.6
 webencodings==0.5.1
 wrapt==1.12.1
-yarl==1.6.3
+yarl==1.9.2
 yaspin==2.1.0
 zipp==3.7.0
