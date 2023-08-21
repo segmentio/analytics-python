@@ -47,7 +47,7 @@ packaging==21.0
 pbr==5.11.1
 pexpect==4.8.0
 pkginfo==1.9.6
-protobuf==4.23.3
+protobuf==4.24.1
 ptyprocess==0.7.0
 pycodestyle==2.5.0
 pyflakes==2.1.1
