@@ -9,9 +9,11 @@ from requests import sessions
 
 import requests
 from urllib.parse import urlencode
+from oauthlib.oauth2 import BackendApplicationClient
+from requests.auth import HTTPBasicAuth
 
 CLIENT_ID = "2TlKP068Khdw4jZaCHuWjXmvui2"
-CLIENT_SECRET = "2TlKP068Khdw4jZaCHuWjXmvui2"
+CLIENT_SECRET = "2TlKOw1a7n9tUUmVK1ISKnnJ0hA"
 REDIRECT_URI = "http://api.segment.build"
 BASE_API_ENDPOINT = "http://api.segment.build"
 
@@ -27,7 +29,33 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, **kwargs):
     body = kwargs
     body["sentAt"] = datetime.utcnow().replace(tzinfo=tzutc()).isoformat()
     url = remove_trailing_slash(host or 'https://api.segment.io') + '/v1/batch'
-    auth = HTTPBasicAuth(write_key, '')
+
+    client_id = CLIENT_ID
+    client_secret = CLIENT_SECRET
+    token_url = REDIRECT_URI + '/token'
+
+    auth = HTTPBasicAuth(client_id, client_secret)
+    client = BackendApplicationClient(client_id=client_id)
+    oauth = OAuth2Session(client=client)
+    token = oauth.fetch_token(token_url=token_url, auth=auth)
+
+    
+"""
+Here's the key file for OAuth2.
+You'll need to specify a different endpoint server, api.segment.build
+The write key for the source is TEBWeMLQWxtJjW8B91Hu5bujQLqhpLUR
+The Client/App ID: 2TlKP068Khdw4jZaCHuWjXmvui2
+The Key ID: 2TlKOw1a7n9tUUmVK1ISKnnJ0hA
+??? BASE_API_ENDPOINT = "https://oauth2.segment.io" or "https://api.segment.build"
+
+"""
+
+    '''overwrite write key for testing ONLY'''
+    WRITE_KEY = 'TEBWeMLQWxtJjW8B91Hu5bujQLqhpLUR'
+    auth = HTTPBasicAuth(WRITE_KEY, '')
+
+
+    '''auth = HTTPBasicAuth(write_key, '')'''
     data = json.dumps(body, cls=DatetimeSerializer)
     log.debug('making request: %s', data)
     headers = {
@@ -104,6 +132,7 @@ class GetOathToken():
 
         response = session.get(base_api_endpoint)
         print(response)
+        return response
         
 
 class APIError(Exception):
