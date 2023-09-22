@@ -7,6 +7,14 @@ from dateutil.tz import tzutc
 from requests.auth import HTTPBasicAuth
 from requests import sessions
 
+import requests
+from urllib.parse import urlencode
+
+CLIENT_ID = "2TlKP068Khdw4jZaCHuWjXmvui2"
+CLIENT_SECRET = "2TlKP068Khdw4jZaCHuWjXmvui2"
+REDIRECT_URI = "http://api.segment.build"
+BASE_API_ENDPOINT = "http://api.segment.build"
+
 from segment.analytics.version import VERSION
 from segment.analytics.utils import remove_trailing_slash
 
@@ -59,6 +67,44 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, **kwargs):
     except ValueError:
         raise APIError(res.status_code, 'unknown', res.text)
 
+class GetOathCode():
+    
+    def __init__(self, arg):
+        params = {
+            "client_id": CLIENT_ID,
+            "redirect_uri": REDIRECT_URI,
+            "scope": "scope"
+        }
+
+        endpoint = "http://api.segment.build"
+        endpoint = endpoint + '?' + urlencode(params)
+        response = _session.post(endpoint)
+        self.code = response
+        return self.code
+        
+
+class GetOathToken():
+
+    def __init__(self, arg, code):
+        params = {
+            "client_id": CLIENT_ID,
+            "client_secret": CLIENT_SECRET,
+            "redirect_uri": REDIRECT_URI,
+            "code": code,
+        }
+        endpoint = "http://api.segment.build/token"
+        response = requests.post(endpoint, params=params, headers = {"Accept": "application/json"}).json()
+        access_token = response['access_token']
+        print("Got Access Token")
+
+        session = requests.session()
+        session.headers = {"Authorization": f"token {access_token}"}
+
+        base_api_endpoint = BASE_API_ENDPOINT
+
+        response = session.get(base_api_endpoint)
+        print(response)
+        
 
 class APIError(Exception):
 
