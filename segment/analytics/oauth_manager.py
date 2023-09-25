@@ -17,6 +17,7 @@ class OauthManager(object):
                  scope,
                  timeout,
                  max_retries):
+        self.log = logging.getLogger('segment')
         self.client_id = client_id
         self.client_key = client_key
         self.key_id = key_id
@@ -59,25 +60,25 @@ class OauthManager(object):
             "iss": self.client_id,
             "sub": self.client_id,
             "aud": "https://oauth2.segment.io",
-            "iat": time.time(),
-            "exp": time.time() + 60,
-            "jti": uuid.uuid4()
+            "iat": int(time.time())-1,
+            "exp": int(time.time()) + 59,
+            "jti": str(uuid.uuid4())
         }
 
         signed_jwt = jwt.encode(
-            payload=jwt_body,
-            key=self.client_key,
+            jwt_body,
+            self.client_key,
             algorithm="RS256",
             headers={"kid": self.key_id},
         )
 
-        request_body = f'grant_type=client_credentials&client_assertion_type='\
+        request_body = 'grant_type=client_credentials&client_assertion_type='\
             'urn:ietf:params:oauth:client-assertion-type:jwt-bearer&'\
-            'client_assertion={signed_jwt}&scope={self.scope}'
+            'client_assertion={}&scope={}'.format(signed_jwt, self.scope)
         
         token_endpoint = f'{self.auth_server}/token'
 
-        res = _session.post(token_endpoint, data=request_body, timeout=self.timeout,
+        res = _session.post(url=token_endpoint, data=request_body, timeout=self.timeout,
                             headers={'Content-Type': 'application/x-www-form-urlencoded'})
         return res
     
@@ -88,7 +89,7 @@ class OauthManager(object):
         try:
             response = self._request_token()
         except Exception as e:
-            logging.error(e)
+            self.log.error(e)
             self.retry_count += 1
             if self.retry_count < self.max_retries:
                 self.thread = threading.Timer(refresh_timer_ms / 1000.0, self._poller_loop)
@@ -120,7 +121,7 @@ class OauthManager(object):
                 self.retry_count = 0
             except Exception as e:
                 # No access token in response?
-                logging.log(e)
+                self.log.error(e)
             try:
                 refresh_timer_ms = int(data['expires_in']) / 2 * 1000
             except Exception as e:
@@ -132,7 +133,7 @@ class OauthManager(object):
             try:
                 rate_limit_reset_time = int(response.headers.get("X-RateLimit-Reset"))
             except Exception as e:
-                logging.log(e)
+                self.log.error(e)
             if rate_limit_reset_time:
                 refresh_timer_ms = rate_limit_reset_time - time.time() * 1000
             else:
@@ -141,11 +142,11 @@ class OauthManager(object):
             # unrecoverable errors
             self.retry_count = 0
             self.error = Exception(f'[{response.status_code}] {response.reason}')
-            logging.log(self.error)
+            self.log.error(self.error)
             return
         else:
             # any other error
-            logging.log(f'[{response.status_code}] {response.reason}')
+            self.log.error(f'[{response.status_code}] {response.reason}')
             self.retry_count += 1
 
         if self.retry_count % self.max_retries == 0:

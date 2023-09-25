@@ -44,7 +44,7 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manag
 
     kwargs = {
         "data": data,
-        "auth": auth,
+        "Authorization": "Bearer {}".format(auth),
         "headers": headers,
         "timeout": 15,
     }
@@ -52,9 +52,8 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manag
     if proxies:
         kwargs['proxies'] = proxies
 
-    res = _session.post(url, data=data, auth=auth,
-                        headers=headers, timeout=timeout)
-
+    res = _session.post(url, data=data, headers=headers, timeout=timeout)
+    print(res)
     if res.status_code == 200:
         log.debug('data uploaded successfully')
         return res
