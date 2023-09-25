@@ -16,6 +16,13 @@ gzip = Client.DefaultConfig.gzip
 timeout = Client.DefaultConfig.timeout
 max_retries = Client.DefaultConfig.max_retries
 
+"""Oauth Settings."""
+oauth_client_id = Client.DefaultConfig.oauth_client_id
+oauth_client_key = Client.DefaultConfig.oauth_client_key
+oauth_key_id = Client.DefaultConfig.oauth_key_id
+oauth_auth_server = Client.DefaultConfig.oauth_auth_server
+oauth_scope = Client.DefaultConfig.oauth_scope
+
 default_client = None
 
 
@@ -73,7 +80,13 @@ def _proxy(method, *args, **kwargs):
                                 max_queue_size=max_queue_size,
                                 send=send, on_error=on_error,
                                 gzip=gzip, max_retries=max_retries,
-                                sync_mode=sync_mode, timeout=timeout)
+                                sync_mode=sync_mode, timeout=timeout, 
+                                oauth_client_id=oauth_client_id,
+                                oauth_client_key=oauth_client_key,
+                                oauth_key_id=oauth_key_id,
+                                oauth_auth_server=oauth_auth_server,
+                                oauth_scope=oauth_scope,
+                                )
 
     fn = getattr(default_client, method)
     return fn(*args, **kwargs)

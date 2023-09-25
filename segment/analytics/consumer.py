@@ -21,7 +21,7 @@ class Consumer(Thread):
 
     def __init__(self, queue, write_key, upload_size=100, host=None,
                  on_error=None, upload_interval=0.5, gzip=False, retries=10,
-                 timeout=15, proxies=None):
+                 timeout=15, proxies=None, oauth_manager=None):
         """Create a consumer thread."""
         Thread.__init__(self)
         # Make consumer a daemon thread so that it doesn't block program exit
@@ -41,6 +41,7 @@ class Consumer(Thread):
         self.retries = retries
         self.timeout = timeout
         self.proxies = proxies
+        self.oauth_manager = oauth_manager
 
     def run(self):
         """Runs the consumer."""
@@ -129,6 +130,7 @@ class Consumer(Thread):
             giveup=fatal_exception)
         def send_request():
             post(self.write_key, self.host, gzip=self.gzip,
-                 timeout=self.timeout, batch=batch, proxies=self.proxies)
+                 timeout=self.timeout, batch=batch, proxies=self.proxies,
+                 oauth_manager=self.oauth_manager)
 
         send_request()
