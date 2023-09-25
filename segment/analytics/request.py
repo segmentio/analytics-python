@@ -18,6 +18,7 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manag
     log = logging.getLogger('segment')
     body = kwargs
     body["sentAt"] = datetime.utcnow().replace(tzinfo=tzutc()).isoformat()
+    body["writeKey"] = write_key
     url = remove_trailing_slash(host or 'https://api.segment.io') + '/v1/batch'
     auth = None
     if oauth_manager:
@@ -25,14 +26,15 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manag
             auth = oauth_manager.get_token()
         except Exception as e:
             raise e
-    else:
-        auth = HTTPBasicAuth(write_key, '')
     data = json.dumps(body, cls=DatetimeSerializer)
     log.debug('making request: %s', data)
     headers = {
         'Content-Type': 'application/json',
         'User-Agent': 'analytics-python/' + VERSION
     }
+    if auth:
+        headers['Authorization'] = 'Bearer {}'.format(auth)
+
     if gzip:
         headers['Content-Encoding'] = 'gzip'
         buf = BytesIO()
@@ -44,7 +46,6 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manag
 
     kwargs = {
         "data": data,
-        "Authorization": "Bearer {}".format(auth),
         "headers": headers,
         "timeout": 15,
     }
@@ -53,7 +54,7 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manag
         kwargs['proxies'] = proxies
 
     res = _session.post(url, data=data, headers=headers, timeout=timeout)
-    print(res)
+
     if res.status_code == 200:
         log.debug('data uploaded successfully')
         return res
