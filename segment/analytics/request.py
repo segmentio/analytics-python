@@ -13,7 +13,7 @@ from segment.analytics.utils import remove_trailing_slash
 _session = sessions.Session()
 
 
-def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manager=None **kwargs):
+def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manager=None, **kwargs):
     """Post the `kwargs` to the API"""
     log = logging.getLogger('segment')
     body = kwargs
@@ -58,6 +58,9 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manag
     if res.status_code == 200:
         log.debug('data uploaded successfully')
         return res
+
+    if oauth_manager and res.status_code in [400, 401, 403]:
+        oauth_manager.clear_token()
 
     try:
         payload = res.json()

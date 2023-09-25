@@ -1,6 +1,5 @@
 from datetime import date, datetime
 import logging
-import json
 import threading 
 import time
 import uuid
@@ -36,7 +35,7 @@ class OauthManager(object):
             if self.token:
                 return self.token
         # No good token, start the loop
-        self.thread = threading.Thread(target=self.poller_loop)
+        self.thread = threading.Thread(target=self._poller_loop)
         self.thread.start()
 
         while True:
@@ -92,7 +91,7 @@ class OauthManager(object):
             logging.error(e)
             self.retry_count += 1
             if self.retry_count < self.max_retries:
-                self.thread = threading.Timer(refresh_timer_ms / 1000, self._poller_loop)
+                self.thread = threading.Timer(refresh_timer_ms / 1000.0, self._poller_loop)
                 self.thread.setDaemon(True)
                 self.thread.start()
                 return
@@ -107,7 +106,7 @@ class OauthManager(object):
             except Exception as e:
                 self.retry_count += 1
                 if self.retry_count < self.max_retries:
-                    self.thread = threading.Timer(refresh_timer_ms / 1000, self._poller_loop)
+                    self.thread = threading.Timer(refresh_timer_ms / 1000.0, self._poller_loop)
                     self.thread.setDaemon(True)
                     self.thread.start()
                     return
@@ -151,10 +150,9 @@ class OauthManager(object):
 
         if self.retry_count % self.max_retries == 0:
             # every time we pass the retry count, put up an error to release any waiting token requests
-            self.error = f'[{response.status_code}] {response.reason}'
-            return
+            self.error = Exception(f'[{response.status_code}] {response.reason}')
 
         # loop
-        self.thread = threading.Timer(refresh_timer_ms / 1000, self._poller_loop)
+        self.thread = threading.Timer(refresh_timer_ms / 1000.0, self._poller_loop)
         self.thread.setDaemon(True)
         self.thread.start()
