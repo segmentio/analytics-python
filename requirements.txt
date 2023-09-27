@@ -1,6 +1,6 @@
 aiohttp==3.7.4.post0
 appdirs==1.4.4
-astroid==1.6.6
+astroid==3.0.0
 async-timeout==3.0.1
 attrs==23.1.0
 backoff==1.10.0
