@@ -17,7 +17,6 @@ class OauthManager(object):
                  scope,
                  timeout,
                  max_retries):
-        self.log = logging.getLogger('segment')
         self.client_id = client_id
         self.client_key = client_key
         self.key_id = key_id
@@ -26,6 +25,8 @@ class OauthManager(object):
         self.timeout = timeout
         self.max_retries = max_retries
         self.retry_count = 0
+        
+        self.log = logging.getLogger('segment')
         self.thread = None
         self.token_mutex = threading.Lock()
         self.token = None
@@ -36,7 +37,11 @@ class OauthManager(object):
             if self.token:
                 return self.token
         # No good token, start the loop
-        self.thread = threading.Thread(target=self._poller_loop)
+        self.log.debug("OAuth is enabled. No cached access token.")
+        # Make sure we're not waiting an excessively long time
+        if self.thread and self.thread.is_alive():
+            self.thread.cancel()
+        self.thread = threading.Timer(0,self._poller_loop)
         self.thread.start()
 
         while True:
@@ -49,9 +54,12 @@ class OauthManager(object):
                     self.error = None
                     raise Exception(error)
             if self.thread:
+                # Wait for a cycle, may not have an answer immediately
                 self.thread.join()
     
     def clear_token(self):
+        self.log.debug("OAuth Token invalidated. Poller for new token is {}".format(
+            "active" if self.thread and self.thread.alive() else "stopped" ))
         with self.token_mutex:
             self.token = None
 
@@ -59,7 +67,7 @@ class OauthManager(object):
         jwt_body = {
             "iss": self.client_id,
             "sub": self.client_id,
-            "aud": "https://oauth2.segment.io",
+            "aud": self.auth_server,
             "iat": int(time.time())-1,
             "exp": int(time.time()) + 59,
             "jti": str(uuid.uuid4())
@@ -78,6 +86,7 @@ class OauthManager(object):
         
         token_endpoint = f'{self.auth_server}/token'
 
+        self.log.debug("OAuth token requested from {} with size {}".format(token_endpoint, len(request_body)))
         res = _session.post(url=token_endpoint, data=request_body, timeout=self.timeout,
                             headers={'Content-Type': 'application/x-www-form-urlencoded'})
         return res
@@ -89,7 +98,7 @@ class OauthManager(object):
         try:
             response = self._request_token()
         except Exception as e:
-            self.log.error(e)
+            self.log.error("OAuth token request encountered an error on attempt {}: {}".format(self.retry_count ,e))
             self.retry_count += 1
             if self.retry_count < self.max_retries:
                 self.thread = threading.Timer(refresh_timer_ms / 1000.0, self._poller_loop)
@@ -121,7 +130,7 @@ class OauthManager(object):
                 self.retry_count = 0
             except Exception as e:
                 # No access token in response?
-                self.log.error(e)
+                self.log.error("OAuth token request received a successful response with a missing token: {}".format(response))
             try:
                 refresh_timer_ms = int(data['expires_in']) / 2 * 1000
             except Exception as e:
@@ -129,29 +138,37 @@ class OauthManager(object):
 
         elif response.status_code == 429:
             self.retry_count += 1
-            rate_limit_reset_time = None
+            rate_limit_reset_timestamp = None
             try:
-                rate_limit_reset_time = int(response.headers.get("X-RateLimit-Reset"))
+                rate_limit_reset_timestamp = int(response.headers.get("X-RateLimit-Reset"))
             except Exception as e:
-                self.log.error(e)
-            if rate_limit_reset_time:
-                refresh_timer_ms = rate_limit_reset_time - time.time() * 1000
+                self.log.error("OAuth rate limit response did not have a valid rest time: {} | {}".format(response, e))
+            if rate_limit_reset_timestamp:
+                refresh_timer_ms = rate_limit_reset_timestamp - time.time() * 1000
             else:
                 refresh_timer_ms = 5 * 1000
+
+            self.log.debug("OAuth token request encountered a rate limit response, waiting {} ms".format(refresh_timer_ms))
+            # We want subsequent calls to get_token to be able to interrupt our
+            #  Timeout when it's waiting for e.g. a long normal expiration, but
+            #  not when we're waiting for a rate limit reset. Sleep instead.
+            time.sleep(refresh_timer_ms * 1000)
+            refresh_timer_ms = 0
         elif response.status_code in [400, 401, 415]:
             # unrecoverable errors
             self.retry_count = 0
             self.error = Exception(f'[{response.status_code}] {response.reason}')
-            self.log.error(self.error)
+            self.log.error("OAuth token request error was unrecoverable, possibly due to configuration: {}".format(self.error))
             return
         else:
             # any other error
-            self.log.error(f'[{response.status_code}] {response.reason}')
+            self.log.debug("OAuth token request error, attempt {}: [{}] {}".format(self.retry_count, response.status_code, response.reason))
             self.retry_count += 1
 
-        if self.retry_count % self.max_retries == 0:
+        if self.retry_count > 0 and self.retry_count % self.max_retries == 0:
             # every time we pass the retry count, put up an error to release any waiting token requests
             self.error = Exception(f'[{response.status_code}] {response.reason}')
+            self.log.error("OAuth token request error after {} attempts: {}".format(self.retry_count, self.error))
 
         # loop
         self.thread = threading.Timer(refresh_timer_ms / 1000.0, self._poller_loop)
