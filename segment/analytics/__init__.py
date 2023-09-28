@@ -9,6 +9,7 @@ write_key = Client.DefaultConfig.write_key
 host = Client.DefaultConfig.host
 on_error = Client.DefaultConfig.on_error
 debug = Client.DefaultConfig.debug
+log_handler = Client.DefaultConfig.log_handler
 send = Client.DefaultConfig.send
 sync_mode = Client.DefaultConfig.sync_mode
 max_queue_size = Client.DefaultConfig.max_queue_size

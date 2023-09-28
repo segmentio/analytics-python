@@ -42,6 +42,7 @@ class OauthManager(object):
         if self.thread and self.thread.is_alive():
             self.thread.cancel()
         self.thread = threading.Timer(0,self._poller_loop)
+        self.thread.setDaemon(True)
         self.thread.start()
 
         while True:
@@ -59,7 +60,7 @@ class OauthManager(object):
     
     def clear_token(self):
         self.log.debug("OAuth Token invalidated. Poller for new token is {}".format(
-            "active" if self.thread and self.thread.alive() else "stopped" ))
+            "active" if self.thread and self.thread.is_alive() else "stopped" ))
         with self.token_mutex:
             self.token = None
 
@@ -87,6 +88,7 @@ class OauthManager(object):
         token_endpoint = f'{self.auth_server}/token'
 
         self.log.debug("OAuth token requested from {} with size {}".format(token_endpoint, len(request_body)))
+
         res = _session.post(url=token_endpoint, data=request_body, timeout=self.timeout,
                             headers={'Content-Type': 'application/x-www-form-urlencoded'})
         return res

@@ -52,9 +52,11 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manag
 
     if proxies:
         kwargs['proxies'] = proxies
-
-    res = _session.post(url, data=data, headers=headers, timeout=timeout)
-
+    try:
+        res = _session.post(url, data=data, headers=headers, timeout=timeout)
+    except Exception as e:
+        log.error(e)
+        
     if res.status_code == 200:
         log.debug('data uploaded successfully')
         return res
@@ -67,6 +69,7 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manag
         log.debug('received response: %s', payload)
         raise APIError(res.status_code, payload['code'], payload['message'])
     except ValueError:
+        log.error('Unknown error: [%s] %s', res.status_code, res.reason)
         raise APIError(res.status_code, 'unknown', res.text)
 
 

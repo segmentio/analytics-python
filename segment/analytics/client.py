@@ -24,6 +24,7 @@ class Client(object):
         host = None
         on_error = None
         debug = False
+        log_handler = None
         send = True
         sync_mode = False
         max_queue_size = 10000
@@ -59,6 +60,7 @@ class Client(object):
                  thread=DefaultConfig.thread,
                  upload_size=DefaultConfig.upload_size,
                  upload_interval=DefaultConfig.upload_interval,
+                 log_handler=DefaultConfig.log_handler,
                  oauth_client_id=DefaultConfig.oauth_client_id,
                  oauth_client_key=DefaultConfig.oauth_client_key,
                  oauth_key_id=DefaultConfig.oauth_key_id,
@@ -80,8 +82,14 @@ class Client(object):
             self.oauth_manager = OauthManager(oauth_client_id, oauth_client_key, oauth_key_id,
                                               oauth_auth_server, oauth_scope, timeout, max_retries)
 
+        if log_handler:
+            self.log.addHandler(log_handler)
+
         if debug:
             self.log.setLevel(logging.DEBUG)
+            if not log_handler:
+                # default log handler does not print debug or info
+                self.log.addHandler(logging.StreamHandler())
 
         if sync_mode:
             self.consumers = None
