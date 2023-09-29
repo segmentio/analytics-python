@@ -6,6 +6,8 @@ import uuid
 from requests import sessions
 import jwt
 
+from segment.analytics import utils
+
 _session = sessions.Session()
 
 class OauthManager(object):
@@ -68,7 +70,7 @@ class OauthManager(object):
         jwt_body = {
             "iss": self.client_id,
             "sub": self.client_id,
-            "aud": self.auth_server,
+            "aud": utils.remove_trailing_slash(self.auth_server),
             "iat": int(time.time())-1,
             "exp": int(time.time()) + 59,
             "jti": str(uuid.uuid4())
@@ -85,7 +87,7 @@ class OauthManager(object):
             'urn:ietf:params:oauth:client-assertion-type:jwt-bearer&'\
             'client_assertion={}&scope={}'.format(signed_jwt, self.scope)
         
-        token_endpoint = f'{self.auth_server}/token'
+        token_endpoint = f'{utils.remove_trailing_slash(self.auth_server)}/token'
 
         self.log.debug("OAuth token requested from {} with size {}".format(token_endpoint, len(request_body)))
 
@@ -100,14 +102,15 @@ class OauthManager(object):
         try:
             response = self._request_token()
         except Exception as e:
-            self.log.error("OAuth token request encountered an error on attempt {}: {}".format(self.retry_count ,e))
             self.retry_count += 1
             if self.retry_count < self.max_retries:
+                self.log.error("OAuth token request encountered an error on attempt {}: {}".format(self.retry_count ,e))
                 self.thread = threading.Timer(refresh_timer_ms / 1000.0, self._poller_loop)
                 self.thread.setDaemon(True)
                 self.thread.start()
                 return
             # Too many retries, giving up
+            self.log.error("OAuth token request encountered an error after {} attempts: {}".format(self.retry_count ,e))
             self.error = e
             return
 

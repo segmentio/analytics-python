@@ -1,5 +1,6 @@
 import sys
 import os
+import time
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 import segment.analytics as analytics
 
@@ -39,7 +40,7 @@ analytics.oauth_client_id = '2VRbiyEPtsDBjFqO9Tu7EXvQH5H' # OAuth application ID
 analytics.oauth_client_key = privatekey # generated as a public/private key pair in PEM format from OpenSSL
 analytics.oauth_key_id = '2VRbiuUFSMo4AGyrYyxxyONzqiP' # From segment dashboard after uploading public key
 analytics.oauth_auth_server = 'https://oauth2.segment.build'
-analytics.oauth_scope = 'tracking_api:write' # 'public_api:read_write'
+analytics.oauth_scope =  'tracking_api:write' #'public_api:read_write'
 
 def on_error(error, items):
     print("An error occurred: ", error)
@@ -48,4 +49,4 @@ analytics.on_error = on_error
 
 analytics.track('AUser', 'track')
 
-input("Press ENTER to exit after receiving a response...")
+time.sleep(3)

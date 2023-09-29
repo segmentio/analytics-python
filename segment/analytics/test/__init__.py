@@ -2,9 +2,8 @@ import unittest
 import pkgutil
 import logging
 import sys
-import analytics
-
-from analytics.client import Client
+import segment.analytics as analytics
+from segment.analytics.client import Client
 
 
 def all_names():

@@ -78,6 +78,7 @@ class Client(object):
         self.gzip = gzip
         self.timeout = timeout
         self.proxies = proxies
+        self.oauth_manager = None
         if(oauth_client_id and oauth_client_key and oauth_key_id):
             self.oauth_manager = OauthManager(oauth_client_id, oauth_client_key, oauth_key_id,
                                               oauth_auth_server, oauth_scope, timeout, max_retries)

@@ -3,13 +3,13 @@ import unittest
 import time
 import mock
 
-from analytics.version import VERSION
-from analytics.client import Client
+from segment.analytics.version import VERSION
+from segment.analytics.client import Client
 
 
 class TestClient(unittest.TestCase):
 
-    def fail(self, e, batch):
+    def fail(self, e, batch=[]):
         """Mark the failure handler"""
         self.failed = True
 
@@ -325,7 +325,7 @@ class TestClient(unittest.TestCase):
 
         # the post function should be called 2 times, with a batch size of 10
         # each time.
-        with mock.patch('analytics.consumer.post', side_effect=mock_post_fn) \
+        with mock.patch('segment.analytics.consumer.post', side_effect=mock_post_fn) \
                 as mock_post:
             for _ in range(20):
                 client.identify('userId', {'trait': 'value'})
