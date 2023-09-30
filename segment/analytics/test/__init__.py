@@ -8,7 +8,7 @@ from segment.analytics.client import Client
 
 def all_names():
     for _, modname, _ in pkgutil.iter_modules(__path__):
-        yield 'analytics.test.' + modname
+        yield 'segment.analytics.test.' + modname
 
 
 def all():
