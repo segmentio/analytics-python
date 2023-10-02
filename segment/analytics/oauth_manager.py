@@ -15,10 +15,10 @@ class OauthManager(object):
                  client_id,
                  client_key,
                  key_id,
-                 auth_server,
-                 scope,
-                 timeout,
-                 max_retries):
+                 auth_server='https://oauth2.segment.io',
+                 scope='tracking_api:write',
+                 timeout=5,
+                 max_retries=3):
         self.client_id = client_id
         self.client_key = client_key
         self.key_id = key_id
@@ -44,7 +44,7 @@ class OauthManager(object):
         if self.thread and self.thread.is_alive():
             self.thread.cancel()
         self.thread = threading.Timer(0,self._poller_loop)
-        self.thread.setDaemon(True)
+        self.thread.daemon = True
         self.thread.start()
 
         while True:
@@ -106,7 +106,7 @@ class OauthManager(object):
             if self.retry_count < self.max_retries:
                 self.log.error("OAuth token request encountered an error on attempt {}: {}".format(self.retry_count ,e))
                 self.thread = threading.Timer(refresh_timer_ms / 1000.0, self._poller_loop)
-                self.thread.setDaemon(True)
+                self.thread.daemon = True
                 self.thread.start()
                 return
             # Too many retries, giving up
@@ -122,7 +122,7 @@ class OauthManager(object):
                 self.retry_count += 1
                 if self.retry_count < self.max_retries:
                     self.thread = threading.Timer(refresh_timer_ms / 1000.0, self._poller_loop)
-                    self.thread.setDaemon(True)
+                    self.thread.daemon = True
                     self.thread.start()
                     return
                 # Too many retries, giving up
@@ -177,5 +177,5 @@ class OauthManager(object):
 
         # loop
         self.thread = threading.Timer(refresh_timer_ms / 1000.0, self._poller_loop)
-        self.thread.setDaemon(True)
+        self.thread.daemon = True
         self.thread.start()

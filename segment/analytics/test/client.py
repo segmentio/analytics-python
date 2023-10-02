@@ -294,6 +294,7 @@ class TestClient(unittest.TestCase):
 
     def test_debug(self):
         Client('bad_key', debug=True)
+        self.client.log.setLevel(0) # reset log level after debug enable
 
     def test_identify_with_date_object(self):
         client = self.client
