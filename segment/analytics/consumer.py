@@ -14,6 +14,13 @@ MAX_MSG_SIZE = 32 << 10
 # lower to leave space for extra data that will be added later, eg. "sentAt".
 BATCH_SIZE_LIMIT = 475000
 
+class FatalError(Exception):
+    def __init__(self, message):
+        self.message = message
+    def __str__(self):
+        msg = "[Segment] {0})"
+        return msg.format(self.message)
+
 
 class Consumer(Thread):
     """Consumes the messages from the client's queue."""
@@ -21,7 +28,7 @@ class Consumer(Thread):
 
     def __init__(self, queue, write_key, upload_size=100, host=None,
                  on_error=None, upload_interval=0.5, gzip=False, retries=10,
-                 timeout=15, proxies=None):
+                 timeout=15, proxies=None, oauth_manager=None):
         """Create a consumer thread."""
         Thread.__init__(self)
         # Make consumer a daemon thread so that it doesn't block program exit
@@ -41,6 +48,7 @@ class Consumer(Thread):
         self.retries = retries
         self.timeout = timeout
         self.proxies = proxies
+        self.oauth_manager = oauth_manager
 
     def run(self):
         """Runs the consumer."""
@@ -118,6 +126,8 @@ class Consumer(Thread):
                 # with 429 status code (rate limited),
                 # don't retry on other client errors
                 return (400 <= exc.status < 500) and exc.status != 429
+            elif isinstance(exc, FatalError):
+                return True
             else:
                 # retry on all other errors (eg. network)
                 return False
@@ -129,6 +139,7 @@ class Consumer(Thread):
             giveup=fatal_exception)
         def send_request():
             post(self.write_key, self.host, gzip=self.gzip,
-                 timeout=self.timeout, batch=batch, proxies=self.proxies)
+                 timeout=self.timeout, batch=batch, proxies=self.proxies,
+                 oauth_manager=self.oauth_manager)
 
         send_request()

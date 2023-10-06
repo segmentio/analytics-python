@@ -6,6 +6,7 @@ import atexit
 import json
 
 from dateutil.tz import tzutc
+from segment.analytics.oauth_manager import OauthManager
 
 from segment.analytics.utils import guess_timezone, clean
 from segment.analytics.consumer import Consumer, MAX_MSG_SIZE
@@ -23,6 +24,7 @@ class Client(object):
         host = None
         on_error = None
         debug = False
+        log_handler = None
         send = True
         sync_mode = False
         max_queue_size = 10000
@@ -33,6 +35,12 @@ class Client(object):
         thread = 1
         upload_interval = 0.5
         upload_size = 100
+        oauth_client_id = None
+        oauth_client_key = None
+        oauth_key_id = None
+        oauth_auth_server = 'https://oauth2.segment.io'
+        oauth_scope = 'tracking_api:write'
+
 
     """Create a new Segment client."""
     log = logging.getLogger('segment')
@@ -51,7 +59,13 @@ class Client(object):
                  proxies=DefaultConfig.proxies,
                  thread=DefaultConfig.thread,
                  upload_size=DefaultConfig.upload_size,
-                 upload_interval=DefaultConfig.upload_interval,):
+                 upload_interval=DefaultConfig.upload_interval,
+                 log_handler=DefaultConfig.log_handler,
+                 oauth_client_id=DefaultConfig.oauth_client_id,
+                 oauth_client_key=DefaultConfig.oauth_client_key,
+                 oauth_key_id=DefaultConfig.oauth_key_id,
+                 oauth_auth_server=DefaultConfig.oauth_auth_server,
+                 oauth_scope=DefaultConfig.oauth_scope,):
         require('write_key', write_key, str)
 
         self.queue = queue.Queue(max_queue_size)
@@ -64,9 +78,19 @@ class Client(object):
         self.gzip = gzip
         self.timeout = timeout
         self.proxies = proxies
+        self.oauth_manager = None
+        if(oauth_client_id and oauth_client_key and oauth_key_id):
+            self.oauth_manager = OauthManager(oauth_client_id, oauth_client_key, oauth_key_id,
+                                              oauth_auth_server, oauth_scope, timeout, max_retries)
+
+        if log_handler:
+            self.log.addHandler(log_handler)
 
         if debug:
             self.log.setLevel(logging.DEBUG)
+            if not log_handler:
+                # default log handler does not print debug or info
+                self.log.addHandler(logging.StreamHandler())
 
         if sync_mode:
             self.consumers = None
@@ -85,7 +109,7 @@ class Client(object):
                     self.queue, write_key, host=host, on_error=on_error,
                     upload_size=upload_size, upload_interval=upload_interval,
                     gzip=gzip, retries=max_retries, timeout=timeout,
-                    proxies=proxies,
+                    proxies=proxies, oauth_manager=self.oauth_manager,
                 )
                 self.consumers.append(consumer)
 
@@ -280,7 +304,8 @@ class Client(object):
         if self.sync_mode:
             self.log.debug('enqueued with blocking %s.', msg['type'])
             post(self.write_key, self.host, gzip=self.gzip,
-                 timeout=self.timeout, proxies=self.proxies, batch=[msg])
+                 timeout=self.timeout, proxies=self.proxies, 
+                 oauth_manager=self.oauth_manager, batch=[msg])
 
             return True, msg
 
