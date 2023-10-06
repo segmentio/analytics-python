@@ -34,12 +34,11 @@ mDyRxq7ohIzLkw8b8buDeuXZ
 -----END PRIVATE KEY-----
 ''' # Should be read from a file on disk which can be rotated out
 
-analytics.write_key = '9BWoGOi4lWVaQBP5NRheT7N0C1t4HTJM'
-analytics.host = 'https://api.segment.build'
-analytics.oauth_client_id = '2VRbiyEPtsDBjFqO9Tu7EXvQH5H' # OAuth application ID from segment dashboard
+analytics.write_key = '<YOUR WRITE KEY HERE>'
+
+analytics.oauth_client_id = 'CLIENT_ID' # OAuth application ID from segment dashboard
 analytics.oauth_client_key = privatekey # generated as a public/private key pair in PEM format from OpenSSL
-analytics.oauth_key_id = '2VRbiuUFSMo4AGyrYyxxyONzqiP' # From segment dashboard after uploading public key
-analytics.oauth_auth_server = 'https://oauth2.segment.build'
+analytics.oauth_key_id = 'KEY_ID' # From segment dashboard after uploading public key
 analytics.oauth_scope =  'tracking_api:write' #'public_api:read_write'
 
 def on_error(error, items):
