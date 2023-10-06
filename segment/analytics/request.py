@@ -17,15 +17,13 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manag
     """Post the `kwargs` to the API"""
     log = logging.getLogger('segment')
     body = kwargs
-    body["sentAt"] = datetime.utcnow().replace(tzinfo=tzutc()).isoformat()
+    if not "sentAt" in body.keys():
+        body["sentAt"] = datetime.utcnow().replace(tzinfo=tzutc()).isoformat()
     body["writeKey"] = write_key
     url = remove_trailing_slash(host or 'https://api.segment.io') + '/v1/batch'
     auth = None
     if oauth_manager:
-        try:
-            auth = oauth_manager.get_token()
-        except Exception as e:
-            raise e
+        auth = oauth_manager.get_token()
     data = json.dumps(body, cls=DatetimeSerializer)
     log.debug('making request: %s', data)
     headers = {

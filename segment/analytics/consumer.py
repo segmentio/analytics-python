@@ -14,6 +14,13 @@ MAX_MSG_SIZE = 32 << 10
 # lower to leave space for extra data that will be added later, eg. "sentAt".
 BATCH_SIZE_LIMIT = 475000
 
+class FatalError(Exception):
+    def __init__(self, message):
+        self.message = message
+    def __str__(self):
+        msg = "[Segment] {0})"
+        return msg.format(self.message)
+
 
 class Consumer(Thread):
     """Consumes the messages from the client's queue."""
@@ -119,6 +126,8 @@ class Consumer(Thread):
                 # with 429 status code (rate limited),
                 # don't retry on other client errors
                 return (400 <= exc.status < 500) and exc.status != 429
+            elif isinstance(exc, FatalError):
+                return True
             else:
                 # retry on all other errors (eg. network)
                 return False

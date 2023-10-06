@@ -1,7 +1,7 @@
 import sys
 import os
-import time
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+import time
 import segment.analytics as analytics
 
 privatekey = '''-----BEGIN PRIVATE KEY-----
@@ -48,5 +48,6 @@ analytics.debug = True
 analytics.on_error = on_error
 
 analytics.track('AUser', 'track')
+analytics.flush()
 
 time.sleep(3)
