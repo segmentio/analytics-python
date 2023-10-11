@@ -1,6 +1,6 @@
 import logging
+import time
 from threading import Thread
-import monotonic
 import backoff
 import json
 
@@ -88,11 +88,11 @@ class Consumer(Thread):
         queue = self.queue
         items = []
 
-        start_time = monotonic.monotonic()
+        start_time = time.monotonic()
         total_size = 0
 
         while len(items) < self.upload_size:
-            elapsed = monotonic.monotonic() - start_time
+            elapsed = time.monotonic() - start_time
             if elapsed >= self.upload_interval:
                 break
             try:
