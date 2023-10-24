@@ -56,4 +56,5 @@ jobs:
           python-version: 3.11
       - name: Run tests
       - run: make test
-      - run: make e2e_test    
+      - run: make e2e_test
+      
