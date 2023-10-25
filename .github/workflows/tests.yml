@@ -23,8 +23,7 @@ jobs:
         with:
           python-version: 3.7
       - name: Run tests
-      - run: make test 
-      - run: e2e_test
+        run: make test e2e_test
 
       - name: Run with setup-python 3.8
         uses: ./
