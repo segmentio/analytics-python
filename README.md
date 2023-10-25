@@ -1,6 +1,10 @@
 ﻿analytics-python
 ==============
 
+[![Run Python Tests](https://github.com/North-Two-Five/analytics-python/actions/workflows/main.yml/badge.svg)](https://github.com/North-Two-Five/analytics-python/actions/workflows/main.yml)
+[![.github/workflows/tests.yml](https://github.com/North-Two-Five/analytics-python/actions/workflows/tests.yml/badge.svg)](https://github.com/North-Two-Five/analytics-python/actions/workflows/tests.yml)
+
+
 analytics-python is a python client for [Segment](https://segment.com)
 
 <div align="center">
