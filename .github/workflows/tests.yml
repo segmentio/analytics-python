@@ -14,10 +14,9 @@ on:
 jobs:
   test-setup-python:
     name: Test setup-python
+    uses: actions/checkout@v3
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout
 
       - name: Run with setup-python 3.7
         uses: ./
