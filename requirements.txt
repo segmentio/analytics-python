@@ -30,7 +30,7 @@ entrypoints==0.3
 flake8==3.7.9
 git-remote-codecommit==1.16
 idna==3.4
-importlib-metadata==4.11.2
+importlib-metadata==7.0.0
 isort==5.9.3
 Jinja2==3.0.1
 jmespath==1.0.1
