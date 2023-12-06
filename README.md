@@ -1,7 +1,9 @@
 ﻿analytics-python
 ==============
 
-[![CircleCI](https://circleci.com/gh/segmentio/analytics-python/tree/master.svg?style=svg&circle-token=c0b411a3e21943918294714ad1d75a1cfc718f79)](https://circleci.com/gh/segmentio/analytics-python/tree/master)
+[![Run Python Tests](https://github.com/North-Two-Five/analytics-python/actions/workflows/main.yml/badge.svg)](https://github.com/North-Two-Five/analytics-python/actions/workflows/main.yml)
+[![.github/workflows/tests.yml](https://github.com/North-Two-Five/analytics-python/actions/workflows/tests.yml/badge.svg)](https://github.com/North-Two-Five/analytics-python/actions/workflows/tests.yml)
+
 
 
 analytics-python is a python client for [Segment](https://segment.com)
