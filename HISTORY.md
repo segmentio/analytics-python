@@ -1,5 +1,5 @@
-# 2.3.2 / 2023-06-12
-- Update project to use github actions
+# 2.2.3 / 2023-06-12
+- Update project to use GitHub Actions
 - Support for Python 3.10 and 3.11
 - Return values for function calls via the proxy
 
@@ -52,7 +52,7 @@
 - Add `shutdown` function
 - Add gzip support
 - Add exponential backoff with jitter when retrying
-- Add a paramater in Client to configure max retries
+- Add a parameter in Client to configure max retries
 - Limit batch upload size to 500KB
 - Drop messages greater than 32kb
 - Allow user-defined upload size
@@ -73,7 +73,7 @@
 
 # 1.2.6 / 2016-12-07
 
-- dont add messages to the queue if send is false
+- don't add messages to the queue if send is false
 - drop py32 support
 
 # 1.2.5 / 2016-07-02
@@ -129,7 +129,7 @@
 
 # 1.0.1 / 2014-09-08
 
-- fixing unicode handling, for write_key and events
+- fixing Unicode handling, for write_key and events
 - adding six to requirements.txt and install scripts
 
 # 1.0.0 / 2014-09-05
@@ -139,8 +139,8 @@
 - moving to analytics.write_key API
 - moving consumer to a separate thread
 - adding request retries
-- making analytics.flush() syncrhonous
-- adding full travis tests
+- making analytics.flush() synchronous
+- adding full Travis tests
 
 # 0.4.4 / 2013-11-21
 
