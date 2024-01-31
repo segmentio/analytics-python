@@ -1,3 +1,9 @@
+# 2.3.0 / 2024-01-29
+- OAuth 2.0 support
+- Adding Python 3.10 and 3.11 classifiers by @mvinogradov-wavefin
+- Update from monotonic to time module by @rudyardrichter
+- Correct HISTORY header for most recent release by @DavidCain
+
 # 2.2.3 / 2023-06-12
 - Update project to use GitHub Actions
 - Support for Python 3.10 and 3.11
