@@ -22,7 +22,8 @@ Documentation and more details at https://github.com/segmentio/analytics-python
 install_requires = [
     "requests~=2.7",
     "backoff~=2.1",
-    "python-dateutil~=2.2"
+    "python-dateutil~=2.2",
+    "PyJWT~=2.8.0"
 ]
 
 tests_require = [
