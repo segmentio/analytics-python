@@ -1,3 +1,6 @@
+# 2.3.1 / 2024-02-07
+- Fixing dependency for JWT
+
 # 2.3.0 / 2024-01-29
 - OAuth 2.0 support
 - Adding Python 3.10 and 3.11 classifiers by @mvinogradov-wavefin
