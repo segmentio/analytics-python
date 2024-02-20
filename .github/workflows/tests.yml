@@ -1,4 +1,4 @@
-name: e2e tests
+name: analytics test suite
 
 on:
   push:
