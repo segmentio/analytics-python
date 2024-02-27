@@ -1,6 +1,6 @@
 backoff==2.2.1
 cryptography==41.0.3
-flake8==3.7.9
+flake8==7.0.0
 mock==2.0.0
 PyJWT==2.8.0
 pylint==2.8.0
