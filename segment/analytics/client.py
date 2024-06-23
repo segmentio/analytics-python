@@ -267,7 +267,7 @@ class Client(object):
         """Push a new `msg` onto the queue, return `(success, msg)`"""
         timestamp = msg['timestamp']
         if timestamp is None:
-            timestamp = datetime.utcnow().replace(tzinfo=tzutc())
+            timestamp = datetime.now(tz=tzutc())
         message_id = msg.get('messageId')
         if message_id is None:
             message_id = uuid4()
