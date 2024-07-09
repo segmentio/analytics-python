@@ -18,7 +18,7 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manag
     log = logging.getLogger('segment')
     body = kwargs
     if not "sentAt" in body.keys():
-        body["sentAt"] = datetime.utcnow().replace(tzinfo=tzutc()).isoformat()
+        body["sentAt"] = datetime.now(tz=tzutc()).isoformat()
     body["writeKey"] = write_key
     url = remove_trailing_slash(host or 'https://api.segment.io') + '/v1/batch'
     auth = None
