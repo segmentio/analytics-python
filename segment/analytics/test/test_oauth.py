@@ -55,7 +55,7 @@ def mocked_requests_get(*args, **kwargs):
     elif kwargs['url'] == 'http://127.0.0.1:400/token':
         return MockResponse({"reason": "test_reason", "json_data" : {"error":"unrecoverable", "error_description":"nah"}}, 400)
     elif kwargs['url'] == 'http://127.0.0.1:429/token':
-        return MockResponse({"reason": "test_reason", "headers" : {"X-RateLimit-Reset": time.time()*1000 + 2000}}, 429)
+        return MockResponse({"reason": "test_reason", "headers" : {"X-RateLimit-Reset": 2000}}, 429)
     elif kwargs['url'] == 'http://127.0.0.1:500/token':
         return MockResponse({"reason": "test_reason", "json_data" : {"error":"recoverable", "error_description":"nah"}}, 500)
     elif kwargs['url'] == 'http://127.0.0.1:501/token':
