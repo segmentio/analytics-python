@@ -55,7 +55,7 @@ def mocked_requests_get(*args, **kwargs):
     elif kwargs['url'] == 'http://127.0.0.1:400/token':
         return MockResponse({"reason": "test_reason", "json_data" : {"error":"unrecoverable", "error_description":"nah"}}, 400)
     elif kwargs['url'] == 'http://127.0.0.1:429/token':
-        return MockResponse({"reason": "test_reason", "headers" : {"X-RateLimit-Reset": 2000}}, 429)
+        return MockResponse({"reason": "test_reason", "headers" : {"X-RateLimit-Reset": 234}}, 429)
     elif kwargs['url'] == 'http://127.0.0.1:500/token':
         return MockResponse({"reason": "test_reason", "json_data" : {"error":"recoverable", "error_description":"nah"}}, 500)
     elif kwargs['url'] == 'http://127.0.0.1:501/token':
@@ -106,7 +106,7 @@ class TestOauthManager(unittest.TestCase):
     def test_oauth_rate_limit_delay(self, mock_sleep, mock_post):
         manager = segment.analytics.oauth_manager.OauthManager("id", privatekey, "keyid", "http://127.0.0.1:429")
         manager._poller_loop()
-        self.assertTrue(mock_sleep.call_args[0][0] > 1.9 and mock_sleep.call_args[0][0] <= 2.0)
+        mock_sleep.assert_called_with(234)
 
 class TestOauthIntegration(unittest.TestCase):
     def fail(self, e, batch=[]):
