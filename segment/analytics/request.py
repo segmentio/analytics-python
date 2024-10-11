@@ -59,6 +59,11 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manag
         
     if res.status_code == 200:
         log.debug('data uploaded successfully')
+        try:
+            data = res.json()
+            log.debug('received response: %s', data)
+        except ValueError:
+            log.error('Unknown error: [%s] %s', res.status_code, res.reason)
         return res
 
     if oauth_manager and res.status_code in [400, 401, 403]:
