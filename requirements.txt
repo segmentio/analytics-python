@@ -1,5 +1,5 @@
 backoff==2.2.1
-cryptography==43.0.1
+cryptography==43.0.3
 flake8==7.1.1
 mock==2.0.0
 pylint==3.2.7
