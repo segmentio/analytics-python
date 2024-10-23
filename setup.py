@@ -23,7 +23,7 @@ install_requires = [
     "requests~=2.7",
     "backoff~=2.1",
     "python-dateutil~=2.2",
-    "PyJWT~=2.8.0"
+    "PyJWT~=2.8"
 ]
 
 tests_require = [

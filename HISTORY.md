@@ -1,3 +1,6 @@
+# 2.3.3 / 2024-10-07
+- Update time handling and OAuth
+
 # 2.3.2 / 2024-02-15
 - Updating version to create a release wheel without the outdated /analytics files
 
