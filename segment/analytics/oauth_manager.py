@@ -152,13 +152,13 @@ class OauthManager(object):
 
         elif response.status_code == 429:
             self.retry_count += 1
-            rate_limit_reset_timestamp = None
+            rate_limit_reset_time = None
             try:
-                rate_limit_reset_timestamp = int(response.headers.get("X-RateLimit-Reset"))
+                rate_limit_reset_time = int(response.headers.get("X-RateLimit-Reset"))
             except Exception as e:
                 self.log.error("OAuth rate limit response did not have a valid rest time: {} | {}".format(response, e))
-            if rate_limit_reset_timestamp:
-                refresh_timer_ms = rate_limit_reset_timestamp - time.time() * 1000
+            if rate_limit_reset_time:
+                refresh_timer_ms = rate_limit_reset_time * 1000
             else:
                 refresh_timer_ms = 5 * 1000
 
