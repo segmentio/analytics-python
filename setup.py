@@ -42,7 +42,7 @@ setup(
     maintainer_email='friends@segment.com',
     test_suite='segment.analytics.test.all',
     packages=['segment.analytics', 'segment.analytics.test'],
-    python_requires='>=3.6.0',
+    python_requires='>=3.9.0',
     license='MIT License',
     install_requires=install_requires,
     extras_require={
