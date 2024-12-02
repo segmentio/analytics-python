@@ -23,12 +23,12 @@ install_requires = [
     "requests~=2.7",
     "backoff~=2.1",
     "python-dateutil~=2.2",
-    "PyJWT~=2.8"
+    "PyJWT~=2.10"
 ]
 
 tests_require = [
     "mock==2.0.0",
-    "pylint==2.8.0",
+    "pylint==3.3.1",
     "flake8==3.7.9",
 ]
 
@@ -56,9 +56,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
