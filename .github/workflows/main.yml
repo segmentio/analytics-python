@@ -14,14 +14,14 @@ jobs:
       - name: Install Python 3
         uses: actions/setup-python@v3
         with:
-          python-version: 3.8
+          python-version: 3.9
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install python-dateutil backoff monotonic
           pip install --user .
-          sudo pip install pylint==2.8.0 flake8 mock==3.0.5 python-dateutil aiohttp==3.9.1
+          sudo pip install pylint==3.3.1 flake8 mock==3.0.5 python-dateutil aiohttp==3.9.1
       - name: Run tests
         run: python -m unittest discover -s segment
 
@@ -41,17 +41,11 @@ jobs:
 #    runs-on: ubuntu-latest
 #    strategy:
 #      matrix:
-#        python: ['3.7', '3.8', '3.9', '3.10', '3.11']
+#        python: ['3.9', '3.10', '3.11']
 #        coverage: [false]
 #        experimental: [false]
 #        include:
 #          # Run code coverage.
-#          - python: '3.7'
-#            coverage: true
-#            experimental: false
-#          - python: '3.8'
-#            coverage: true
-#            experimental: false
 #          - python: '3.9'
 #            coverage: true
 #            experimental: false
