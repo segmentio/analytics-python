@@ -23,12 +23,12 @@ install_requires = [
     "requests~=2.7",
     "backoff~=2.1",
     "python-dateutil~=2.2",
-    "PyJWT~=2.8.0"
+    "PyJWT~=2.10.1"
 ]
 
 tests_require = [
     "mock==2.0.0",
-    "pylint==2.8.0",
+    "pylint==3.3.1",
     "flake8==3.7.9",
 ]
 
@@ -42,7 +42,7 @@ setup(
     maintainer_email='friends@segment.com',
     test_suite='segment.analytics.test.all',
     packages=['segment.analytics', 'segment.analytics.test'],
-    python_requires='>=3.6.0',
+    python_requires='>=3.9.0',
     license='MIT License',
     install_requires=install_requires,
     extras_require={
@@ -56,9 +56,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",

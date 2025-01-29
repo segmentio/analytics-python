@@ -19,24 +19,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run with setup-python 3.7
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.7'
-      - name: Setup required modules
-        run: python -m pip install -r requirements.txt
-      - name: Run tests
-        run: python -m unittest discover -s segment
-
-      - name: Run with setup-python 3.8
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.8'
-      - name: Setup required modules
-        run: python -m pip install -r requirements.txt         
-      - name: Run tests
-        run: python -m unittest discover -s segment
-
       - name: Run with setup-python 3.9
         uses: actions/setup-python@v5
         with:
