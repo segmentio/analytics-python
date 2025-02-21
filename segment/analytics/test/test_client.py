@@ -344,6 +344,19 @@ class TestClient(unittest.TestCase):
             self.assertEqual(consumer.timeout, 15)
 
     def test_proxies(self):
-        client = Client('testsecret', proxies={'http':'203.243.63.16:80','https':'203.243.63.16:80'})
-        success, msg = client.identify('userId', {'trait': 'value'})
-        self.assertTrue(success)
+        proxies={'http':'203.243.63.16:80','https':'203.243.63.16:80'}
+        client = Client('testsecret', proxies=proxies)
+        def mock_post_fn(*args, **kwargs):
+                res = mock.Mock()
+                res.status_code = 200
+                res.json.return_value = {'code': 'success', 'message': 'success'}
+                return res
+
+        with mock.patch('segment.analytics.request._session.post', side_effect=mock_post_fn) as mock_post:
+            success, msg = client.identify('userId', {'trait': 'value'})
+            client.flush()
+            self.assertTrue(success)
+            mock_post.assert_called_once()
+            args, kwargs = mock_post.call_args
+            self.assertIn('proxies', kwargs)
+            self.assertEqual(kwargs['proxies'], proxies)

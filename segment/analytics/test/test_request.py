@@ -2,6 +2,7 @@ from datetime import datetime, date
 import unittest
 import json
 import requests
+from unittest import mock
 
 from segment.analytics.request import post, DatetimeSerializer
 
@@ -53,10 +54,21 @@ class TestRequests(unittest.TestCase):
             }], timeout=0.0001)
 
     def test_proxies(self):
-        res = post('testsecret', batch=[{
-            'userId': 'userId',
-            'event': 'python event',
-            'type': 'track',
-            'proxies': {'http':'203.243.63.16:80','https':'203.243.63.16:80'}
-        }])
-        self.assertEqual(res.status_code, 200)
+        proxies = {'http': '203.243.63.16:80', 'https': '203.243.63.16:80'}
+        def mock_post_fn(*args, **kwargs):
+            res = mock.Mock()
+            res.status_code = 200
+            res.json.return_value = {'code': 'success', 'message': 'success'}
+            return res
+
+        with mock.patch('segment.analytics.request._session.post', side_effect=mock_post_fn) as mock_post:
+            res = post('testsecret', proxies= proxies, batch=[{
+                'userId': 'userId',
+                'event': 'python event',
+                'type': 'track'
+            }])
+            self.assertEqual(res.status_code, 200)
+            mock_post.assert_called_once()
+            args, kwargs = mock_post.call_args
+            self.assertIn('proxies', kwargs)
+            self.assertEqual(kwargs['proxies'], proxies)
