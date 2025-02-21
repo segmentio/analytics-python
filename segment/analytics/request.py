@@ -45,14 +45,14 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manag
     kwargs = {
         "data": data,
         "headers": headers,
-        "timeout": 15,
+        "timeout": timeout,
     }
 
     if proxies:
         kwargs['proxies'] = proxies
-    res = None
+
     try:
-        res = _session.post(url, data=data, headers=headers, timeout=timeout)
+        res = _session.post(url, **kwargs)
     except Exception as e:
         log.error(e)
         raise e
