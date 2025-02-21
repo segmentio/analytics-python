@@ -200,7 +200,7 @@ class TestConsumer(unittest.TestCase):
 
     @classmethod
     def test_proxies(cls):
-        consumer = Consumer(None, 'testsecret', proxies='203.243.63.16:80')
+        consumer = Consumer(None, 'testsecret', proxies={'http':'203.243.63.16:80','https':'203.243.63.16:80'})
         track = {
             'type': 'track',
             'event': 'python event',
