@@ -1,3 +1,6 @@
+# 2.3.4 / 2025-2-24
+- Fix for proxy values not being used
+
 # 2.3.3 / 2024-10-07
 - Update time handling and OAuth
 
