@@ -11,3 +11,4 @@ build
 .idea/
 .python-version
 .venv
+.DS_Store
