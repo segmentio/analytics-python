@@ -1,9 +1,10 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='e2e-test',
     version='0.1.0',
-    py_modules=['e2e-test'],
+    packages=find_packages(),
+    include_package_data=True,
     install_requires=[
         'click', 'python-dotenv', 'python-dateutil', 'requests', 'PyJWT', 'backoff'
     ],
