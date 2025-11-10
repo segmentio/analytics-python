@@ -1,3 +1,6 @@
+# 2.3.5 / 2025-11-10
+- Fixed Github Issue #516
+
 # 2.3.4 / 2025-2-24
 - Fix for proxy values not being used
 
