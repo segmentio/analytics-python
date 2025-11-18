@@ -54,9 +54,8 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manag
     try:
         res = _session.post(url, **kwargs)
     except Exception as e:
-        log.error(e)
         raise e
-        
+
     if res.status_code == 200:
         log.debug('data uploaded successfully')
         return res

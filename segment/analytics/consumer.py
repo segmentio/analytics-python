@@ -134,14 +134,26 @@ class Consumer(Thread):
                 # retry on all other errors (eg. network)
                 return False
 
+        attempt_count = 0
+
         @backoff.on_exception(
             backoff.expo,
             Exception,
             max_tries=self.retries + 1,
-            giveup=fatal_exception)
+            giveup=fatal_exception,
+            on_backoff=lambda details: self.log.debug(
+                f"Retry attempt {details['tries']}/{self.retries + 1} after {details['elapsed']:.2f}s"
+            ))
         def send_request():
-            post(self.write_key, self.host, gzip=self.gzip,
-                 timeout=self.timeout, batch=batch, proxies=self.proxies,
-                 oauth_manager=self.oauth_manager)
+            nonlocal attempt_count
+            attempt_count += 1
+            try:
+                return post(self.write_key, self.host, gzip=self.gzip,
+                            timeout=self.timeout, batch=batch, proxies=self.proxies,
+                            oauth_manager=self.oauth_manager)
+            except Exception as e:
+                if attempt_count >= self.retries + 1:
+                    self.log.error(f"All {self.retries} retries exhausted. Final error: {e}")
+                raise
 
         send_request()
