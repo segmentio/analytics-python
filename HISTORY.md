@@ -1,6 +1,11 @@
-# 2.3.5 / 2025-11-10
-- Fixed Github Issue #516
-- Fixed Github Issue #515
+# 2.3.5 / 2025-11-18
+- Fix for Github Issue #516
+- Fix for Github Issue #515
+- Fix for Github Issue #493
+- Updated the version to 2.3.5
+- Enhanced retry logic in segment/analytics/consumer.py by adding detailed debug logs for each retry attempt and logging an error when all retries are exhausted.
+- Moved the return success out of the finally block in segment/analytics/consumer.py at Line 84.
+- Removed redundant error logging in segment/analytics/request.py to avoid duplicate logs when exceptions are raised.
 
 # 2.3.4 / 2025-2-24
 - Fix for proxy values not being used
