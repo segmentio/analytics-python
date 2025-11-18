@@ -152,7 +152,7 @@ class Consumer(Thread):
                             timeout=self.timeout, batch=batch, proxies=self.proxies,
                             oauth_manager=self.oauth_manager)
             except Exception as e:
-                if attempt_count > self.retries:
+                if attempt_count >= self.retries + 1:
                     self.log.error(f"All {self.retries} retries exhausted. Final error: {e}")
                 raise
 
