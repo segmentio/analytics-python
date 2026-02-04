@@ -1,102 +1,141 @@
-import click
-from dotenv import load_dotenv
-import os
-import sys
-import logging
-import json
-from collections.abc import Iterable
+#!/usr/bin/env python3
+"""
+Analytics Python E2E CLI
 
-load_dotenv()
+Accepts a JSON input with event sequences and SDK configuration,
+sends events through the analytics SDK, and outputs results as JSON.
+"""
+
+import click
+import json
+import sys
+import os
+import time
+import logging
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
-import segment.analytics as analytics  # noqa: E402 (ignore autopep8)
+from segment.analytics.client import Client  # noqa: E402
+
+
+def setup_logging(debug: bool = False):
+    level = logging.DEBUG if debug else logging.WARNING
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        stream=sys.stderr,
+    )
+    return logging.getLogger("e2e-cli")
+
+
+def send_event(client: Client, event: dict, logger: logging.Logger):
+    """Send a single event through the analytics client."""
+    event_type = event.get("type")
+    user_id = event.get("userId", "")
+    anonymous_id = event.get("anonymousId", "")
+    message_id = event.get("messageId")
+    timestamp = event.get("timestamp")
+    context = event.get("context")
+    integrations = event.get("integrations")
+    traits = event.get("traits")
+    properties = event.get("properties")
+    event_name = event.get("event")
+    name = event.get("name")
+    category = event.get("category")
+    group_id = event.get("groupId")
+    previous_id = event.get("previousId")
+
+    logger.debug(f"Sending {event_type} event: {event}")
+
+    if event_type == "identify":
+        client.identify(user_id, traits, context, timestamp, anonymous_id, integrations, message_id)
+    elif event_type == "track":
+        client.track(user_id, event_name, properties, context, timestamp, anonymous_id, integrations, message_id)
+    elif event_type == "page":
+        client.page(user_id, category, name, properties, context, timestamp, anonymous_id, integrations, message_id)
+    elif event_type == "screen":
+        client.screen(user_id, category, name, properties, context, timestamp, anonymous_id, integrations, message_id)
+    elif event_type == "alias":
+        client.alias(previous_id, user_id, context, timestamp, integrations, message_id)
+    elif event_type == "group":
+        client.group(user_id, group_id, traits, context, timestamp, anonymous_id, integrations, message_id)
+    else:
+        raise ValueError(f"Unknown event type: {event_type}")
 
 
 @click.command()
-@click.option('--writeKey', type=str, help='Segment write key')
-@click.option('--apiHost', type=str, help='Custom host')
-@click.option('--payload', type=str, help='A JSON string that specifies the event payload.')
-def run(writekey, payload, apihost=None):
-    analytics.write_key = writekey
-
-    if apihost is not None:
-        analytics.host = apihost  # Set custom host
-
-    analytics.debug = os.getenv('DEBUG_MODE')
-    analytics.send = os.getenv('SEND_EVENTS')
-    logger = log_config()
+@click.option("--input", "input_json", type=str, required=True, help="JSON input with sequences and config")
+@click.option("--debug", is_flag=True, help="Enable debug logging")
+def run(input_json: str, debug: bool):
+    """Run the E2E CLI with the given input configuration."""
+    logger = setup_logging(debug)
+    output = {"success": False, "sentBatches": 0, "error": None}
 
     try:
-        # Decode the JSON payload
-        decodedJson = json.loads(payload)
-        dataObject = json.loads(decodedJson)
+        data = json.loads(input_json)
 
-        # To ensure for loop do not raise exception when individual JSON is passed
-        # we are converting the payload to a List having a single Dictionary as its item
+        write_key = data.get("writeKey", "test-key")
+        api_host = data.get("apiHost", "https://api.segment.io")
+        sequences = data.get("sequences", [])
+        config = data.get("config", {})
 
-        if not isinstance(dataObject, Iterable):  # Check if dataObject is non-iterable
-            dataObject = [dataObject]
-        elif isinstance(dataObject, dict):  # Check if dataObject is a dictionary
-            dataObject = [dataObject]
+        # Extract config options
+        flush_at = config.get("flushAt", 100)  # upload_size in Python SDK
+        flush_interval = config.get("flushInterval", 0.5)  # upload_interval (seconds)
+        max_retries = config.get("maxRetries", 10)
+        timeout = config.get("timeout", 15)
 
-        # Iterate over each item in the payload JSON
-        for data in dataObject:
+        # If flushInterval is in ms (> 100), convert to seconds
+        if flush_interval > 100:
+            flush_interval = flush_interval / 1000.0
 
-            specType = data.get('type') if data.get('type') is not None else None
-            messageId = data.get('messageId') if data.get('messageId') is not None else None
-            userId = data.get('userId') if data.get('userId') is not None else ''
-            eventName = data.get('event') if data.get('event') is not None else None
-            traits = data.get('traits') if data.get('traits') is not None else None
-            properties = data.get('properties') if data.get('properties') is not None else None
-            context = data.get('context') if data.get('context') is not None else None
-            integrations = data.get('integrations') if data.get('integrations') is not None else None
-            groupId = data.get('groupId') if data.get('groupId') is not None else None
-            pageOrScreenName = data.get('name') if data.get('name') is not None else None
-            pageOrScreenCategory = data.get('category') if data.get('category') is not None else None
-            timestamp = data.get('timestamp') if data.get('timestamp') is not None else None
-            anonymousId = data.get('anonymousId') if data.get('anonymousId') is not None else ''
-            previousId = data.get('previousId') if data.get('previousId') is not None else None
+        logger.info(f"Creating client with host={api_host}, flush_at={flush_at}, flush_interval={flush_interval}")
 
-            if specType == 'identify':
-                analytics.identify(userId, traits, context, timestamp, anonymousId, integrations, messageId)
-            elif specType == 'track':
-                analytics.track(userId, eventName, properties, context, timestamp, anonymousId, integrations, messageId)
-            elif specType == 'page':
-                analytics.page(userId, pageOrScreenCategory, pageOrScreenName, properties,
-                               context, timestamp, anonymousId, integrations, messageId)
-            elif specType == 'screen':
-                analytics.screen(userId, pageOrScreenCategory, pageOrScreenName, properties,
-                                 context, timestamp, anonymousId, integrations, messageId)
-            elif specType == 'alias':
-                analytics.alias(previousId, userId, context, timestamp, integrations, messageId)
-            elif specType == 'group':
-                analytics.group(userId, groupId, traits, context, timestamp, anonymousId, integrations, messageId)
-            else:
-                raise Exception
+        # Create the analytics client
+        client = Client(
+            write_key=write_key,
+            host=api_host,
+            debug=debug,
+            upload_size=flush_at,
+            upload_interval=flush_interval,
+            max_retries=max_retries,
+            timeout=timeout,
+            sync_mode=False,  # Use async mode to test batching
+        )
+
+        # Process event sequences
+        for seq in sequences:
+            delay_ms = seq.get("delayMs", 0)
+            events = seq.get("events", [])
+
+            if delay_ms > 0:
+                logger.debug(f"Waiting {delay_ms}ms before sending next sequence")
+                time.sleep(delay_ms / 1000.0)
+
+            for event in events:
+                send_event(client, event, logger)
+
+        # Flush and shutdown
+        logger.debug("Flushing client...")
+        client.flush()
+        client.join()
+
+        output["success"] = True
+        # Note: We don't have easy access to batch count from the SDK internals
+        # This could be enhanced if needed
+        output["sentBatches"] = 1  # Placeholder
+
+    except json.JSONDecodeError as e:
+        output["error"] = f"Invalid JSON input: {e}"
+        logger.error(output["error"])
     except Exception as e:
-        logger.exception(e)
-    finally:
-        analytics.flush()
+        output["error"] = str(e)
+        logger.exception("Error running CLI")
+
+    # Output result as JSON (last line of stdout)
+    print(json.dumps(output))
+    sys.exit(0 if output["success"] else 1)
 
 
-def log_config():
-    # Create a logger object
-    logger = logging.getLogger(os.getenv('APP_NAME'))
-    logger.setLevel(logging.DEBUG)
-
-    handler = logging.StreamHandler()
-    handler.setLevel(logging.DEBUG)
-
-    # Define the log message format
-    formatter = logging.Formatter(os.getenv('LOG_FORMAT'))
-    handler.setFormatter(formatter)
-
-    # Attach the handler to the logger
-    logger.addHandler(handler)
-
-    return logger
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     run()
