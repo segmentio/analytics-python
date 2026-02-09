@@ -60,8 +60,7 @@ jobs:
       - name: Run E2E tests
         working-directory: sdk-e2e-tests
         env:
-          CLI_COMMAND: python -m e2e_cli
-          CLI_CWD: ${{ github.workspace }}/sdk/e2e-test
+          CLI_COMMAND: e2e-cli
           E2E_TEST_SUITES: basic,retry
           # E2E_TEST_SKIP: exponential-backoff  # skip specific test files if needed
         run: npm test
