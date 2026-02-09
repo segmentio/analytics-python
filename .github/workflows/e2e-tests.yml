@@ -46,7 +46,7 @@ jobs:
         run: pip install -e .
 
       - name: Install e2e-cli dependencies
-        working-directory: sdk/e2e-test
+        working-directory: sdk/e2e-cli
         run: pip install -e .
 
       - name: Install sdk-e2e-tests dependencies
