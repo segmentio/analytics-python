@@ -62,6 +62,8 @@ jobs:
         env:
           CLI_COMMAND: python -m e2e_cli
           CLI_CWD: ${{ github.workspace }}/sdk/e2e-test
+          E2E_TEST_SUITES: basic,retry
+          # E2E_TEST_SKIP: exponential-backoff  # skip specific test files if needed
         run: npm test
 
       - name: Upload test results
