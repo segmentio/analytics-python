@@ -1,10 +1,10 @@
 import logging
 import time
+import random
 from threading import Thread
-import backoff
 import json
 
-from segment.analytics.request import post, APIError, DatetimeSerializer
+from segment.analytics.request import post, APIError, DatetimeSerializer, parse_retry_after
 
 from queue import Empty
 
@@ -120,40 +120,108 @@ class Consumer(Thread):
         return items
 
     def request(self, batch):
-        """Attempt to upload the batch and retry before raising an error """
+        """Attempt to upload the batch and retry before raising an error"""
 
-        def fatal_exception(exc):
-            if isinstance(exc, APIError):
-                # retry on server errors and client errors
-                # with 429 status code (rate limited),
-                # don't retry on other client errors
-                return (400 <= exc.status < 500) and exc.status != 429
-            elif isinstance(exc, FatalError):
-                return True
-            else:
-                # retry on all other errors (eg. network)
-                return False
+        def is_retryable_status(status):
+            """
+            Determine if a status code is retryable.
+            Retryable 4xx: 408, 410, 429, 460
+            Non-retryable 4xx: 400, 401, 403, 404, 413, 422, and all other 4xx
+            Retryable 5xx: All except 501, 505
+            Non-retryable 5xx: 501, 505
+            """
+            if 400 <= status < 500:
+                return status in (408, 410, 429, 460)
+            elif 500 <= status < 600:
+                return status not in (501, 505)
+            return False
 
-        attempt_count = 0
+        def should_use_retry_after(status):
+            """Check if status code should respect Retry-After header"""
+            return status in (408, 429, 503)
 
-        @backoff.on_exception(
-            backoff.expo,
-            Exception,
-            max_tries=self.retries + 1,
-            giveup=fatal_exception,
-            on_backoff=lambda details: self.log.debug(
-                f"Retry attempt {details['tries']}/{self.retries + 1} after {details['elapsed']:.2f}s"
-            ))
-        def send_request():
-            nonlocal attempt_count
-            attempt_count += 1
+        total_attempts = 0
+        backoff_attempts = 0
+        max_backoff_attempts = self.retries + 1
+
+        while True:
             try:
-                return post(self.write_key, self.host, gzip=self.gzip,
-                            timeout=self.timeout, batch=batch, proxies=self.proxies,
-                            oauth_manager=self.oauth_manager)
-            except Exception as e:
-                if attempt_count >= self.retries + 1:
-                    self.log.error(f"All {self.retries} retries exhausted. Final error: {e}")
+                # Make the request with current retry count
+                response = post(
+                    self.write_key,
+                    self.host,
+                    gzip=self.gzip,
+                    timeout=self.timeout,
+                    batch=batch,
+                    proxies=self.proxies,
+                    oauth_manager=self.oauth_manager,
+                    retry_count=total_attempts
+                )
+                # Success
+                return response
+
+            except FatalError as e:
+                # Non-retryable error
+                self.log.error(f"Fatal error after {total_attempts} attempts: {e}")
                 raise
 
-        send_request()
+            except APIError as e:
+                total_attempts += 1
+
+                # Check if we should use Retry-After header
+                if should_use_retry_after(e.status) and e.response:
+                    retry_after = parse_retry_after(e.response)
+                    if retry_after:
+                        self.log.debug(
+                            f"Retry-After header present: waiting {retry_after}s (attempt {total_attempts})"
+                        )
+                        time.sleep(retry_after)
+                        continue  # Does not count against backoff budget
+
+                # Check if status is retryable
+                if not is_retryable_status(e.status):
+                    self.log.error(
+                        f"Non-retryable error {e.status} after {total_attempts} attempts: {e}"
+                    )
+                    raise
+
+                # Count this against backoff attempts
+                backoff_attempts += 1
+                if backoff_attempts >= max_backoff_attempts:
+                    self.log.error(
+                        f"All {self.retries} retries exhausted after {total_attempts} total attempts. Final error: {e}"
+                    )
+                    raise
+
+                # Calculate exponential backoff delay with jitter
+                base_delay = 0.5 * (2 ** (backoff_attempts - 1))
+                jitter = random.uniform(0, 0.1 * base_delay)
+                delay = min(base_delay + jitter, 60)  # Cap at 60 seconds
+
+                self.log.debug(
+                    f"Retry attempt {backoff_attempts}/{self.retries} (total attempts: {total_attempts}) "
+                    f"after {delay:.2f}s for status {e.status}"
+                )
+                time.sleep(delay)
+
+            except Exception as e:
+                # Network errors or other exceptions - retry with backoff
+                total_attempts += 1
+                backoff_attempts += 1
+
+                if backoff_attempts >= max_backoff_attempts:
+                    self.log.error(
+                        f"All {self.retries} retries exhausted after {total_attempts} total attempts. Final error: {e}"
+                    )
+                    raise
+
+                # Calculate exponential backoff delay with jitter
+                base_delay = 0.5 * (2 ** (backoff_attempts - 1))
+                jitter = random.uniform(0, 0.1 * base_delay)
+                delay = min(base_delay + jitter, 60)  # Cap at 60 seconds
+
+                self.log.debug(
+                    f"Network error retry {backoff_attempts}/{self.retries} (total attempts: {total_attempts}) "
+                    f"after {delay:.2f}s: {e}"
+                )
+                time.sleep(delay)
