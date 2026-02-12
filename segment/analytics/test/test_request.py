@@ -191,14 +191,12 @@ class TestRequests(unittest.TestCase):
             return res
 
         with mock.patch('segment.analytics.request._session.post', side_effect=mock_post_fn):
-            try:
+            with self.assertRaises(APIError):
                 post('testsecret', oauth_manager=oauth_manager, batch=[{
                     'userId': 'userId',
                     'event': 'python event',
                     'type': 'track'
                 }])
-            except APIError:
-                pass
 
             # Verify clear_token was called
             oauth_manager.clear_token.assert_called_once()
