@@ -30,7 +30,7 @@ class Client(object):
         max_queue_size = 10000
         gzip = False
         timeout = 15
-        max_retries = 10
+        max_retries = 1000
         proxies = None
         thread = 1
         upload_interval = 0.5
