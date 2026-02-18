@@ -5,7 +5,7 @@ import logging
 import json
 import base64
 from dateutil.tz import tzutc
-from requests.auth import HTTPBasicAuth
+
 from requests import sessions
 
 from segment.analytics.version import VERSION
@@ -30,7 +30,8 @@ def parse_retry_after(response):
     try:
         # Try parsing as integer (delay in seconds)
         delay = int(retry_after)
-        return min(delay, MAX_RETRY_AFTER_SECONDS)
+        # Ensure delay is non-negative before applying upper bound
+        return min(max(delay, 0), MAX_RETRY_AFTER_SECONDS)
     except ValueError:
         # Could be HTTP-date format, but for simplicity we'll skip that
         # Most APIs use integer seconds

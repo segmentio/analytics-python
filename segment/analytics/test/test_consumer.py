@@ -490,10 +490,8 @@ class TestConsumer(unittest.TestCase):
             raise FatalError('Fatal error occurred')
 
         with mock.patch('segment.analytics.consumer.post', side_effect=mock_post_fn):
-            try:
+            with self.assertRaises(FatalError):
                 consumer.request([track])
-            except FatalError:
-                pass
 
         # Should only be called once (no retries)
         self.assertEqual(call_count, 1)
