@@ -50,21 +50,12 @@ jobs:
         working-directory: sdk/e2e-cli
         run: pip install -e .
 
-      - name: Install sdk-e2e-tests dependencies
-        working-directory: sdk-e2e-tests
-        run: npm ci
-
-      - name: Build sdk-e2e-tests
-        working-directory: sdk-e2e-tests
-        run: npm run build
-
       - name: Run E2E tests
         working-directory: sdk-e2e-tests
-        env:
-          CLI_COMMAND: e2e-cli
-          E2E_TEST_SUITES: basic,retry
-          # E2E_TEST_SKIP: exponential-backoff  # skip specific test files if needed
-        run: npm test
+        run: |
+          ./scripts/run-tests.sh \
+            --sdk-dir "${{ github.workspace }}/sdk/e2e-cli" \
+            --cli "e2e-cli"
 
       - name: Upload test results
         if: always()
