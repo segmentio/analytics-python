@@ -140,9 +140,22 @@ class Consumer(Thread):
             """Check if status code should respect Retry-After header"""
             return status in (408, 429, 503)
 
+        def calculate_backoff_delay(attempt):
+            """
+            Calculate exponential backoff delay with jitter.
+            First retry is immediate, then 0.5s, 1s, 2s, 4s, etc.
+            """
+            if attempt == 1:
+                return 0  # First retry is immediate
+            base_delay = 0.5 * (2 ** (attempt - 2))
+            jitter = random.uniform(0, 0.1 * base_delay)
+            return min(base_delay + jitter, 60)  # Cap at 60 seconds
+
         total_attempts = 0
         backoff_attempts = 0
         max_backoff_attempts = self.retries + 1
+        # Prevent infinite retry loops even with Retry-After
+        max_total_attempts = max_backoff_attempts * 10
 
         while True:
             try:
@@ -167,6 +180,13 @@ class Consumer(Thread):
 
             except APIError as e:
                 total_attempts += 1
+
+                # Prevent infinite retry loops
+                if total_attempts >= max_total_attempts:
+                    self.log.error(
+                        f"Maximum total attempts ({max_total_attempts}) reached after {total_attempts} attempts. Final error: {e}"
+                    )
+                    raise
 
                 # Check if we should use Retry-After header
                 if should_use_retry_after(e.status) and e.response:
@@ -194,9 +214,7 @@ class Consumer(Thread):
                     raise
 
                 # Calculate exponential backoff delay with jitter
-                base_delay = 0.5 * (2 ** (backoff_attempts - 1))
-                jitter = random.uniform(0, 0.1 * base_delay)
-                delay = min(base_delay + jitter, 60)  # Cap at 60 seconds
+                delay = calculate_backoff_delay(backoff_attempts)
 
                 self.log.debug(
                     f"Retry attempt {backoff_attempts}/{self.retries} (total attempts: {total_attempts}) "
@@ -209,6 +227,13 @@ class Consumer(Thread):
                 total_attempts += 1
                 backoff_attempts += 1
 
+                # Prevent infinite retry loops
+                if total_attempts >= max_total_attempts:
+                    self.log.error(
+                        f"Maximum total attempts ({max_total_attempts}) reached after {total_attempts} attempts. Final error: {e}"
+                    )
+                    raise
+
                 if backoff_attempts >= max_backoff_attempts:
                     self.log.error(
                         f"All {self.retries} retries exhausted after {total_attempts} total attempts. Final error: {e}"
@@ -216,9 +241,7 @@ class Consumer(Thread):
                     raise
 
                 # Calculate exponential backoff delay with jitter
-                base_delay = 0.5 * (2 ** (backoff_attempts - 1))
-                jitter = random.uniform(0, 0.1 * base_delay)
-                delay = min(base_delay + jitter, 60)  # Cap at 60 seconds
+                delay = calculate_backoff_delay(backoff_attempts)
 
                 self.log.debug(
                     f"Network error retry {backoff_attempts}/{self.retries} (total attempts: {total_attempts}) "

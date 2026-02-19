@@ -469,13 +469,12 @@ class TestConsumer(unittest.TestCase):
         self.assertEqual(len(sleep_durations), 3)
 
         # Delays should be increasing (exponential)
-        # First: ~0.5s, Second: ~1s, Third: ~2s (with jitter)
-        self.assertGreater(sleep_durations[0], 0.4)
-        self.assertLess(sleep_durations[0], 1.0)
-        self.assertGreater(sleep_durations[1], 0.9)
-        self.assertLess(sleep_durations[1], 2.0)
-        self.assertGreater(sleep_durations[2], 1.8)
-        self.assertLess(sleep_durations[2], 4.0)
+        # First: 0s (immediate), Second: ~0.5s, Third: ~1s (with jitter)
+        self.assertEqual(sleep_durations[0], 0)  # First retry is immediate
+        self.assertGreater(sleep_durations[1], 0.4)
+        self.assertLess(sleep_durations[1], 0.6)
+        self.assertGreater(sleep_durations[2], 0.9)
+        self.assertLess(sleep_durations[2], 1.2)
 
     def test_fatal_error_not_retried(self):
         """Test that FatalError is not retried"""
@@ -572,11 +571,10 @@ class TestConsumer(unittest.TestCase):
         self.assertEqual(call_count, 2)
         self.assertEqual(retry_counts, [0, 1])
 
-        # Should use backoff delay (around 0.5s with jitter)
+        # First retry should be immediate (0s delay)
         self.assertIsNotNone(sleep_duration)
         if sleep_duration is not None:
-            self.assertGreater(sleep_duration, 0.4)
-            self.assertLess(sleep_duration, 1.0)
+            self.assertEqual(sleep_duration, 0)
 
     def test_408_without_retry_after_uses_backoff(self):
         """T10: 408 without Retry-After header uses backoff retry"""
@@ -613,11 +611,10 @@ class TestConsumer(unittest.TestCase):
         self.assertEqual(call_count, 2)
         self.assertEqual(retry_counts, [0, 1])
 
-        # Should use backoff delay
+        # First retry should be immediate (0s delay)
         self.assertIsNotNone(sleep_duration)
         if sleep_duration is not None:
-            self.assertGreater(sleep_duration, 0.4)
-            self.assertLess(sleep_duration, 1.0)
+            self.assertEqual(sleep_duration, 0)
 
     def test_network_error_retried_with_backoff(self):
         """T15: Network/IO error is retried with backoff"""
@@ -651,11 +648,10 @@ class TestConsumer(unittest.TestCase):
         self.assertEqual(call_count, 2)
         self.assertEqual(retry_counts, [0, 1])
 
-        # Should use backoff delay
+        # First retry should be immediate (0s delay)
         self.assertIsNotNone(sleep_duration)
         if sleep_duration is not None:
-            self.assertGreater(sleep_duration, 0.4)
-            self.assertLess(sleep_duration, 1.0)
+            self.assertEqual(sleep_duration, 0)
 
     def test_511_is_retryable(self):
         """T05: 511 status code is retryable (part of 5xx family, not in non-retryable list)"""
