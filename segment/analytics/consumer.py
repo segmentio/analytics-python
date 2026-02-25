@@ -14,6 +14,10 @@ MAX_MSG_SIZE = 32 << 10
 # lower to leave space for extra data that will be added later, eg. "sentAt".
 BATCH_SIZE_LIMIT = 475000
 
+# Default duration limits (12 hours in seconds)
+DEFAULT_MAX_TOTAL_BACKOFF_DURATION = 43200
+DEFAULT_MAX_RATE_LIMIT_DURATION = 43200
+
 
 class FatalError(Exception):
     def __init__(self, message):
@@ -30,7 +34,9 @@ class Consumer(Thread):
 
     def __init__(self, queue, write_key, upload_size=100, host=None,
                  on_error=None, upload_interval=0.5, gzip=False, retries=1000,
-                 timeout=15, proxies=None, oauth_manager=None):
+                 timeout=15, proxies=None, oauth_manager=None,
+                 max_total_backoff_duration=DEFAULT_MAX_TOTAL_BACKOFF_DURATION,
+                 max_rate_limit_duration=DEFAULT_MAX_RATE_LIMIT_DURATION):
         """Create a consumer thread."""
         Thread.__init__(self)
         # Make consumer a daemon thread so that it doesn't block program exit
@@ -51,6 +57,12 @@ class Consumer(Thread):
         self.timeout = timeout
         self.proxies = proxies
         self.oauth_manager = oauth_manager
+        self.max_total_backoff_duration = max_total_backoff_duration
+        self.max_rate_limit_duration = max_rate_limit_duration
+
+        # Rate-limit state
+        self.rate_limited_until = None
+        self.rate_limit_start_time = None
 
     def run(self):
         """Runs the consumer."""
@@ -64,6 +76,19 @@ class Consumer(Thread):
         """Pause the consumer."""
         self.running = False
 
+    def set_rate_limit_state(self, response):
+        """Set rate-limit state from a 429 response with a valid Retry-After header."""
+        retry_after = parse_retry_after(response) if response else None
+        if retry_after:
+            self.rate_limited_until = time.time() + retry_after
+        if self.rate_limit_start_time is None:
+            self.rate_limit_start_time = time.time()
+
+    def clear_rate_limit_state(self):
+        """Clear rate-limit state after successful request or duration exceeded."""
+        self.rate_limited_until = None
+        self.rate_limit_start_time = None
+
     def upload(self):
         """Upload the next batch of items, return whether successful."""
         success = False
@@ -71,9 +96,57 @@ class Consumer(Thread):
         if len(batch) == 0:
             return False
 
+        # Check rate-limit state before attempting upload
+        if self.rate_limited_until is not None:
+            now = time.time()
+
+            # Check if maxRateLimitDuration has been exceeded
+            if (self.rate_limit_start_time is not None and
+                    now - self.rate_limit_start_time > self.max_rate_limit_duration):
+                self.log.error(
+                    'Rate limit duration exceeded (%ds). Clearing rate-limit state and dropping batch.',
+                    self.max_rate_limit_duration
+                )
+                self.clear_rate_limit_state()
+                # Drop the batch by marking items as done
+                if self.on_error:
+                    self.on_error(
+                        Exception('Rate limit duration exceeded, batch dropped'),
+                        batch
+                    )
+                for _ in batch:
+                    self.queue.task_done()
+                return False
+
+            # Still rate-limited; wait until the rate limit expires
+            wait_time = self.rate_limited_until - now
+            if wait_time > 0:
+                self.log.debug(
+                    'Rate-limited. Waiting %.2fs before next upload attempt.',
+                    wait_time
+                )
+                time.sleep(wait_time)
+
         try:
             self.request(batch)
+            # Success — clear rate-limit state
+            self.clear_rate_limit_state()
             success = True
+        except APIError as e:
+            if e.status == 429:
+                # 429: rate-limit state already set by request(). Re-queue batch.
+                self.log.debug('429 received. Re-queuing batch and halting upload iteration.')
+                for item in batch:
+                    try:
+                        self.queue.put(item, block=False)
+                    except Exception:
+                        pass  # Queue full, item lost
+                success = False
+            else:
+                self.log.error('error uploading: %s', e)
+                success = False
+                if self.on_error:
+                    self.on_error(e, batch)
         except Exception as e:
             self.log.error('error uploading: %s', e)
             success = False
@@ -128,17 +201,18 @@ class Consumer(Thread):
             Retryable 4xx: 408, 410, 429, 460
             Non-retryable 4xx: 400, 401, 403, 404, 413, 422, and all other 4xx
             Retryable 5xx: All except 501, 505
+              - 511 is only retryable when OauthManager is configured
             Non-retryable 5xx: 501, 505
             """
             if 400 <= status < 500:
                 return status in (408, 410, 429, 460)
             elif 500 <= status < 600:
-                return status not in (501, 505)
+                if status in (501, 505):
+                    return False
+                if status == 511:
+                    return self.oauth_manager is not None
+                return True
             return False
-
-        def should_use_retry_after(status):
-            """Check if status code should respect Retry-After header"""
-            return status in (408, 429, 503)
 
         def calculate_backoff_delay(attempt):
             """
@@ -153,11 +227,11 @@ class Consumer(Thread):
 
         total_attempts = 0
         backoff_attempts = 0
-        max_backoff_attempts = self.retries + 1
-        # Prevent infinite retry loops even with Retry-After
-        max_total_attempts = max_backoff_attempts * 10
+        first_failure_time = None
 
         while True:
+            total_attempts += 1
+
             try:
                 # Make the request with current retry count
                 response = post(
@@ -168,7 +242,7 @@ class Consumer(Thread):
                     batch=batch,
                     proxies=self.proxies,
                     oauth_manager=self.oauth_manager,
-                    retry_count=total_attempts
+                    retry_count=total_attempts - 1
                 )
                 # Success
                 return response
@@ -179,24 +253,14 @@ class Consumer(Thread):
                 raise
 
             except APIError as e:
-                total_attempts += 1
-
-                # Prevent infinite retry loops
-                if total_attempts >= max_total_attempts:
-                    self.log.error(
-                        f"Maximum total attempts ({max_total_attempts}) reached after {total_attempts} attempts. Final error: {e}"
-                    )
-                    raise
-
-                # Check if we should use Retry-After header
-                if should_use_retry_after(e.status) and e.response:
-                    retry_after = parse_retry_after(e.response)
-                    if retry_after:
-                        self.log.debug(
-                            f"Retry-After header present: waiting {retry_after}s (attempt {total_attempts})"
-                        )
-                        time.sleep(retry_after)
-                        continue  # Does not count against backoff budget
+                # 429 with valid Retry-After: set rate-limit state and raise
+                # to caller (pipeline blocking). Without Retry-After, fall
+                # through to counted backoff like any other retryable error.
+                if e.status == 429:
+                    retry_after = parse_retry_after(e.response) if e.response else None
+                    if retry_after is not None:
+                        self.set_rate_limit_state(e.response)
+                        raise
 
                 # Check if status is retryable
                 if not is_retryable_status(e.status):
@@ -205,9 +269,19 @@ class Consumer(Thread):
                     )
                     raise
 
+                # Transient error -- per-batch backoff
+                if first_failure_time is None:
+                    first_failure_time = time.time()
+                if time.time() - first_failure_time > self.max_total_backoff_duration:
+                    self.log.error(
+                        f"Max total backoff duration ({self.max_total_backoff_duration}s) exceeded "
+                        f"after {total_attempts} attempts. Final error: {e}"
+                    )
+                    raise
+
                 # Count this against backoff attempts
                 backoff_attempts += 1
-                if backoff_attempts >= max_backoff_attempts:
+                if backoff_attempts >= self.retries + 1:
                     self.log.error(
                         f"All {self.retries} retries exhausted after {total_attempts} total attempts. Final error: {e}"
                     )
@@ -224,17 +298,18 @@ class Consumer(Thread):
 
             except Exception as e:
                 # Network errors or other exceptions - retry with backoff
-                total_attempts += 1
-                backoff_attempts += 1
-
-                # Prevent infinite retry loops
-                if total_attempts >= max_total_attempts:
+                if first_failure_time is None:
+                    first_failure_time = time.time()
+                if time.time() - first_failure_time > self.max_total_backoff_duration:
                     self.log.error(
-                        f"Maximum total attempts ({max_total_attempts}) reached after {total_attempts} attempts. Final error: {e}"
+                        f"Max total backoff duration ({self.max_total_backoff_duration}s) exceeded "
+                        f"after {total_attempts} attempts. Final error: {e}"
                     )
                     raise
 
-                if backoff_attempts >= max_backoff_attempts:
+                backoff_attempts += 1
+
+                if backoff_attempts >= self.retries + 1:
                     self.log.error(
                         f"All {self.retries} retries exhausted after {total_attempts} total attempts. Final error: {e}"
                     )

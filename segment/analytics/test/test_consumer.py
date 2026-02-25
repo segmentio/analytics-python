@@ -144,7 +144,7 @@ class TestConsumer(unittest.TestCase):
         self._test_request_retry(consumer, APIError(
             500, 'code', 'Internal Server Error'), 2)
 
-        # we should retry on HTTP 429 errors
+        # 429 without Retry-After uses counted backoff (like other retryable errors)
         consumer = Consumer(None, 'testsecret')
         self._test_request_retry(consumer, APIError(
             429, 'code', 'Too Many Requests'), 2)
@@ -266,7 +266,7 @@ class TestConsumer(unittest.TestCase):
                 self.assertEqual(call_count, 1, f'Status {status_code} should not be retried')
 
     def test_retryable_4xx_status_codes(self):
-        """Test that retryable 4xx errors are retried"""
+        """Test that retryable 4xx errors are retried (429 without Retry-After uses backoff too)"""
         consumer = Consumer(None, 'testsecret', retries=3)
         track = {'type': 'track', 'event': 'python event', 'userId': 'userId'}
 
@@ -339,107 +339,82 @@ class TestConsumer(unittest.TestCase):
                 # Should have been called 3 times
                 self.assertEqual(call_count, 3, f'Status {status_code} should be retried')
 
-    def test_retry_after_header_support(self):
-        """Test that Retry-After header is respected and doesn't count against retry budget"""
+    def test_429_sets_rate_limit_state_with_retry_after(self):
+        """Test that 429 with Retry-After sets rate_limited_until on consumer"""
         consumer = Consumer(None, 'testsecret', retries=2)
         track = {'type': 'track', 'event': 'python event', 'userId': 'userId'}
 
-        call_count = 0
-        sleep_durations = []
-
         def mock_post_fn(*args, **kwargs):
-            nonlocal call_count
-            call_count += 1
-
-            if call_count <= 3:
-                # Return 429 with Retry-After for first 3 attempts
-                response = mock.Mock()
-                response.headers = {'Retry-After': '10'}
-                error = APIError(429, 'rate_limit', 'Too Many Requests')
-                error.response = response
-                raise error
-
-            # Success on 4th attempt
-            return mock.Mock(status_code=200)
-
-        def mock_sleep(duration):
-            sleep_durations.append(duration)
+            response = mock.Mock()
+            response.headers = {'Retry-After': '10'}
+            error = APIError(429, 'rate_limit', 'Too Many Requests')
+            error.response = response
+            raise error
 
         with mock.patch('segment.analytics.consumer.post', side_effect=mock_post_fn):
-            with mock.patch('time.sleep', side_effect=mock_sleep):
+            with self.assertRaises(APIError) as ctx:
                 consumer.request([track])
+            self.assertEqual(ctx.exception.status, 429)
 
-        # Should succeed after 4 attempts (3 Retry-After, then success)
-        self.assertEqual(call_count, 4)
-
-        # First 3 sleeps should be for Retry-After (10 seconds each)
-        self.assertEqual(sleep_durations[:3], [10, 10, 10])
+        # Rate-limit state should be set
+        self.assertIsNotNone(consumer.rate_limited_until)
+        self.assertIsNotNone(consumer.rate_limit_start_time)
+        # rate_limited_until should be ~10 seconds in the future
+        self.assertGreater(consumer.rate_limited_until, time.time() + 5)
 
     def test_retry_after_capped_at_300_seconds(self):
-        """Test that Retry-After delay is capped at 300 seconds"""
+        """Test that Retry-After delay is capped at 300 seconds when setting rate-limit state"""
         consumer = Consumer(None, 'testsecret', retries=2)
         track = {'type': 'track', 'event': 'python event', 'userId': 'userId'}
 
-        call_count = 0
-        sleep_duration = None
-
         def mock_post_fn(*args, **kwargs):
-            nonlocal call_count
-            call_count += 1
+            response = mock.Mock()
+            response.headers = {'Retry-After': '600'}  # 10 minutes
+            error = APIError(429, 'rate_limit', 'Too Many Requests')
+            error.response = response
+            raise error
 
-            if call_count == 1:
-                # Return 429 with large Retry-After
-                response = mock.Mock()
-                response.headers = {'Retry-After': '600'}  # 10 minutes
-                error = APIError(429, 'rate_limit', 'Too Many Requests')
-                error.response = response
-                raise error
-
-            # Success on 2nd attempt
-            return mock.Mock(status_code=200)
-
-        def mock_sleep(duration):
-            nonlocal sleep_duration
-            sleep_duration = duration
-
+        now = time.time()
         with mock.patch('segment.analytics.consumer.post', side_effect=mock_post_fn):
-            with mock.patch('time.sleep', side_effect=mock_sleep):
+            with self.assertRaises(APIError):
                 consumer.request([track])
 
-        # Sleep should be capped at 300 seconds
-        self.assertEqual(sleep_duration, 300)
+        # rate_limited_until should be capped at ~300s from now (not 600s)
+        self.assertIsNotNone(consumer.rate_limited_until)
+        self.assertLessEqual(consumer.rate_limited_until, now + 310)
+        self.assertGreater(consumer.rate_limited_until, now + 290)
 
-    def test_retry_after_for_408_and_503(self):
-        """Test that Retry-After is respected for 408 and 503 status codes"""
-        consumer = Consumer(None, 'testsecret', retries=2)
+    def test_408_and_503_use_backoff(self):
+        """Test that 408 and 503 use exponential backoff"""
         track = {'type': 'track', 'event': 'python event', 'userId': 'userId'}
 
         for status_code in [408, 503]:
+            consumer = Consumer(None, 'testsecret', retries=2)
             call_count = 0
-            sleep_duration = None
+            sleep_durations = []
 
             def mock_post_fn(*args, **kwargs):
                 nonlocal call_count
                 call_count += 1
-
                 if call_count == 1:
                     response = mock.Mock()
                     response.headers = {'Retry-After': '5'}
                     error = APIError(status_code, 'error', 'Error')
                     error.response = response
                     raise error
-
                 return mock.Mock(status_code=200)
 
             def mock_sleep(duration):
-                nonlocal sleep_duration
-                sleep_duration = duration
+                sleep_durations.append(duration)
 
             with mock.patch('segment.analytics.consumer.post', side_effect=mock_post_fn):
                 with mock.patch('time.sleep', side_effect=mock_sleep):
                     consumer.request([track])
 
-            self.assertEqual(sleep_duration, 5, f'Retry-After should be respected for {status_code}')
+            # Should use backoff delay (0 for first retry), NOT the Retry-After value of 5
+            self.assertEqual(call_count, 2)
+            self.assertEqual(len(sleep_durations), 1)
+            self.assertEqual(sleep_durations[0], 0, f'{status_code} should use backoff, not Retry-After')
 
     def test_exponential_backoff_with_jitter(self):
         """Test that exponential backoff is used for retries without Retry-After"""
@@ -536,45 +511,31 @@ class TestConsumer(unittest.TestCase):
         # First request should have retry_count=0
         self.assertEqual(retry_count, 0)
 
-    def test_429_without_retry_after_uses_backoff(self):
-        """T09: 429 without Retry-After header uses backoff retry"""
-        consumer = Consumer(None, 'testsecret', retries=3)
+    def test_429_without_retry_after_uses_counted_backoff(self):
+        """429 without Retry-After uses counted backoff (not pipeline blocking)"""
+        consumer = Consumer(None, 'testsecret', retries=2)
         track = {'type': 'track', 'event': 'python event', 'userId': 'userId'}
 
         call_count = 0
-        retry_counts = []
-        sleep_duration = None
 
         def mock_post_fn(*args, **kwargs):
             nonlocal call_count
             call_count += 1
-            retry_counts.append(kwargs.get('retry_count', 0))
-
-            if call_count == 1:
-                # 429 without Retry-After header
+            if call_count < 3:
                 error = APIError(429, 'rate_limit', 'Too Many Requests')
                 error.response = mock.Mock()
                 error.response.headers = {}  # No Retry-After
                 raise error
-
             return mock.Mock(status_code=200)
 
-        def mock_sleep(duration):
-            nonlocal sleep_duration
-            sleep_duration = duration
-
         with mock.patch('segment.analytics.consumer.post', side_effect=mock_post_fn):
-            with mock.patch('time.sleep', side_effect=mock_sleep):
+            with mock.patch('time.sleep'):
                 consumer.request([track])
 
-        # Should have two attempts
-        self.assertEqual(call_count, 2)
-        self.assertEqual(retry_counts, [0, 1])
-
-        # First retry should be immediate (0s delay)
-        self.assertIsNotNone(sleep_duration)
-        if sleep_duration is not None:
-            self.assertEqual(sleep_duration, 0)
+        # Should retry with backoff (3 calls: initial + 2 retries)
+        self.assertEqual(call_count, 3)
+        # Rate-limit state should NOT be set (no pipeline blocking)
+        self.assertIsNone(consumer.rate_limited_until)
 
     def test_408_without_retry_after_uses_backoff(self):
         """T10: 408 without Retry-After header uses backoff retry"""
@@ -653,71 +614,70 @@ class TestConsumer(unittest.TestCase):
         if sleep_duration is not None:
             self.assertEqual(sleep_duration, 0)
 
-    def test_511_is_retryable(self):
-        """T05: 511 status code is retryable (part of 5xx family, not in non-retryable list)"""
+    def test_511_not_retryable_without_oauth(self):
+        """T17: 511 is NOT retried when OauthManager is not configured"""
         consumer = Consumer(None, 'testsecret', retries=3)
         track = {'type': 'track', 'event': 'python event', 'userId': 'userId'}
 
         call_count = 0
-        retry_counts = []
 
         def mock_post_fn(*args, **kwargs):
             nonlocal call_count
             call_count += 1
-            retry_counts.append(kwargs.get('retry_count', 0))
+            raise APIError(511, 'auth_required', 'Network Authentication Required')
 
+        with mock.patch('segment.analytics.consumer.post', side_effect=mock_post_fn):
+            with self.assertRaises(APIError) as ctx:
+                consumer.request([track])
+            self.assertEqual(ctx.exception.status, 511)
+
+        # Should only be called once (not retried without OAuth)
+        self.assertEqual(call_count, 1)
+
+    def test_511_retryable_with_oauth(self):
+        """T17: 511 IS retried when OauthManager is configured"""
+        oauth_manager = mock.Mock()
+        consumer = Consumer(None, 'testsecret', retries=3, oauth_manager=oauth_manager)
+        track = {'type': 'track', 'event': 'python event', 'userId': 'userId'}
+
+        call_count = 0
+
+        def mock_post_fn(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
             if call_count < 3:
                 raise APIError(511, 'auth_required', 'Network Authentication Required')
-
             return mock.Mock(status_code=200)
 
         with mock.patch('segment.analytics.consumer.post', side_effect=mock_post_fn):
-            with mock.patch('time.sleep'):  # Mock sleep to speed up test
+            with mock.patch('time.sleep'):
                 consumer.request([track])
 
-        # Should have been called 3 times (511 is retryable)
+        # Should have been called 3 times (511 is retryable with OAuth)
         self.assertEqual(call_count, 3)
-        self.assertEqual(retry_counts, [0, 1, 2])
 
-    def test_retry_after_not_counted_against_backoff_budget(self):
-        """T17: Retry-After attempts don't consume backoff retry budget"""
+    def test_429_with_retry_after_does_not_count_against_backoff_budget(self):
+        """429 with Retry-After raises immediately (pipeline blocking) without consuming backoff budget"""
         consumer = Consumer(None, 'testsecret', retries=1)
         track = {'type': 'track', 'event': 'python event', 'userId': 'userId'}
 
         call_count = 0
-        retry_counts = []
 
         def mock_post_fn(*args, **kwargs):
             nonlocal call_count
             call_count += 1
-            retry_counts.append(kwargs.get('retry_count', 0))
-
-            if call_count <= 2:
-                # First two: 429 with Retry-After (shouldn't count against budget)
-                response = mock.Mock()
-                response.headers = {'Retry-After': '1'}
-                error = APIError(429, 'rate_limit', 'Too Many Requests')
-                error.response = response
-                raise error
-            elif call_count == 3:
-                # Third: 500 without Retry-After (counts against budget)
-                raise APIError(500, 'error', 'Server Error')
-
-            # Success on 4th attempt
-            return mock.Mock(status_code=200)
+            error = APIError(429, 'rate_limit', 'Too Many Requests')
+            error.response = mock.Mock()
+            error.response.headers = {'Retry-After': '1'}
+            raise error
 
         with mock.patch('segment.analytics.consumer.post', side_effect=mock_post_fn):
-            with mock.patch('time.sleep'):  # Mock sleep to speed up test
+            with self.assertRaises(APIError) as ctx:
                 consumer.request([track])
+            self.assertEqual(ctx.exception.status, 429)
 
-        # Should succeed after 4 attempts:
-        # - 2 Retry-After attempts (don't count against budget)
-        # - 1 backoff attempt (counts against budget = 1)
-        # - 1 final backoff attempt (counts against budget = 1, limit reached)
-        # Actually wait, with retries=1, we have max_backoff_attempts=2
-        # So: 2 Retry-After + 2 backoff attempts = 4 total
-        self.assertEqual(call_count, 4)
-        self.assertEqual(retry_counts, [0, 1, 2, 3])
+        # 429 with Retry-After raises on first attempt (pipeline blocking)
+        self.assertEqual(call_count, 1)
 
     def test_413_payload_too_large_not_retried(self):
         """T12: 413 Payload Too Large is non-retryable (won't succeed on retry)"""
@@ -739,3 +699,131 @@ class TestConsumer(unittest.TestCase):
 
         # Should only be called once (no retries)
         self.assertEqual(call_count, 1)
+
+    def test_t04_429_halts_upload_iteration(self):
+        """T04: 429 halts current upload iteration — batch is re-queued, not dropped"""
+        q = Queue()
+        consumer = Consumer(q, 'testsecret', retries=3)
+        track = {'type': 'track', 'event': 'python event', 'userId': 'userId'}
+
+        # Put a message in the queue
+        q.put(track)
+
+        call_count = 0
+
+        def mock_post_fn(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            response = mock.Mock()
+            response.headers = {'Retry-After': '10'}
+            error = APIError(429, 'rate_limit', 'Too Many Requests')
+            error.response = response
+            raise error
+
+        on_error_called = []
+
+        def on_error(e, batch):
+            on_error_called.append((e, batch))
+
+        consumer.on_error = on_error
+
+        with mock.patch('segment.analytics.consumer.post', side_effect=mock_post_fn):
+            with mock.patch('time.sleep'):
+                result = consumer.upload()
+
+        # upload() should return False (not successful)
+        self.assertFalse(result)
+        # request() should have been called exactly once
+        self.assertEqual(call_count, 1)
+        # on_error should NOT have been called (batch was re-queued, not dropped)
+        self.assertEqual(len(on_error_called), 0)
+        # Rate-limit state should be set
+        self.assertIsNotNone(consumer.rate_limited_until)
+        self.assertIsNotNone(consumer.rate_limit_start_time)
+
+    def test_t19_max_total_backoff_duration(self):
+        """T19: Gives up after maxTotalBackoffDuration elapsed"""
+        consumer = Consumer(None, 'testsecret', retries=1000,
+                            max_total_backoff_duration=5)
+        track = {'type': 'track', 'event': 'python event', 'userId': 'userId'}
+
+        call_count = 0
+        fake_time = [100.0]  # Start time
+
+        def mock_post_fn(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            raise APIError(500, 'error', 'Server Error')
+
+        original_time = time.time
+
+        def mock_time():
+            # Advance time by 3 seconds on each call after the first
+            result = fake_time[0]
+            fake_time[0] += 3.0
+            return result
+
+        with mock.patch('segment.analytics.consumer.post', side_effect=mock_post_fn):
+            with mock.patch('time.sleep'):
+                with mock.patch('time.time', side_effect=mock_time):
+                    with self.assertRaises(APIError) as ctx:
+                        consumer.request([track])
+                    self.assertEqual(ctx.exception.status, 500)
+
+        # With max_total_backoff_duration=5 and time advancing 3s per call:
+        # Attempt 1: fails, first_failure_time set at 100, time now 103
+        # Attempt 2: fails, time is 106, 106-100=6 > 5, exceeds duration
+        # So should be called exactly 2 times
+        self.assertEqual(call_count, 2)
+
+    def test_t20_max_rate_limit_duration(self):
+        """T20: Rate-limited state clears and batch is dropped after maxRateLimitDuration"""
+        q = Queue()
+        consumer = Consumer(q, 'testsecret', retries=3,
+                            max_rate_limit_duration=10)
+        track = {'type': 'track', 'event': 'python event', 'userId': 'userId'}
+
+        # Pre-set rate-limit state as if we entered it 15 seconds ago
+        now = time.time()
+        consumer.rate_limit_start_time = now - 15  # 15s ago, exceeds 10s limit
+        consumer.rate_limited_until = now + 5  # Would still be rate-limited
+
+        # Put a message in the queue
+        q.put(track)
+
+        on_error_called = []
+
+        def on_error(e, batch):
+            on_error_called.append((e, batch))
+
+        consumer.on_error = on_error
+
+        # upload() should detect duration exceeded, clear state, drop batch
+        result = consumer.upload()
+
+        self.assertFalse(result)
+        # Rate-limit state should be cleared
+        self.assertIsNone(consumer.rate_limited_until)
+        self.assertIsNone(consumer.rate_limit_start_time)
+        # on_error should have been called (batch was dropped)
+        self.assertEqual(len(on_error_called), 1)
+
+    def test_rate_limit_state_cleared_on_success(self):
+        """Rate-limit state is cleared after a successful request"""
+        q = Queue()
+        consumer = Consumer(q, 'testsecret', retries=3)
+        track = {'type': 'track', 'event': 'python event', 'userId': 'userId'}
+
+        # Set rate-limit state
+        consumer.rate_limited_until = time.time() - 1  # Already expired
+        consumer.rate_limit_start_time = time.time() - 10
+
+        q.put(track)
+
+        with mock.patch('segment.analytics.consumer.post', return_value=mock.Mock(status_code=200)):
+            result = consumer.upload()
+
+        self.assertTrue(result)
+        # Rate-limit state should be cleared on success
+        self.assertIsNone(consumer.rate_limited_until)
+        self.assertIsNone(consumer.rate_limit_start_time)
