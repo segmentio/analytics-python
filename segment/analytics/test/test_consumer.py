@@ -155,7 +155,7 @@ class TestConsumer(unittest.TestCase):
         try:
             self._test_request_retry(consumer, api_error, 1)
         except APIError:
-            pass
+            pass  # Expected: 400 is non-retryable, so the error propagates here
         else:
             self.fail('request() should not retry on client errors')
 
