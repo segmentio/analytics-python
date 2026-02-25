@@ -79,7 +79,7 @@ class Consumer(Thread):
     def set_rate_limit_state(self, response):
         """Set rate-limit state from a 429 response with a valid Retry-After header."""
         retry_after = parse_retry_after(response) if response else None
-        if retry_after:
+        if retry_after is not None:
             self.rate_limited_until = time.time() + retry_after
         if self.rate_limit_start_time is None:
             self.rate_limit_start_time = time.time()
@@ -133,7 +133,7 @@ class Consumer(Thread):
             self.clear_rate_limit_state()
             success = True
         except APIError as e:
-            if e.status == 429:
+            if e.status == 429 and self.rate_limited_until is not None:
                 # 429: rate-limit state already set by request(). Re-queue batch.
                 self.log.debug('429 received. Re-queuing batch and halting upload iteration.')
                 for item in batch:

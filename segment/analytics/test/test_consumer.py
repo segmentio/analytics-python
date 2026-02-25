@@ -741,6 +741,59 @@ class TestConsumer(unittest.TestCase):
         self.assertIsNotNone(consumer.rate_limited_until)
         self.assertIsNotNone(consumer.rate_limit_start_time)
 
+    def test_429_without_retry_after_does_not_requeue_batch(self):
+        """429 without Retry-After is treated as normal failure in upload() and is not re-queued"""
+        q = Queue()
+        consumer = Consumer(q, 'testsecret', retries=0)
+        track = {'type': 'track', 'event': 'python event', 'userId': 'userId'}
+        q.put(track)
+
+        def mock_post_fn(*args, **kwargs):
+            error = APIError(429, 'rate_limit', 'Too Many Requests')
+            error.response = mock.Mock()
+            error.response.headers = {}
+            raise error
+
+        on_error_called = []
+
+        def on_error(e, batch):
+            on_error_called.append((e, batch))
+
+        consumer.on_error = on_error
+
+        with mock.patch('segment.analytics.consumer.post', side_effect=mock_post_fn):
+            with mock.patch('time.sleep'):
+                result = consumer.upload()
+
+        self.assertFalse(result)
+        self.assertEqual(len(on_error_called), 1)
+        self.assertIsNone(consumer.rate_limited_until)
+        self.assertEqual(q.qsize(), 0)
+
+    def test_retry_after_zero_sets_rate_limit_state(self):
+        """429 with Retry-After: 0 still sets rate-limit state for consistent pipeline handling"""
+        consumer = Consumer(None, 'testsecret', retries=1)
+        track = {'type': 'track', 'event': 'python event', 'userId': 'userId'}
+
+        def mock_post_fn(*args, **kwargs):
+            response = mock.Mock()
+            response.headers = {'Retry-After': '0'}
+            error = APIError(429, 'rate_limit', 'Too Many Requests')
+            error.response = response
+            raise error
+
+        before = time.time()
+        with mock.patch('segment.analytics.consumer.post', side_effect=mock_post_fn):
+            with self.assertRaises(APIError) as ctx:
+                consumer.request([track])
+            self.assertEqual(ctx.exception.status, 429)
+        after = time.time()
+
+        self.assertIsNotNone(consumer.rate_limited_until)
+        self.assertIsNotNone(consumer.rate_limit_start_time)
+        self.assertGreaterEqual(consumer.rate_limited_until, before)
+        self.assertLessEqual(consumer.rate_limited_until, after + 0.1)
+
     def test_t19_max_total_backoff_duration(self):
         """T19: Gives up after maxTotalBackoffDuration elapsed"""
         consumer = Consumer(None, 'testsecret', retries=1000,
