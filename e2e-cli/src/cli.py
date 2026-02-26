@@ -70,6 +70,10 @@ def run(input_json: str, debug: bool):
     """Run the E2E CLI with the given input configuration."""
     logger = setup_logging(debug)
     output = {"success": False, "sentBatches": 0, "error": None}
+    delivery_errors = []
+
+    def on_error(error, batch):
+        delivery_errors.append(str(error))
 
     try:
         data = json.loads(input_json)
@@ -96,6 +100,7 @@ def run(input_json: str, debug: bool):
             write_key=write_key,
             host=api_host,
             debug=debug,
+            on_error=on_error,
             upload_size=flush_at,
             upload_interval=flush_interval,
             max_retries=max_retries,
@@ -120,10 +125,12 @@ def run(input_json: str, debug: bool):
         client.flush()
         client.join()
 
-        output["success"] = True
-        # Note: We don't have easy access to batch count from the SDK internals
-        # This could be enhanced if needed
-        output["sentBatches"] = 1  # Placeholder
+        if delivery_errors:
+            output["success"] = False
+            output["error"] = delivery_errors[0]
+        else:
+            output["success"] = True
+            output["sentBatches"] = 1
 
     except json.JSONDecodeError as e:
         output["error"] = f"Invalid JSON input: {e}"
