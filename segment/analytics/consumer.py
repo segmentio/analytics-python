@@ -78,7 +78,7 @@ class Consumer(Thread):
 
     def set_rate_limit_state(self, response):
         """Set rate-limit state from a 429 response with a valid Retry-After header."""
-        retry_after = parse_retry_after(response) if response else None
+        retry_after = parse_retry_after(response) if response is not None else None
         if retry_after is not None:
             self.rate_limited_until = time.time() + retry_after
         if self.rate_limit_start_time is None:
@@ -257,7 +257,7 @@ class Consumer(Thread):
                 # to caller (pipeline blocking). Without Retry-After, fall
                 # through to counted backoff like any other retryable error.
                 if e.status == 429:
-                    retry_after = parse_retry_after(e.response) if e.response else None
+                    retry_after = parse_retry_after(e.response) if e.response is not None else None
                     if retry_after is not None:
                         self.set_rate_limit_state(e.response)
                         raise
