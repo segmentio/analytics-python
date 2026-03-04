@@ -30,7 +30,7 @@ class Client(object):
         max_queue_size = 10000
         gzip = False
         timeout = 15
-        max_retries = 1000
+        max_retries = 10
         max_total_backoff_duration = 43200
         max_rate_limit_duration = 43200
         proxies = None

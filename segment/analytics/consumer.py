@@ -33,7 +33,7 @@ class Consumer(Thread):
     log = logging.getLogger('segment')
 
     def __init__(self, queue, write_key, upload_size=100, host=None,
-                 on_error=None, upload_interval=0.5, gzip=False, retries=1000,
+                 on_error=None, upload_interval=0.5, gzip=False, retries=10,
                  timeout=15, proxies=None, oauth_manager=None,
                  max_total_backoff_duration=DEFAULT_MAX_TOTAL_BACKOFF_DURATION,
                  max_rate_limit_duration=DEFAULT_MAX_RATE_LIMIT_DURATION):
