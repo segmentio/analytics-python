@@ -54,8 +54,9 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manag
     headers = {
         'Content-Type': 'application/json',
         'User-Agent': 'analytics-python/' + VERSION,
-        'X-Retry-Count': str(retry_count)
     }
+    if retry_count > 0:
+        headers['X-Retry-Count'] = str(retry_count)
 
     # Add Authorization header - prefer OAuth Bearer token, fallback to Basic auth
     if auth:

@@ -120,14 +120,14 @@ class TestRequests(unittest.TestCase):
             self.assertEqual(headers['Authorization'], 'Bearer test_token_123')
 
     def test_x_retry_count_header(self):
-        """Test that X-Retry-Count header is included"""
+        """Test that X-Retry-Count header is omitted on first attempt and included on retries"""
         def mock_post_fn(*args, **kwargs):
             res = mock.Mock()
             res.status_code = 200
             return res
 
         with mock.patch('segment.analytics.request._session.post', side_effect=mock_post_fn) as mock_post:
-            # Test with retry_count=0 (first attempt)
+            # Test with retry_count=0 (first attempt) — header should be absent
             post('testsecret', retry_count=0, batch=[{
                 'userId': 'userId',
                 'event': 'python event',
@@ -136,8 +136,7 @@ class TestRequests(unittest.TestCase):
 
             args, kwargs = mock_post.call_args
             headers = kwargs['headers']
-            self.assertIn('X-Retry-Count', headers)
-            self.assertEqual(headers['X-Retry-Count'], '0')
+            self.assertNotIn('X-Retry-Count', headers)
 
         with mock.patch('segment.analytics.request._session.post', side_effect=mock_post_fn) as mock_post:
             # Test with retry_count=5
