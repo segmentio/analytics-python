@@ -1,3 +1,6 @@
+# 2.3.6 / 2026-4-7
+- Update and widen PyJWT version to address security issue
+
 # 2.3.5 / 2025-11-18
 - Fix for Github Issue #516
 - Fix for Github Issue #515
