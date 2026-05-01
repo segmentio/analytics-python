@@ -90,7 +90,7 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manag
     except Exception as e:
         raise e
 
-    if res.status_code == 200:
+    if 200 <= res.status_code < 400:
         log.debug('data uploaded successfully')
         return res
 

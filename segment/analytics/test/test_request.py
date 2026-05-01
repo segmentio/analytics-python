@@ -150,6 +150,22 @@ class TestRequests(unittest.TestCase):
             headers = kwargs['headers']
             self.assertEqual(headers['X-Retry-Count'], '5')
 
+    def test_non_200_2xx_treated_as_success(self):
+        """Test that 2xx and 3xx status codes are treated as success"""
+        for status_code in [200, 201, 204, 301, 302]:
+            def mock_post_fn(*args, **kwargs):
+                res = mock.Mock()
+                res.status_code = status_code
+                return res
+
+            with mock.patch('segment.analytics.request._session.post', side_effect=mock_post_fn):
+                res = post('testsecret', batch=[{
+                    'userId': 'userId',
+                    'event': 'python event',
+                    'type': 'track'
+                }])
+                self.assertEqual(res.status_code, status_code)
+
     def test_parse_retry_after_integer(self):
         """Test parsing Retry-After header with integer seconds"""
         response = mock.Mock()
