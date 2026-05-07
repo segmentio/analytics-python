@@ -1,0 +1,27 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.2/.schema/devbox.schema.json",
+  "packages": {
+    "python312": "latest",
+    "jq": "latest"
+  },
+  "shell": {
+    "init_hook": [
+      "export PROJECT_ROOT=\"$(git rev-parse --show-toplevel 2>/dev/null || echo $DEVBOX_PROJECT_ROOT)\"",
+      "if [ ! -d \"$PROJECT_ROOT/.venv\" ]; then python -m venv $PROJECT_ROOT/.venv; fi",
+      "source $PROJECT_ROOT/.venv/bin/activate",
+      "if ! python -m pylint --version > /dev/null 2>&1; then echo 'Running pip install...'; pip install -r requirements.txt && pip install -e '.[test]'; fi"
+    ],
+    "scripts": {
+      "install": ["pip install -r requirements.txt && pip install -e '.[test]'"],
+      "test": ["python -m pytest segment/analytics/test/"],
+      "lint": ["pylint --rcfile=.pylintrc --reports=y --exit-zero segment/analytics"],
+      "format-check": ["flake8 --max-complexity=10 --statistics segment/analytics"],
+      "check": [
+        "devbox run lint",
+        "devbox run format-check",
+        "devbox run test"
+      ],
+      "release": ["python setup.py sdist bdist_wheel", "twine upload dist/*"]
+    }
+  }
+}
