@@ -28,13 +28,13 @@ def parse_retry_after(response):
         return None
 
     try:
-        # Try parsing as integer (delay in seconds)
         delay = int(retry_after)
-        # Ensure delay is non-negative before applying upper bound
         return min(max(delay, 0), MAX_RETRY_AFTER_SECONDS)
     except ValueError:
-        # Could be HTTP-date format, but for simplicity we'll skip that
-        # Most APIs use integer seconds
+        # RFC 7231 allows HTTP-date format (e.g. "Wed, 21 Oct 2015 07:28:00 GMT")
+        # but we don't parse it; fall back to counted backoff.
+        log = logging.getLogger('segment')
+        log.warning('Unrecognized Retry-After format %r; ignoring header.', retry_after)
         return None
 
 

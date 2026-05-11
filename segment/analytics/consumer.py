@@ -136,11 +136,16 @@ class Consumer(Thread):
             if e.status == 429 and self.rate_limited_until is not None:
                 # 429: rate-limit state already set by request(). Re-queue batch.
                 self.log.debug('429 received. Re-queuing batch and halting upload iteration.')
+                dropped = []
                 for item in batch:
                     try:
                         self.queue.put(item, block=False)
                     except Exception:
-                        pass  # Queue full, item lost
+                        dropped.append(item)
+                if dropped:
+                    self.log.error('Queue full during 429 re-queue. Dropping %d item(s).', len(dropped))
+                    if self.on_error:
+                        self.on_error(Exception('Queue full, items dropped during 429 re-queue'), dropped)
                 success = False
             else:
                 self.log.error('error uploading: %s', e)
@@ -153,7 +158,9 @@ class Consumer(Thread):
             if self.on_error:
                 self.on_error(e, batch)
         finally:
-            # mark items as acknowledged from queue
+            # Each item in batch was obtained via queue.get() and must have
+            # exactly one matching task_done() call — including re-queued items,
+            # which will produce a new task_done() obligation on their next get().
             for _ in batch:
                 self.queue.task_done()
         return success
@@ -196,14 +203,13 @@ class Consumer(Thread):
         """Attempt to upload the batch and retry before raising an error"""
 
         def is_retryable_status(status):
-            """
-            Determine if a status code is retryable.
-            Retryable 4xx: 408, 410, 429, 460
-            Non-retryable 4xx: 400, 401, 403, 404, 413, 422, and all other 4xx
-            Retryable 5xx: All except 501, 505
-              - 511 is only retryable when OauthManager is configured
-            Non-retryable 5xx: 501, 505
-            """
+            # Retryable 4xx: 408, 429, 460
+            # 410 Gone: permanently removed, but included for parity with the
+            # Node.js SDK. Retrying is harmless since the server will keep
+            # returning 410, and the retry budget caps total attempts.
+            # Non-retryable 4xx: 400, 401, 403, 404, 413, 422, and all other 4xx
+            # Retryable 5xx: all except 501, 505
+            # 511: only retryable when OauthManager is configured
             if 400 <= status < 500:
                 return status in (408, 410, 429, 460)
             elif 500 <= status < 600:
@@ -215,15 +221,36 @@ class Consumer(Thread):
             return False
 
         def calculate_backoff_delay(attempt):
-            """
-            Calculate exponential backoff delay with jitter.
-            First retry is immediate, then 0.5s, 1s, 2s, 4s, etc.
-            """
+            # First retry is immediate; thereafter 0.5s, 1s, 2s, 4s… capped at 60s
             if attempt == 1:
-                return 0  # First retry is immediate
+                return 0
             base_delay = 0.5 * (2 ** (attempt - 2))
             jitter = random.uniform(0, 0.1 * base_delay)
-            return min(base_delay + jitter, 60)  # Cap at 60 seconds
+            return min(base_delay + jitter, 60)
+
+        def apply_backoff(e, label):
+            """Apply retry backoff logic. Returns delay if should retry, raises if exhausted."""
+            nonlocal first_failure_time, backoff_attempts
+            if first_failure_time is None:
+                first_failure_time = time.time()
+            if time.time() - first_failure_time >= self.max_total_backoff_duration:
+                self.log.error(
+                    f"Max total backoff duration ({self.max_total_backoff_duration}s) exceeded "
+                    f"after {total_attempts} attempts. Final error: {e}"
+                )
+                raise e
+            backoff_attempts += 1
+            if backoff_attempts >= self.retries + 1:
+                self.log.error(
+                    f"All {self.retries} retries exhausted after {total_attempts} total attempts. Final error: {e}"
+                )
+                raise e
+            delay = calculate_backoff_delay(backoff_attempts)
+            self.log.debug(
+                f"{label} {backoff_attempts}/{self.retries} (total attempts: {total_attempts}) "
+                f"after {delay:.2f}s: {e}"
+            )
+            return delay
 
         total_attempts = 0
         backoff_attempts = 0
@@ -233,7 +260,6 @@ class Consumer(Thread):
             total_attempts += 1
 
             try:
-                # Make the request with current retry count
                 response = post(
                     self.write_key,
                     self.host,
@@ -244,82 +270,33 @@ class Consumer(Thread):
                     oauth_manager=self.oauth_manager,
                     retry_count=total_attempts - 1
                 )
-                # Success
                 return response
 
             except FatalError as e:
-                # Non-retryable error
+                # Raised by oauth_manager when token refresh fails permanently;
+                # not safe to retry.
                 self.log.error(f"Fatal error after {total_attempts} attempts: {e}")
                 raise
 
             except APIError as e:
-                # 429 with valid Retry-After: set rate-limit state and raise
-                # to caller (pipeline blocking). Without Retry-After, fall
-                # through to counted backoff like any other retryable error.
+                # 429 with valid Retry-After > 0: block the pipeline and let
+                # upload() re-queue the batch. Retry-After: 0 or missing falls
+                # through to counted backoff to avoid a tight re-queue loop.
                 if e.status == 429:
                     retry_after = parse_retry_after(e.response) if e.response is not None else None
-                    if retry_after is not None:
+                    if retry_after is not None and retry_after > 0:
                         self.set_rate_limit_state(e.response)
                         raise
 
-                # Check if status is retryable
                 if not is_retryable_status(e.status):
                     self.log.error(
                         f"Non-retryable error {e.status} after {total_attempts} attempts: {e}"
                     )
                     raise
 
-                # Transient error -- per-batch backoff
-                if first_failure_time is None:
-                    first_failure_time = time.time()
-                if time.time() - first_failure_time > self.max_total_backoff_duration:
-                    self.log.error(
-                        f"Max total backoff duration ({self.max_total_backoff_duration}s) exceeded "
-                        f"after {total_attempts} attempts. Final error: {e}"
-                    )
-                    raise
-
-                # Count this against backoff attempts
-                backoff_attempts += 1
-                if backoff_attempts >= self.retries + 1:
-                    self.log.error(
-                        f"All {self.retries} retries exhausted after {total_attempts} total attempts. Final error: {e}"
-                    )
-                    raise
-
-                # Calculate exponential backoff delay with jitter
-                delay = calculate_backoff_delay(backoff_attempts)
-
-                self.log.debug(
-                    f"Retry attempt {backoff_attempts}/{self.retries} (total attempts: {total_attempts}) "
-                    f"after {delay:.2f}s for status {e.status}"
-                )
+                delay = apply_backoff(e, f"Retry attempt (status {e.status})")
                 time.sleep(delay)
 
             except Exception as e:
-                # Network errors or other exceptions - retry with backoff
-                if first_failure_time is None:
-                    first_failure_time = time.time()
-                if time.time() - first_failure_time > self.max_total_backoff_duration:
-                    self.log.error(
-                        f"Max total backoff duration ({self.max_total_backoff_duration}s) exceeded "
-                        f"after {total_attempts} attempts. Final error: {e}"
-                    )
-                    raise
-
-                backoff_attempts += 1
-
-                if backoff_attempts >= self.retries + 1:
-                    self.log.error(
-                        f"All {self.retries} retries exhausted after {total_attempts} total attempts. Final error: {e}"
-                    )
-                    raise
-
-                # Calculate exponential backoff delay with jitter
-                delay = calculate_backoff_delay(backoff_attempts)
-
-                self.log.debug(
-                    f"Network error retry {backoff_attempts}/{self.retries} (total attempts: {total_attempts}) "
-                    f"after {delay:.2f}s: {e}"
-                )
+                delay = apply_backoff(e, "Network error retry")
                 time.sleep(delay)

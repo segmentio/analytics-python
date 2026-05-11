@@ -770,29 +770,33 @@ class TestConsumer(unittest.TestCase):
         self.assertIsNone(consumer.rate_limited_until)
         self.assertEqual(q.qsize(), 0)
 
-    def test_retry_after_zero_sets_rate_limit_state(self):
-        """429 with Retry-After: 0 still sets rate-limit state for consistent pipeline handling"""
-        consumer = Consumer(None, 'testsecret', retries=1)
+    def test_retry_after_zero_uses_counted_backoff(self):
+        """429 with Retry-After: 0 falls through to counted backoff (not pipeline blocking).
+        Prevents a tight re-queue loop when the server says retry immediately."""
+        consumer = Consumer(None, 'testsecret', retries=2)
         track = {'type': 'track', 'event': 'python event', 'userId': 'userId'}
 
+        call_count = 0
+
         def mock_post_fn(*args, **kwargs):
-            response = mock.Mock()
-            response.headers = {'Retry-After': '0'}
-            error = APIError(429, 'rate_limit', 'Too Many Requests')
-            error.response = response
-            raise error
+            nonlocal call_count
+            call_count += 1
+            if call_count < 3:
+                response = mock.Mock()
+                response.headers = {'Retry-After': '0'}
+                error = APIError(429, 'rate_limit', 'Too Many Requests')
+                error.response = response
+                raise error
+            return mock.Mock(status_code=200)
 
-        before = time.time()
         with mock.patch('segment.analytics.consumer.post', side_effect=mock_post_fn):
-            with self.assertRaises(APIError) as ctx:
+            with mock.patch('time.sleep'):
                 consumer.request([track])
-            self.assertEqual(ctx.exception.status, 429)
-        after = time.time()
 
-        self.assertIsNotNone(consumer.rate_limited_until)
-        self.assertIsNotNone(consumer.rate_limit_start_time)
-        self.assertGreaterEqual(consumer.rate_limited_until, before)
-        self.assertLessEqual(consumer.rate_limited_until, after + 0.1)
+        # Should retry with backoff (3 calls: initial + 2 retries)
+        self.assertEqual(call_count, 3)
+        # Rate-limit state must NOT be set (no pipeline blocking for Retry-After: 0)
+        self.assertIsNone(consumer.rate_limited_until)
 
     def test_t19_max_total_backoff_duration(self):
         """T19: Gives up after maxTotalBackoffDuration elapsed"""
@@ -880,3 +884,152 @@ class TestConsumer(unittest.TestCase):
         # Rate-limit state should be cleared on success
         self.assertIsNone(consumer.rate_limited_until)
         self.assertIsNone(consumer.rate_limit_start_time)
+
+    def test_retry_after_zero_does_not_trigger_pipeline_blocking(self):
+        """Retry-After: 0 must not cause tight re-queue loop; falls through to counted backoff"""
+        q = Queue()
+        consumer = Consumer(q, 'testsecret', retries=2)
+        track = {'type': 'track', 'event': 'python event', 'userId': 'userId'}
+        q.put(track)
+
+        call_count = 0
+
+        def mock_post_fn(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                response = mock.Mock()
+                response.headers = {'Retry-After': '0'}
+                error = APIError(429, 'rate_limit', 'Too Many Requests')
+                error.response = response
+                raise error
+            return mock.Mock(status_code=200)
+
+        with mock.patch('segment.analytics.consumer.post', side_effect=mock_post_fn):
+            with mock.patch('time.sleep'):
+                result = consumer.upload()
+
+        # Should succeed on retry (counted backoff path, not pipeline-blocking)
+        self.assertTrue(result)
+        # Rate-limit state must NOT be set (no pipeline blocking)
+        self.assertIsNone(consumer.rate_limited_until)
+
+    def test_queue_full_during_429_requeue_calls_on_error(self):
+        """Queue-full during 429 re-queue calls on_error with dropped items"""
+        from queue import Full
+        q = Queue()
+        consumer = Consumer(q, 'testsecret', retries=3)
+        track = {'type': 'track', 'event': 'python event', 'userId': 'userId'}
+        q.put(track)
+
+        dropped_batches = []
+
+        def on_error(e, batch):
+            dropped_batches.append(batch)
+
+        consumer.on_error = on_error
+
+        def mock_post_fn(*args, **kwargs):
+            response = mock.Mock()
+            response.headers = {'Retry-After': '5'}
+            error = APIError(429, 'rate_limit', 'Too Many Requests')
+            error.response = response
+            raise error
+
+        with mock.patch('segment.analytics.consumer.post', side_effect=mock_post_fn):
+            with mock.patch('time.sleep'):
+                # Make queue.put raise Full to simulate a full queue
+                with mock.patch.object(q, 'put', side_effect=Full):
+                    result = consumer.upload()
+
+        self.assertFalse(result)
+        # on_error should have been called with the dropped item
+        self.assertEqual(len(dropped_batches), 1)
+        self.assertEqual(len(dropped_batches[0]), 1)
+
+    def test_none_max_total_backoff_duration_rejected_by_client(self):
+        """Client rejects None for max_total_backoff_duration"""
+        from segment.analytics.client import Client
+        with self.assertRaises(ValueError):
+            Client('testsecret', max_total_backoff_duration=None)
+
+    def test_none_max_rate_limit_duration_rejected_by_client(self):
+        """Client rejects None for max_rate_limit_duration"""
+        from segment.analytics.client import Client
+        with self.assertRaises(ValueError):
+            Client('testsecret', max_rate_limit_duration=None)
+
+    def test_max_total_backoff_duration_zero_prevents_retry(self):
+        """max_total_backoff_duration=0 prevents any retry attempt"""
+        consumer = Consumer(None, 'testsecret', retries=1000,
+                            max_total_backoff_duration=0)
+        track = {'type': 'track', 'event': 'python event', 'userId': 'userId'}
+
+        call_count = 0
+
+        def mock_post_fn(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            raise APIError(500, 'error', 'Server Error')
+
+        with mock.patch('segment.analytics.consumer.post', side_effect=mock_post_fn):
+            with mock.patch('time.sleep'):
+                with self.assertRaises(APIError):
+                    consumer.request([track])
+
+        # With duration=0 and >= check, first failure sets first_failure_time
+        # and immediately satisfies time.time() - first_failure_time >= 0,
+        # so it raises on the very first failure (1 attempt total).
+        self.assertEqual(call_count, 1)
+
+    def test_parse_retry_after_http_date_logs_warning(self):
+        """parse_retry_after logs a warning for HTTP-date format and returns None"""
+        import logging
+        from segment.analytics.request import parse_retry_after
+
+        response = mock.Mock()
+        response.headers = {'Retry-After': 'Wed, 21 Oct 2015 07:28:00 GMT'}
+
+        with self.assertLogs('segment', level=logging.WARNING) as cm:
+            result = parse_retry_after(response)
+
+        self.assertIsNone(result)
+        self.assertTrue(any('Unrecognized Retry-After' in line for line in cm.output))
+
+    def test_410_and_460_retried(self):
+        """410 and 460 are retryable status codes"""
+        for status_code in [410, 460]:
+            consumer = Consumer(None, 'testsecret', retries=2)
+            track = {'type': 'track', 'event': 'python event', 'userId': 'userId'}
+            call_count = 0
+
+            def mock_post_fn(*args, _status=status_code, **kwargs):
+                nonlocal call_count
+                call_count += 1
+                if call_count < 2:
+                    raise APIError(_status, 'error', f'Error {_status}')
+                return mock.Mock(status_code=200)
+
+            with mock.patch('segment.analytics.consumer.post', side_effect=mock_post_fn):
+                with mock.patch('time.sleep'):
+                    consumer.request([track])
+
+            self.assertEqual(call_count, 2, f'{status_code} should be retried')
+
+    def test_505_not_retried(self):
+        """505 HTTP Version Not Supported is non-retryable"""
+        consumer = Consumer(None, 'testsecret', retries=3)
+        track = {'type': 'track', 'event': 'python event', 'userId': 'userId'}
+        call_count = 0
+
+        def mock_post_fn(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            raise APIError(505, 'error', 'HTTP Version Not Supported')
+
+        with mock.patch('segment.analytics.consumer.post', side_effect=mock_post_fn):
+            with self.assertRaises(APIError) as ctx:
+                consumer.request([track])
+            self.assertEqual(ctx.exception.status, 505)
+
+        self.assertEqual(call_count, 1)
