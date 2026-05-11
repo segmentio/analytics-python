@@ -334,8 +334,7 @@ class Client(object):
         """Forces a flush from the internal queue to the server.
 
         Warning: if the consumer is currently rate-limited, this call will
-        block until the rate limit clears or max_rate_limit_duration elapses
-        (up to 12 hours by default).
+        block until the rate limit clears or max_rate_limit_duration elapses.
         """
         queue = self.queue
         size = queue.qsize()
