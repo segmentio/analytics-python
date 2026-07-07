@@ -3,7 +3,11 @@ description: "Exchange GitHub OIDC token for Artifactory access token and config
 
 inputs:
   artifactory-url:
-    description: "Base Artifactory platform URL. Falls back to ARTIFACTORY_URL env var."
+    description: "JFrog platform base URL for OIDC token exchange. Falls back to ARTIFACTORY_URL env var."
+    required: false
+    default: ""
+  pypi-index-url:
+    description: "Full PyPI index base URL (without /simple). Falls back to ARTIFACTORY_PYPI_URL env var, then derived from artifactory-url."
     required: false
     default: ""
   oidc-provider-name:
@@ -11,7 +15,7 @@ inputs:
     required: false
     default: "github-actions"
   pypi-repo:
-    description: "Artifactory virtual PyPI repository name"
+    description: "Artifactory virtual PyPI repository name (used only when deriving index URL from artifactory-url)"
     required: false
     default: "virtual-pypi-thirdparty"
 
@@ -22,6 +26,7 @@ runs:
       shell: bash
       env:
         INPUT_ARTIFACTORY_URL: ${{ inputs.artifactory-url }}
+        INPUT_PYPI_INDEX_URL: ${{ inputs.pypi-index-url }}
         OIDC_PROVIDER_NAME: ${{ inputs.oidc-provider-name }}
         PYPI_REPO: ${{ inputs.pypi-repo }}
       run: |
@@ -55,10 +60,18 @@ runs:
         fi
         echo "::add-mask::$ART_TOKEN"
 
-        HOST=$(echo "${ARTIFACTORY_URL}" | sed -E 's#^https?://##')
-        INDEX_URL="https://:${ART_TOKEN}@${HOST}/artifactory/api/pypi/${PYPI_REPO}/simple/"
+        # Determine the PyPI index base URL:
+        # 1. explicit input, 2. ARTIFACTORY_PYPI_URL env var, 3. derived from ARTIFACTORY_URL
+        PYPI_BASE="${INPUT_PYPI_INDEX_URL:-${ARTIFACTORY_PYPI_URL:-}}"
+        if [ -z "$PYPI_BASE" ]; then
+          HOST=$(echo "${ARTIFACTORY_URL}" | sed -E 's#^https?://##')
+          PYPI_BASE="https://${HOST}/artifactory/api/pypi/${PYPI_REPO}"
+        fi
+        PYPI_BASE="${PYPI_BASE%/}"  # strip trailing slash
+
+        INDEX_URL="https://:${ART_TOKEN}@$(echo "${PYPI_BASE}" | sed -E 's#^https?://##')/simple/"
 
         echo "::add-mask::${INDEX_URL}"
         echo "UV_INDEX_URL=${INDEX_URL}" >> "$GITHUB_ENV"
         echo "PIP_INDEX_URL=${INDEX_URL}" >> "$GITHUB_ENV"
-        echo "Configured to resolve through Artifactory (${PYPI_REPO})"
+        echo "Configured PyPI index through Artifactory"
