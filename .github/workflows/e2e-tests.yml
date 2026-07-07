@@ -1,18 +1,10 @@
-# E2E Tests for analytics-python
-# Copy this file to: analytics-python/.github/workflows/e2e-tests.yml
-#
-# This workflow:
-# 1. Checks out the SDK and sdk-e2e-tests repos
-# 2. Installs the SDK and e2e-cli dependencies
-# 3. Runs the e2e test suite
-
 name: E2E Tests
 
 on:
   push:
-    branches: [main, master]
+    branches: [master]
   pull_request:
-    branches: [main, master]
+    branches: [master]
   workflow_dispatch:
     inputs:
       e2e_tests_ref:
@@ -20,33 +12,35 @@ on:
         required: false
         default: 'main'
 
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  ARTIFACTORY_URL: ${{ vars.ARTIFACTORY_URL }}
+
 jobs:
   e2e-tests:
-    # Skip on fork PRs where repo secrets aren't available
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: ubuntu-latest
-
+    runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-latest' || 'ubuntu-x64' }}
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork }}
     steps:
       - name: Checkout SDK
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           path: sdk
 
       - name: Checkout sdk-e2e-tests
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           repository: segmentio/sdk-e2e-tests
           ref: ${{ inputs.e2e_tests_ref || 'main' }}
-          token: ${{ secrets.E2E_TESTS_TOKEN }}
           path: sdk-e2e-tests
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.11'
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # v4
         with:
           node-version: '20'
 
@@ -67,7 +61,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: e2e-test-results
           path: sdk-e2e-tests/test-results/
