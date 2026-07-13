@@ -1,4 +1,4 @@
-name: Deploy
+name: Publish
 
 on:
   release:
@@ -36,7 +36,7 @@ jobs:
     needs: [test]
     runs-on: ${{ github.repository_owner == 'twilio' && 'ubuntu-x64' || 'ubuntu-latest' }}
     if: github.repository_owner == 'twilio'
-    environment: pypi
+    environment: production
     permissions:
       contents: read
       id-token: write
@@ -73,8 +73,5 @@ jobs:
 
       - name: Publish to PyPI
         run: |
-          pip install twine
-          twine upload --repository pypi dist/*
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+          pip install "twine>=5.0"
+          twine upload --repository pypi --trusted-publishing=always dist/*
