@@ -13,7 +13,7 @@ inputs:
   oidc-provider-name:
     description: "OIDC provider name configured in Artifactory"
     required: false
-    default: "github-actions"
+    default: "github-actions-segmentio"
   pypi-repo:
     description: "Artifactory virtual PyPI repository name (used only when deriving index URL from artifactory-url)"
     required: false
