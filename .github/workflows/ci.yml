@@ -64,9 +64,6 @@ jobs:
       - name: Build package
         run: uv build --no-build-isolation
       - name: Verify installable
-        env:
-          PIP_INDEX_URL: ""
-          UV_INDEX_URL: ""
         run: |
           python -m venv test-env
           . test-env/bin/activate
