@@ -1,16 +1,18 @@
-from datetime import datetime
-import threading
+import os
+import sys
 import time
 import unittest
+from datetime import datetime
+
 import mock
-import sys
-import os
+
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../.."))
-from segment.analytics.client import Client
-import segment.analytics.oauth_manager
 import requests
 
-privatekey = '''-----BEGIN PRIVATE KEY-----
+import segment.analytics.oauth_manager
+from segment.analytics.client import Client
+
+privatekey = """-----BEGIN PRIVATE KEY-----
 MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDVll7uJaH322IN
 PQsH2aOXZJ2r1q+6hpVK1R5JV1p41PUzn8pOxyXFHWB+53dUd4B8qywKS36XQjp0
 VmhR1tQ22znQ9ZCM6y4LGeOJBjAZiFZLcGQNNrDFC0WGWTrK1ZTS2K7p5qy4fIXG
@@ -37,43 +39,48 @@ sKPfP9LVRnY+l1BWLEilvB+xBzqMwh2YWkIlWI6PMQKBgGi6TBnxp81lOYrxVRDj
 /3ycRnVDmBdlQKFunvfzUBmG1mG/G0YHeVSUKZJGX7w2l+jnDwIA383FcUeA8X6A
 l9q+amhtkwD/6fbkAu/xoWNl+11IFoxd88y2ByBFoEKB6UVLuCTSKwXDqzEZet7x
 mDyRxq7ohIzLkw8b8buDeuXZ
------END PRIVATE KEY-----'''
+-----END PRIVATE KEY-----"""
+
 
 def mocked_requests_get(*args, **kwargs):
     class MockResponse:
         def __init__(self, data, status_code):
-            self.__dict__['headers'] = {'date': datetime.now().strftime("%a, %d %b %Y %H:%M:%S GMT")}
+            self.__dict__["headers"] = {"date": datetime.now().strftime("%a, %d %b %Y %H:%M:%S GMT")}
             self.__dict__.update(data)
             self.status_code = status_code
 
         def json(self):
             return self.json_data
-    if 'url' not in kwargs:
-        kwargs['url'] = args[0]
-    if kwargs['url'] == 'http://127.0.0.1:80/token':
-        return MockResponse({"json_data" : {"access_token": "test_token", "expires_in": 4000}}, 200)
-    elif kwargs['url'] == 'http://127.0.0.1:400/token':
-        return MockResponse({"reason": "test_reason", "json_data" : {"error":"unrecoverable", "error_description":"nah"}}, 400)
-    elif kwargs['url'] == 'http://127.0.0.1:429/token':
-        return MockResponse({"reason": "test_reason", "headers" : {"X-RateLimit-Reset": 234}}, 429)
-    elif kwargs['url'] == 'http://127.0.0.1:500/token':
-        return MockResponse({"reason": "test_reason", "json_data" : {"error":"recoverable", "error_description":"nah"}}, 500)
-    elif kwargs['url'] == 'http://127.0.0.1:501/token':
+
+    if "url" not in kwargs:
+        kwargs["url"] = args[0]
+    if kwargs["url"] == "http://127.0.0.1:80/token":
+        return MockResponse({"json_data": {"access_token": "test_token", "expires_in": 4000}}, 200)
+    elif kwargs["url"] == "http://127.0.0.1:400/token":
+        return MockResponse({"reason": "test_reason", "json_data": {"error": "unrecoverable", "error_description": "nah"}}, 400)
+    elif kwargs["url"] == "http://127.0.0.1:429/token":
+        return MockResponse({"reason": "test_reason", "headers": {"X-RateLimit-Reset": 234}}, 429)
+    elif kwargs["url"] == "http://127.0.0.1:500/token":
+        return MockResponse({"reason": "test_reason", "json_data": {"error": "recoverable", "error_description": "nah"}}, 500)
+    elif kwargs["url"] == "http://127.0.0.1:501/token":
         if mocked_requests_get.error_count < 0 or mocked_requests_get.error_count > 0:
             if mocked_requests_get.error_count > 0:
                 mocked_requests_get.error_count -= 1
-            return MockResponse({"reason": "test_reason", "json_data" : {"error":"recoverable", "message":"nah"}}, 500)
-        else: # return the number of errors if set above 0
+            return MockResponse({"reason": "test_reason", "json_data": {"error": "recoverable", "message": "nah"}}, 500)
+        else:  # return the number of errors if set above 0
             mocked_requests_get.error_count = -1
-            return MockResponse({"json_data" : {"access_token": "test_token", "expires_in": 4000}}, 200)
-    elif kwargs['url'] == 'https://api.segment.io/v1/batch':
+            return MockResponse({"json_data": {"access_token": "test_token", "expires_in": 4000}}, 200)
+    elif kwargs["url"] == "https://api.segment.io/v1/batch":
         return MockResponse({}, 200)
     print("Unhandled mock URL")
-    return MockResponse({'text':'Unhandled mock URL error'}, 404)
+    return MockResponse({"text": "Unhandled mock URL error"}, 404)
+
+
 mocked_requests_get.error_count = -1
 
+
 class TestOauthManager(unittest.TestCase):
-    @mock.patch.object(requests.Session, 'post', side_effect=mocked_requests_get)
+    @mock.patch.object(requests.Session, "post", side_effect=mocked_requests_get)
     def test_oauth_success(self, mock_post):
         manager = segment.analytics.oauth_manager.OauthManager("id", privatekey, "keyid", "http://127.0.0.1:80")
         self.assertEqual(manager.get_token(), "test_token")
@@ -83,30 +90,31 @@ class TestOauthManager(unittest.TestCase):
         self.assertEqual(manager.timeout, 15)
         self.assertTrue(manager.thread.is_alive)
 
-    @mock.patch.object(requests.Session, 'post', side_effect=mocked_requests_get)
+    @mock.patch.object(requests.Session, "post", side_effect=mocked_requests_get)
     def test_oauth_fail_unrecoverably(self, mock_post):
         manager = segment.analytics.oauth_manager.OauthManager("id", privatekey, "keyid", "http://127.0.0.1:400")
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(Exception):
             manager.get_token()
         self.assertTrue(manager.thread.is_alive)
         self.assertEqual(mock_post.call_count, 1)
         manager.thread.cancel()
 
-    @mock.patch.object(requests.Session, 'post', side_effect=mocked_requests_get)
+    @mock.patch.object(requests.Session, "post", side_effect=mocked_requests_get)
     def test_oauth_fail_with_retries(self, mock_post):
         manager = segment.analytics.oauth_manager.OauthManager("id", privatekey, "keyid", "http://127.0.0.1:500")
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(Exception):
             manager.get_token()
         self.assertTrue(manager.thread.is_alive)
         self.assertEqual(mock_post.call_count, 3)
         manager.thread.cancel()
 
-    @mock.patch.object(requests.Session, 'post', side_effect=mocked_requests_get)
-    @mock.patch('time.sleep', spec=time.sleep) # 429 uses sleep so it won't be interrupted
+    @mock.patch.object(requests.Session, "post", side_effect=mocked_requests_get)
+    @mock.patch("time.sleep", spec=time.sleep)  # 429 uses sleep so it won't be interrupted
     def test_oauth_rate_limit_delay(self, mock_sleep, mock_post):
         manager = segment.analytics.oauth_manager.OauthManager("id", privatekey, "keyid", "http://127.0.0.1:429")
         manager._poller_loop()
         mock_sleep.assert_called_with(234)
+
 
 class TestOauthIntegration(unittest.TestCase):
     def fail(self, e, batch=[]):
@@ -115,41 +123,66 @@ class TestOauthIntegration(unittest.TestCase):
     def setUp(self):
         self.failed = False
 
-    @mock.patch.object(requests.Session, 'post', side_effect=mocked_requests_get)
+    @mock.patch.object(requests.Session, "post", side_effect=mocked_requests_get)
     def test_oauth_integration_success(self, mock_post):
-        client = Client("write_key", on_error=self.fail, oauth_auth_server="http://127.0.0.1:80",
-                        oauth_client_id="id",oauth_client_key=privatekey, oauth_key_id="keyid")
+        client = Client(
+            "write_key",
+            on_error=self.fail,
+            oauth_auth_server="http://127.0.0.1:80",
+            oauth_client_id="id",
+            oauth_client_key=privatekey,
+            oauth_key_id="keyid",
+        )
         client.track("user", "event")
         client.flush()
         self.assertFalse(self.failed)
         self.assertEqual(mock_post.call_count, 2)
 
-    @mock.patch.object(requests.Session, 'post', side_effect=mocked_requests_get)
+    @mock.patch.object(requests.Session, "post", side_effect=mocked_requests_get)
     def test_oauth_integration_failure(self, mock_post):
-        client = Client("write_key", on_error=self.fail, oauth_auth_server="http://127.0.0.1:400",
-                        oauth_client_id="id",oauth_client_key=privatekey, oauth_key_id="keyid")
+        client = Client(
+            "write_key",
+            on_error=self.fail,
+            oauth_auth_server="http://127.0.0.1:400",
+            oauth_client_id="id",
+            oauth_client_key=privatekey,
+            oauth_key_id="keyid",
+        )
         client.track("user", "event")
         client.flush()
         self.assertTrue(self.failed)
         self.assertEqual(mock_post.call_count, 1)
 
-    @mock.patch.object(requests.Session, 'post', side_effect=mocked_requests_get)
+    @mock.patch.object(requests.Session, "post", side_effect=mocked_requests_get)
     def test_oauth_integration_recovery(self, mock_post):
-        mocked_requests_get.error_count = 2 # 2 errors and then success
-        client = Client("write_key", on_error=self.fail, oauth_auth_server="http://127.0.0.1:501",
-                        oauth_client_id="id",oauth_client_key=privatekey, oauth_key_id="keyid")
+        mocked_requests_get.error_count = 2  # 2 errors and then success
+        client = Client(
+            "write_key",
+            on_error=self.fail,
+            oauth_auth_server="http://127.0.0.1:501",
+            oauth_client_id="id",
+            oauth_client_key=privatekey,
+            oauth_key_id="keyid",
+        )
         client.track("user", "event")
         client.flush()
         self.assertFalse(self.failed)
         self.assertEqual(mock_post.call_count, 4)
 
-    @mock.patch.object(requests.Session, 'post', side_effect=mocked_requests_get)
+    @mock.patch.object(requests.Session, "post", side_effect=mocked_requests_get)
     def test_oauth_integration_fail_bad_key(self, mock_post):
-        client = Client("write_key", on_error=self.fail, oauth_auth_server="http://127.0.0.1:80",
-                        oauth_client_id="id",oauth_client_key="badkey", oauth_key_id="keyid")
+        client = Client(
+            "write_key",
+            on_error=self.fail,
+            oauth_auth_server="http://127.0.0.1:80",
+            oauth_client_id="id",
+            oauth_client_key="badkey",
+            oauth_key_id="keyid",
+        )
         client.track("user", "event")
         client.flush()
         self.assertTrue(self.failed)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

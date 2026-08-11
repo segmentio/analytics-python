@@ -1,6 +1,6 @@
+import unittest
 from datetime import date, datetime, timedelta
 from decimal import Decimal
-import unittest
 
 from dateutil.tz import tzutc
 
@@ -8,7 +8,6 @@ from segment.analytics import utils
 
 
 class TestUtils(unittest.TestCase):
-
     def test_timezone_utils(self):
         now = datetime.now()
         utcnow = datetime.now(tz=tzutc())
@@ -23,22 +22,18 @@ class TestUtils(unittest.TestCase):
 
     def test_clean(self):
         simple = {
-            'decimal': Decimal('0.142857'),
-            'unicode': 'woo',
-            'date': datetime.now(),
-            'long': 200000000,
-            'integer': 1,
-            'float': 2.0,
-            'bool': True,
-            'str': 'woo',
-            'none': None
+            "decimal": Decimal("0.142857"),
+            "unicode": "woo",
+            "date": datetime.now(),
+            "long": 200000000,
+            "integer": 1,
+            "float": 2.0,
+            "bool": True,
+            "str": "woo",
+            "none": None,
         }
 
-        complicated = {
-            'exception': Exception('This should show up'),
-            'timedelta': timedelta(microseconds=20),
-            'list': [1, 2, 3]
-        }
+        complicated = {"exception": Exception("This should show up"), "timedelta": timedelta(microseconds=20), "list": [1, 2, 3]}
 
         combined = dict(simple.items())
         combined.update(complicated.items())
@@ -50,8 +45,8 @@ class TestUtils(unittest.TestCase):
 
     def test_clean_with_dates(self):
         dict_with_dates = {
-            'birthdate': date(1980, 1, 1),
-            'registration': datetime.utcnow(),
+            "birthdate": date(1980, 1, 1),
+            "registration": datetime.utcnow(),
         }
         self.assertEqual(dict_with_dates, utils.clean(dict_with_dates))
 
@@ -61,13 +56,11 @@ class TestUtils(unittest.TestCase):
         utils.clean(item)
 
     def test_clean_fn(self):
-        cleaned = utils.clean({'fn': lambda x: x, 'number': 4})
-        self.assertEqual(cleaned['number'], 4)
-        if 'fn' in cleaned:
-            self.assertEqual(cleaned['fn'], None)
+        cleaned = utils.clean({"fn": lambda x: x, "number": 4})
+        self.assertEqual(cleaned["number"], 4)
+        if "fn" in cleaned:
+            self.assertEqual(cleaned["fn"], None)
 
     def test_remove_slash(self):
-        self.assertEqual('http://segment.io',
-                         utils.remove_trailing_slash('http://segment.io/'))
-        self.assertEqual('http://segment.io',
-                         utils.remove_trailing_slash('http://segment.io'))
+        self.assertEqual("http://segment.io", utils.remove_trailing_slash("http://segment.io/"))
+        self.assertEqual("http://segment.io", utils.remove_trailing_slash("http://segment.io"))

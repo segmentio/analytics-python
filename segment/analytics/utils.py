@@ -1,12 +1,12 @@
-from enum import Enum
 import logging
 import numbers
-
-from decimal import Decimal
 from datetime import date, datetime
+from decimal import Decimal
+from enum import Enum
+
 from dateutil.tz import tzlocal, tzutc
 
-log = logging.getLogger('segment')
+log = logging.getLogger("segment")
 
 
 def is_naive(dt):
@@ -17,8 +17,7 @@ def is_naive(dt):
 def total_seconds(delta):
     """Determines total seconds with python < 2.7 compat."""
     # http://stackoverflow.com/questions/3694835/python-2-6-5-divide-timedelta-with-timedelta
-    return (delta.microseconds
-            + (delta.seconds + delta.days * 24 * 3600) * 1e6) / 1e6
+    return (delta.microseconds + (delta.seconds + delta.days * 24 * 3600) * 1e6) / 1e6
 
 
 def guess_timezone(dt):
@@ -38,7 +37,7 @@ def guess_timezone(dt):
 
 
 def remove_trailing_slash(host):
-    if host.endswith('/'):
+    if host.endswith("/"):
         return host[:-1]
     return host
 
@@ -46,8 +45,7 @@ def remove_trailing_slash(host):
 def clean(item):
     if isinstance(item, Decimal):
         return float(item)
-    elif isinstance(item, (str, bool, numbers.Number, datetime,
-                           date, type(None))):
+    elif isinstance(item, (str, bool, numbers.Number, datetime, date, type(None))):
         return item
     elif isinstance(item, (set, list, tuple)):
         return _clean_list(item)
@@ -70,9 +68,10 @@ def _clean_dict(dict_):
             data[k] = clean(v)
         except TypeError:
             log.warning(
-                'Dictionary values must be serializeable to '
-                'JSON "%s" value %s of type %s is unsupported.',
-                k, v, type(v),
+                'Dictionary values must be serializeable to JSON "%s" value %s of type %s is unsupported.',
+                k,
+                v,
+                type(v),
             )
     return data
 
@@ -83,6 +82,6 @@ def _coerce_unicode(cmplx):
     except AttributeError as exception:
         item = ":".join(exception)
         item.decode("utf-8", "strict")
-        log.warning('Error decoding: %s', item)
+        log.warning("Error decoding: %s", item)
         return None
     return item

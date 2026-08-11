@@ -6,12 +6,13 @@ Accepts a JSON input with event sequences and SDK configuration,
 sends events through the analytics SDK, and outputs results as JSON.
 """
 
-import click
 import json
-import sys
-import os
-import time
 import logging
+import os
+import sys
+import time
+
+import click
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
