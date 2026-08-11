@@ -73,7 +73,7 @@ jobs:
   all-checks:
     name: All Checks Passed
     needs: [lint, test, build]
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-latest' || 'ubuntu-x64' }}
     if: always()
     steps:
       - name: Check all job statuses
