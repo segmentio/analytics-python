@@ -1,19 +1,18 @@
-from datetime import datetime
-from uuid import uuid4
-import logging
-import numbers
 import atexit
 import json
+import logging
+import numbers
+import queue
+from datetime import datetime
+from uuid import uuid4
 
 from dateutil.tz import tzutc
+
+from segment.analytics.consumer import MAX_MSG_SIZE, Consumer
 from segment.analytics.oauth_manager import OauthManager
-
-from segment.analytics.utils import guess_timezone, clean
-from segment.analytics.consumer import Consumer, MAX_MSG_SIZE
-from segment.analytics.request import post, DatetimeSerializer
+from segment.analytics.request import DatetimeSerializer, post
+from segment.analytics.utils import clean, guess_timezone
 from segment.analytics.version import VERSION
-
-import queue
 
 ID_TYPES = (numbers.Number, str)
 
@@ -38,35 +37,36 @@ class Client(object):
         oauth_client_id = None
         oauth_client_key = None
         oauth_key_id = None
-        oauth_auth_server = 'https://oauth2.segment.io'
-        oauth_scope = 'tracking_api:write'
-
+        oauth_auth_server = "https://oauth2.segment.io"
+        oauth_scope = "tracking_api:write"
 
     """Create a new Segment client."""
-    log = logging.getLogger('segment')
+    log = logging.getLogger("segment")
 
-    def __init__(self,
-                 write_key=DefaultConfig.write_key,
-                 host=DefaultConfig.host,
-                 debug=DefaultConfig.debug,
-                 max_queue_size=DefaultConfig.max_queue_size,
-                 send=DefaultConfig.send,
-                 on_error=DefaultConfig.on_error,
-                 gzip=DefaultConfig.gzip,
-                 max_retries=DefaultConfig.max_retries,
-                 sync_mode=DefaultConfig.sync_mode,
-                 timeout=DefaultConfig.timeout,
-                 proxies=DefaultConfig.proxies,
-                 thread=DefaultConfig.thread,
-                 upload_size=DefaultConfig.upload_size,
-                 upload_interval=DefaultConfig.upload_interval,
-                 log_handler=DefaultConfig.log_handler,
-                 oauth_client_id=DefaultConfig.oauth_client_id,
-                 oauth_client_key=DefaultConfig.oauth_client_key,
-                 oauth_key_id=DefaultConfig.oauth_key_id,
-                 oauth_auth_server=DefaultConfig.oauth_auth_server,
-                 oauth_scope=DefaultConfig.oauth_scope,):
-        require('write_key', write_key, str)
+    def __init__(
+        self,
+        write_key=DefaultConfig.write_key,
+        host=DefaultConfig.host,
+        debug=DefaultConfig.debug,
+        max_queue_size=DefaultConfig.max_queue_size,
+        send=DefaultConfig.send,
+        on_error=DefaultConfig.on_error,
+        gzip=DefaultConfig.gzip,
+        max_retries=DefaultConfig.max_retries,
+        sync_mode=DefaultConfig.sync_mode,
+        timeout=DefaultConfig.timeout,
+        proxies=DefaultConfig.proxies,
+        thread=DefaultConfig.thread,
+        upload_size=DefaultConfig.upload_size,
+        upload_interval=DefaultConfig.upload_interval,
+        log_handler=DefaultConfig.log_handler,
+        oauth_client_id=DefaultConfig.oauth_client_id,
+        oauth_client_key=DefaultConfig.oauth_client_key,
+        oauth_key_id=DefaultConfig.oauth_key_id,
+        oauth_auth_server=DefaultConfig.oauth_auth_server,
+        oauth_scope=DefaultConfig.oauth_scope,
+    ):
+        require("write_key", write_key, str)
 
         self.queue = queue.Queue(max_queue_size)
         self.write_key = write_key
@@ -79,9 +79,10 @@ class Client(object):
         self.timeout = timeout
         self.proxies = proxies
         self.oauth_manager = None
-        if(oauth_client_id and oauth_client_key and oauth_key_id):
-            self.oauth_manager = OauthManager(oauth_client_id, oauth_client_key, oauth_key_id,
-                                              oauth_auth_server, oauth_scope, timeout, max_retries)
+        if oauth_client_id and oauth_client_key and oauth_key_id:
+            self.oauth_manager = OauthManager(
+                oauth_client_id, oauth_client_key, oauth_key_id, oauth_auth_server, oauth_scope, timeout, max_retries
+            )
 
         if log_handler:
             self.log.addHandler(log_handler)
@@ -106,10 +107,17 @@ class Client(object):
             for _ in range(thread):
                 self.consumers = []
                 consumer = Consumer(
-                    self.queue, write_key, host=host, on_error=on_error,
-                    upload_size=upload_size, upload_interval=upload_interval,
-                    gzip=gzip, retries=max_retries, timeout=timeout,
-                    proxies=proxies, oauth_manager=self.oauth_manager,
+                    self.queue,
+                    write_key,
+                    host=host,
+                    on_error=on_error,
+                    upload_size=upload_size,
+                    upload_interval=upload_interval,
+                    gzip=gzip,
+                    retries=max_retries,
+                    timeout=timeout,
+                    proxies=proxies,
+                    oauth_manager=self.oauth_manager,
                 )
                 self.consumers.append(consumer)
 
@@ -117,204 +125,223 @@ class Client(object):
                 if send:
                     consumer.start()
 
-    def identify(self, user_id=None, traits=None, context=None, timestamp=None,
-                 anonymous_id=None, integrations=None, message_id=None):
+    def identify(self, user_id=None, traits=None, context=None, timestamp=None, anonymous_id=None, integrations=None, message_id=None):
         traits = traits or {}
         context = context or {}
         integrations = integrations or {}
-        require('user_id or anonymous_id', user_id or anonymous_id, ID_TYPES)
-        require('traits', traits, dict)
+        require("user_id or anonymous_id", user_id or anonymous_id, ID_TYPES)
+        require("traits", traits, dict)
 
         msg = {
-            'integrations': integrations,
-            'anonymousId': anonymous_id,
-            'timestamp': timestamp,
-            'context': context,
-            'type': 'identify',
-            'userId': user_id,
-            'traits': traits,
-            'messageId': message_id,
+            "integrations": integrations,
+            "anonymousId": anonymous_id,
+            "timestamp": timestamp,
+            "context": context,
+            "type": "identify",
+            "userId": user_id,
+            "traits": traits,
+            "messageId": message_id,
         }
 
         return self._enqueue(msg)
 
-    def track(self, user_id=None, event=None, properties=None, context=None,
-              timestamp=None, anonymous_id=None, integrations=None,
-              message_id=None):
+    def track(
+        self, user_id=None, event=None, properties=None, context=None, timestamp=None, anonymous_id=None, integrations=None, message_id=None
+    ):
         properties = properties or {}
         context = context or {}
         integrations = integrations or {}
-        require('user_id or anonymous_id', user_id or anonymous_id, ID_TYPES)
-        require('properties', properties, dict)
-        require('event', event, str)
+        require("user_id or anonymous_id", user_id or anonymous_id, ID_TYPES)
+        require("properties", properties, dict)
+        require("event", event, str)
 
         msg = {
-            'integrations': integrations,
-            'anonymousId': anonymous_id,
-            'properties': properties,
-            'timestamp': timestamp,
-            'context': context,
-            'userId': user_id,
-            'type': 'track',
-            'event': event,
-            'messageId': message_id,
+            "integrations": integrations,
+            "anonymousId": anonymous_id,
+            "properties": properties,
+            "timestamp": timestamp,
+            "context": context,
+            "userId": user_id,
+            "type": "track",
+            "event": event,
+            "messageId": message_id,
         }
 
         return self._enqueue(msg)
 
-    def alias(self, previous_id=None, user_id=None, context=None,
-              timestamp=None, integrations=None, message_id=None):
+    def alias(self, previous_id=None, user_id=None, context=None, timestamp=None, integrations=None, message_id=None):
         context = context or {}
         integrations = integrations or {}
-        require('previous_id', previous_id, ID_TYPES)
-        require('user_id', user_id, ID_TYPES)
+        require("previous_id", previous_id, ID_TYPES)
+        require("user_id", user_id, ID_TYPES)
 
         msg = {
-            'integrations': integrations,
-            'previousId': previous_id,
-            'timestamp': timestamp,
-            'context': context,
-            'userId': user_id,
-            'type': 'alias',
-            'messageId': message_id,
+            "integrations": integrations,
+            "previousId": previous_id,
+            "timestamp": timestamp,
+            "context": context,
+            "userId": user_id,
+            "type": "alias",
+            "messageId": message_id,
         }
 
         return self._enqueue(msg)
 
-    def group(self, user_id=None, group_id=None, traits=None, context=None,
-              timestamp=None, anonymous_id=None, integrations=None,
-              message_id=None):
+    def group(
+        self, user_id=None, group_id=None, traits=None, context=None, timestamp=None, anonymous_id=None, integrations=None, message_id=None
+    ):
         traits = traits or {}
         context = context or {}
         integrations = integrations or {}
-        require('user_id or anonymous_id', user_id or anonymous_id, ID_TYPES)
-        require('group_id', group_id, ID_TYPES)
-        require('traits', traits, dict)
+        require("user_id or anonymous_id", user_id or anonymous_id, ID_TYPES)
+        require("group_id", group_id, ID_TYPES)
+        require("traits", traits, dict)
 
         msg = {
-            'integrations': integrations,
-            'anonymousId': anonymous_id,
-            'timestamp': timestamp,
-            'groupId': group_id,
-            'context': context,
-            'userId': user_id,
-            'traits': traits,
-            'type': 'group',
-            'messageId': message_id,
+            "integrations": integrations,
+            "anonymousId": anonymous_id,
+            "timestamp": timestamp,
+            "groupId": group_id,
+            "context": context,
+            "userId": user_id,
+            "traits": traits,
+            "type": "group",
+            "messageId": message_id,
         }
 
         return self._enqueue(msg)
 
-    def page(self, user_id=None, category=None, name=None, properties=None,
-             context=None, timestamp=None, anonymous_id=None,
-             integrations=None, message_id=None):
+    def page(
+        self,
+        user_id=None,
+        category=None,
+        name=None,
+        properties=None,
+        context=None,
+        timestamp=None,
+        anonymous_id=None,
+        integrations=None,
+        message_id=None,
+    ):
         properties = properties or {}
         context = context or {}
         integrations = integrations or {}
-        require('user_id or anonymous_id', user_id or anonymous_id, ID_TYPES)
-        require('properties', properties, dict)
+        require("user_id or anonymous_id", user_id or anonymous_id, ID_TYPES)
+        require("properties", properties, dict)
 
         if name:
-            require('name', name, str)
+            require("name", name, str)
         if category:
-            require('category', category, str)
+            require("category", category, str)
 
         msg = {
-            'integrations': integrations,
-            'anonymousId': anonymous_id,
-            'properties': properties,
-            'timestamp': timestamp,
-            'category': category,
-            'context': context,
-            'userId': user_id,
-            'type': 'page',
-            'name': name,
-            'messageId': message_id,
+            "integrations": integrations,
+            "anonymousId": anonymous_id,
+            "properties": properties,
+            "timestamp": timestamp,
+            "category": category,
+            "context": context,
+            "userId": user_id,
+            "type": "page",
+            "name": name,
+            "messageId": message_id,
         }
 
         return self._enqueue(msg)
 
-    def screen(self, user_id=None, category=None, name=None, properties=None,
-               context=None, timestamp=None, anonymous_id=None,
-               integrations=None, message_id=None):
+    def screen(
+        self,
+        user_id=None,
+        category=None,
+        name=None,
+        properties=None,
+        context=None,
+        timestamp=None,
+        anonymous_id=None,
+        integrations=None,
+        message_id=None,
+    ):
         properties = properties or {}
         context = context or {}
         integrations = integrations or {}
-        require('user_id or anonymous_id', user_id or anonymous_id, ID_TYPES)
-        require('properties', properties, dict)
+        require("user_id or anonymous_id", user_id or anonymous_id, ID_TYPES)
+        require("properties", properties, dict)
 
         if name:
-            require('name', name, str)
+            require("name", name, str)
         if category:
-            require('category', category, str)
+            require("category", category, str)
 
         msg = {
-            'integrations': integrations,
-            'anonymousId': anonymous_id,
-            'properties': properties,
-            'timestamp': timestamp,
-            'category': category,
-            'context': context,
-            'userId': user_id,
-            'type': 'screen',
-            'name': name,
-            'messageId': message_id,
+            "integrations": integrations,
+            "anonymousId": anonymous_id,
+            "properties": properties,
+            "timestamp": timestamp,
+            "category": category,
+            "context": context,
+            "userId": user_id,
+            "type": "screen",
+            "name": name,
+            "messageId": message_id,
         }
 
         return self._enqueue(msg)
 
     def _enqueue(self, msg):
         """Push a new `msg` onto the queue, return `(success, msg)`"""
-        timestamp = msg['timestamp']
+        timestamp = msg["timestamp"]
         if timestamp is None:
             timestamp = datetime.now(tz=tzutc())
-        message_id = msg.get('messageId')
+        message_id = msg.get("messageId")
         if message_id is None:
             message_id = uuid4()
 
-        require('integrations', msg['integrations'], dict)
-        require('type', msg['type'], str)
-        require('timestamp', timestamp, datetime)
-        require('context', msg['context'], dict)
+        require("integrations", msg["integrations"], dict)
+        require("type", msg["type"], str)
+        require("timestamp", timestamp, datetime)
+        require("context", msg["context"], dict)
 
         # add common
         timestamp = guess_timezone(timestamp)
-        msg['timestamp'] = timestamp.isoformat(timespec='milliseconds')
-        msg['messageId'] = stringify_id(message_id)
-        msg['context']['library'] = {
-            'name': 'analytics-python',
-            'version': VERSION
-        }
+        msg["timestamp"] = timestamp.isoformat(timespec="milliseconds")
+        msg["messageId"] = stringify_id(message_id)
+        msg["context"]["library"] = {"name": "analytics-python", "version": VERSION}
 
-        msg['userId'] = stringify_id(msg.get('userId', None))
-        msg['anonymousId'] = stringify_id(msg.get('anonymousId', None))
+        msg["userId"] = stringify_id(msg.get("userId", None))
+        msg["anonymousId"] = stringify_id(msg.get("anonymousId", None))
 
         msg = clean(msg)
-        self.log.debug('queueing: %s', msg)
+        self.log.debug("queueing: %s", msg)
 
         # Check message size.
         msg_size = len(json.dumps(msg, cls=DatetimeSerializer).encode())
         if msg_size > MAX_MSG_SIZE:
-            raise RuntimeError('Message exceeds %skb limit. (%s)', str(int(MAX_MSG_SIZE / 1024)), str(msg))
+            raise RuntimeError("Message exceeds %skb limit. (%s)", str(int(MAX_MSG_SIZE / 1024)), str(msg))
 
         # if send is False, return msg as if it was successfully queued
         if not self.send:
             return True, msg
 
         if self.sync_mode:
-            self.log.debug('enqueued with blocking %s.', msg['type'])
-            post(self.write_key, self.host, gzip=self.gzip,
-                 timeout=self.timeout, proxies=self.proxies, 
-                 oauth_manager=self.oauth_manager, batch=[msg])
+            self.log.debug("enqueued with blocking %s.", msg["type"])
+            post(
+                self.write_key,
+                self.host,
+                gzip=self.gzip,
+                timeout=self.timeout,
+                proxies=self.proxies,
+                oauth_manager=self.oauth_manager,
+                batch=[msg],
+            )
 
             return True, msg
 
         try:
             self.queue.put(msg, block=False)
-            self.log.debug('enqueued %s.', msg['type'])
+            self.log.debug("enqueued %s.", msg["type"])
             return True, msg
         except queue.Full:
-            self.log.warning('analytics-python queue is full')
+            self.log.warning("analytics-python queue is full")
             return False, msg
 
     def flush(self):
@@ -323,7 +350,7 @@ class Client(object):
         size = queue.qsize()
         queue.join()
         # Note that this message may not be precise, because of threading.
-        self.log.debug('successfully flushed about %s items.', size)
+        self.log.debug("successfully flushed about %s items.", size)
 
     def join(self):
         """Ends the consumer thread once the queue is empty.
@@ -346,7 +373,7 @@ class Client(object):
 def require(name, field, data_type):
     """Require that the named `field` has the right `data_type`"""
     if not isinstance(field, data_type):
-        msg = '{0} must have {1}, got: {2}'.format(name, data_type, field)
+        msg = "{0} must have {1}, got: {2}".format(name, data_type, field)
         raise AssertionError(msg)
 
 

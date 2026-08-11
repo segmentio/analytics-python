@@ -1,0 +1,56 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "segment-analytics-python"
+version = "2.3.6"
+description = "The hassle-free way to integrate analytics into any python application."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+authors = [
+    { name = "Segment", email = "friends@segment.com" },
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "requests~=2.7",
+    "backoff~=2.1",
+    "python-dateutil~=2.2",
+    "PyJWT[crypto]~=2.12",
+]
+
+[project.urls]
+Homepage = "https://github.com/segmentio/analytics-python"
+Repository = "https://github.com/segmentio/analytics-python"
+
+[dependency-groups]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.4",
+    "mock>=2.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["segment"]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 140
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[tool.pytest.ini_options]
+testpaths = ["segment/analytics/test"]

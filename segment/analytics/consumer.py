@@ -1,12 +1,12 @@
+import json
 import logging
 import time
-from threading import Thread
-import backoff
-import json
-
-from segment.analytics.request import post, APIError, DatetimeSerializer
-
 from queue import Empty
+from threading import Thread
+
+import backoff
+
+from segment.analytics.request import APIError, DatetimeSerializer, post
 
 MAX_MSG_SIZE = 32 << 10
 
@@ -26,11 +26,23 @@ class FatalError(Exception):
 
 class Consumer(Thread):
     """Consumes the messages from the client's queue."""
-    log = logging.getLogger('segment')
 
-    def __init__(self, queue, write_key, upload_size=100, host=None,
-                 on_error=None, upload_interval=0.5, gzip=False, retries=10,
-                 timeout=15, proxies=None, oauth_manager=None):
+    log = logging.getLogger("segment")
+
+    def __init__(
+        self,
+        queue,
+        write_key,
+        upload_size=100,
+        host=None,
+        on_error=None,
+        upload_interval=0.5,
+        gzip=False,
+        retries=10,
+        timeout=15,
+        proxies=None,
+        oauth_manager=None,
+    ):
         """Create a consumer thread."""
         Thread.__init__(self)
         # Make consumer a daemon thread so that it doesn't block program exit
@@ -54,11 +66,11 @@ class Consumer(Thread):
 
     def run(self):
         """Runs the consumer."""
-        self.log.debug('consumer is running...')
+        self.log.debug("consumer is running...")
         while self.running:
             self.upload()
 
-        self.log.debug('consumer exited.')
+        self.log.debug("consumer exited.")
 
     def pause(self):
         """Pause the consumer."""
@@ -75,7 +87,7 @@ class Consumer(Thread):
             self.request(batch)
             success = True
         except Exception as e:
-            self.log.error('error uploading: %s', e)
+            self.log.error("error uploading: %s", e)
             success = False
             if self.on_error:
                 self.on_error(e, batch)
@@ -98,29 +110,25 @@ class Consumer(Thread):
             if elapsed >= self.upload_interval:
                 break
             try:
-                item = queue.get(
-                    block=True, timeout=self.upload_interval - elapsed)
-                item_size = len(json.dumps(
-                    item, cls=DatetimeSerializer).encode())
+                item = queue.get(block=True, timeout=self.upload_interval - elapsed)
+                item_size = len(json.dumps(item, cls=DatetimeSerializer).encode())
                 if item_size > MAX_MSG_SIZE:
-                    self.log.error(
-                        'Item exceeds 32kb limit, dropping. (%s)', str(item))
+                    self.log.error("Item exceeds 32kb limit, dropping. (%s)", str(item))
                     continue
                 items.append(item)
                 total_size += item_size
                 if total_size >= BATCH_SIZE_LIMIT:
-                    self.log.debug(
-                        'hit batch size limit (size: %d)', total_size)
+                    self.log.debug("hit batch size limit (size: %d)", total_size)
                     break
             except Empty:
                 break
             except Exception as e:
-                self.log.exception('Exception: %s', e)
+                self.log.exception("Exception: %s", e)
 
         return items
 
     def request(self, batch):
-        """Attempt to upload the batch and retry before raising an error """
+        """Attempt to upload the batch and retry before raising an error"""
 
         def fatal_exception(exc):
             if isinstance(exc, APIError):
@@ -143,14 +151,21 @@ class Consumer(Thread):
             giveup=fatal_exception,
             on_backoff=lambda details: self.log.debug(
                 f"Retry attempt {details['tries']}/{self.retries + 1} after {details['elapsed']:.2f}s"
-            ))
+            ),
+        )
         def send_request():
             nonlocal attempt_count
             attempt_count += 1
             try:
-                return post(self.write_key, self.host, gzip=self.gzip,
-                            timeout=self.timeout, batch=batch, proxies=self.proxies,
-                            oauth_manager=self.oauth_manager)
+                return post(
+                    self.write_key,
+                    self.host,
+                    gzip=self.gzip,
+                    timeout=self.timeout,
+                    batch=batch,
+                    proxies=self.proxies,
+                    oauth_manager=self.oauth_manager,
+                )
             except Exception as e:
                 if attempt_count >= self.retries + 1:
                     self.log.error(f"All {self.retries} retries exhausted. Final error: {e}")

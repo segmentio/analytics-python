@@ -1,10 +1,12 @@
-import sys
 import os
+import sys
+
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 import time
+
 import segment.analytics as analytics
 
-privatekey = '''-----BEGIN PRIVATE KEY-----
+privatekey = """-----BEGIN PRIVATE KEY-----
 MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDVll7uJaH322IN
 PQsH2aOXZJ2r1q+6hpVK1R5JV1p41PUzn8pOxyXFHWB+53dUd4B8qywKS36XQjp0
 VmhR1tQ22znQ9ZCM6y4LGeOJBjAZiFZLcGQNNrDFC0WGWTrK1ZTS2K7p5qy4fIXG
@@ -32,21 +34,24 @@ sKPfP9LVRnY+l1BWLEilvB+xBzqMwh2YWkIlWI6PMQKBgGi6TBnxp81lOYrxVRDj
 l9q+amhtkwD/6fbkAu/xoWNl+11IFoxd88y2ByBFoEKB6UVLuCTSKwXDqzEZet7x
 mDyRxq7ohIzLkw8b8buDeuXZ
 -----END PRIVATE KEY-----
-''' # Should be read from a file on disk which can be rotated out
+"""  # Should be read from a file on disk which can be rotated out
 
-analytics.write_key = '<YOUR WRITE KEY HERE>'
+analytics.write_key = "<YOUR WRITE KEY HERE>"
 
-analytics.oauth_client_id = 'CLIENT_ID' # OAuth application ID from segment dashboard
-analytics.oauth_client_key = privatekey # generated as a public/private key pair in PEM format from OpenSSL
-analytics.oauth_key_id = 'KEY_ID' # From segment dashboard after uploading public key
-analytics.oauth_scope =  'tracking_api:write' #'public_api:read_write'
+analytics.oauth_client_id = "CLIENT_ID"  # OAuth application ID from segment dashboard
+analytics.oauth_client_key = privatekey  # generated as a public/private key pair in PEM format from OpenSSL
+analytics.oauth_key_id = "KEY_ID"  # From segment dashboard after uploading public key
+analytics.oauth_scope = "tracking_api:write"  #'public_api:read_write'
+
 
 def on_error(error, items):
     print("An error occurred: ", error)
+
+
 analytics.debug = True
 analytics.on_error = on_error
 
-analytics.track('AUser', 'track')
+analytics.track("AUser", "track")
 analytics.flush()
 
 time.sleep(3)
