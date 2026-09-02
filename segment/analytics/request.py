@@ -1,9 +1,11 @@
 from datetime import date, datetime
+from email.utils import parsedate_to_datetime
 from io import BytesIO
 from gzip import GzipFile
 import logging
 import json
 import base64
+import time as _time
 from dateutil.tz import tzutc
 
 from requests import sessions
@@ -31,8 +33,16 @@ def parse_retry_after(response):
         delay = int(retry_after)
         return min(max(delay, 0), MAX_RETRY_AFTER_SECONDS)
     except ValueError:
-        # RFC 7231 allows HTTP-date format (e.g. "Wed, 21 Oct 2015 07:28:00 GMT")
-        # but we don't parse it; fall back to counted backoff.
+        pass
+
+    # Try HTTP-date format (RFC 7231 §7.1.1.1)
+    try:
+        target_dt = parsedate_to_datetime(retry_after)
+        delay = int(target_dt.timestamp() - _time.time())
+        if delay <= 0:
+            return None
+        return min(delay, MAX_RETRY_AFTER_SECONDS)
+    except (TypeError, ValueError, OverflowError):
         log = logging.getLogger('segment')
         log.warning('Unrecognized Retry-After format %r; ignoring header.', retry_after)
         return None

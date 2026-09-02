@@ -133,9 +133,8 @@ class Consumer(Thread):
             self.clear_rate_limit_state()
             success = True
         except APIError as e:
-            if e.status == 429 and self.rate_limited_until is not None:
-                # 429: rate-limit state already set by request(). Re-queue batch.
-                self.log.debug('429 received. Re-queuing batch and halting upload iteration.')
+            if self.rate_limited_until is not None:
+                self.log.debug('Rate-limited (status %d). Re-queuing batch and halting upload iteration.', e.status)
                 dropped = []
                 for item in batch:
                     try:
@@ -143,9 +142,9 @@ class Consumer(Thread):
                     except Exception:
                         dropped.append(item)
                 if dropped:
-                    self.log.error('Queue full during 429 re-queue. Dropping %d item(s).', len(dropped))
+                    self.log.error('Queue full during rate-limit re-queue. Dropping %d item(s).', len(dropped))
                     if self.on_error:
-                        self.on_error(Exception('Queue full, items dropped during 429 re-queue'), dropped)
+                        self.on_error(Exception('Queue full, items dropped during rate-limit re-queue'), dropped)
                 success = False
             else:
                 self.log.error('error uploading: %s', e)
@@ -279,21 +278,19 @@ class Consumer(Thread):
                 raise
 
             except APIError as e:
-                # 429 with valid Retry-After > 0: block the pipeline and let
-                # upload() re-queue the batch. Retry-After: 0 or missing falls
-                # through to counted backoff to avoid a tight re-queue loop.
-                if e.status == 429:
-                    retry_after = parse_retry_after(e.response) if e.response is not None else None
-                    if retry_after is not None and retry_after > 0:
-                        self.set_rate_limit_state(e.response)
-                        raise
-
                 if not is_retryable_status(e.status):
                     self.log.error(
                         f"Non-retryable error {e.status} after {total_attempts} attempts: {e}"
                     )
                     raise
 
+                # Any retryable status with valid Retry-After > 0: block pipeline, re-queue
+                retry_after = parse_retry_after(e.response) if e.response is not None else None
+                if retry_after is not None and retry_after > 0:
+                    self.set_rate_limit_state(e.response)
+                    raise
+
+                # No Retry-After: counted backoff
                 delay = apply_backoff(e, f"Retry attempt (status {e.status})")
                 time.sleep(delay)
 

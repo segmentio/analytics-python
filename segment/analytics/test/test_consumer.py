@@ -384,8 +384,8 @@ class TestConsumer(unittest.TestCase):
         self.assertLessEqual(consumer.rate_limited_until, now + 310)
         self.assertGreater(consumer.rate_limited_until, now + 290)
 
-    def test_408_and_503_use_backoff(self):
-        """Test that 408 and 503 use exponential backoff"""
+    def test_408_and_503_without_retry_after_use_backoff(self):
+        """Test that 408 and 503 without Retry-After header use exponential backoff"""
         track = {'type': 'track', 'event': 'python event', 'userId': 'userId'}
 
         for status_code in [408, 503]:
@@ -398,7 +398,7 @@ class TestConsumer(unittest.TestCase):
                 call_count += 1
                 if call_count == 1:
                     response = mock.Mock()
-                    response.headers = {'Retry-After': '5'}
+                    response.headers = {}  # No Retry-After
                     error = APIError(status_code, 'error', 'Error')
                     error.response = response
                     raise error
@@ -411,10 +411,54 @@ class TestConsumer(unittest.TestCase):
                 with mock.patch('time.sleep', side_effect=mock_sleep):
                     consumer.request([track])
 
-            # Should use backoff delay (0 for first retry), NOT the Retry-After value of 5
+            # Should use backoff delay (0 for first retry), not Retry-After
             self.assertEqual(call_count, 2)
             self.assertEqual(len(sleep_durations), 1)
-            self.assertEqual(sleep_durations[0], 0, f'{status_code} should use backoff, not Retry-After')
+            self.assertEqual(sleep_durations[0], 0, f'{status_code} without Retry-After should use backoff')
+
+    def test_503_with_retry_after_sets_rate_limit_state(self):
+        """503 with Retry-After > 0 blocks the pipeline (sets rate_limit_state) and raises"""
+        consumer = Consumer(None, 'testsecret', retries=2)
+        track = {'type': 'track', 'event': 'python event', 'userId': 'userId'}
+
+        def mock_post_fn(*args, **kwargs):
+            response = mock.Mock()
+            response.headers = {'Retry-After': '2'}
+            error = APIError(503, 'unavailable', 'Service Unavailable')
+            error.response = response
+            raise error
+
+        with mock.patch('segment.analytics.consumer.post', side_effect=mock_post_fn):
+            with self.assertRaises(APIError) as ctx:
+                consumer.request([track])
+            self.assertEqual(ctx.exception.status, 503)
+
+        # Rate-limit state should be set (pipeline-blocking)
+        self.assertIsNotNone(consumer.rate_limited_until)
+        self.assertIsNotNone(consumer.rate_limit_start_time)
+        self.assertGreater(consumer.rate_limited_until, time.time())
+
+    def test_529_with_retry_after_sets_rate_limit_state(self):
+        """529 with Retry-After > 0 blocks the pipeline (sets rate_limit_state) and raises"""
+        consumer = Consumer(None, 'testsecret', retries=2)
+        track = {'type': 'track', 'event': 'python event', 'userId': 'userId'}
+
+        def mock_post_fn(*args, **kwargs):
+            response = mock.Mock()
+            response.headers = {'Retry-After': '3'}
+            error = APIError(529, 'too_many_requests', 'Too Many Requests')
+            error.response = response
+            raise error
+
+        with mock.patch('segment.analytics.consumer.post', side_effect=mock_post_fn):
+            with self.assertRaises(APIError) as ctx:
+                consumer.request([track])
+            self.assertEqual(ctx.exception.status, 529)
+
+        # Rate-limit state should be set (pipeline-blocking)
+        self.assertIsNotNone(consumer.rate_limited_until)
+        self.assertIsNotNone(consumer.rate_limit_start_time)
+        self.assertGreater(consumer.rate_limited_until, time.time())
 
     def test_exponential_backoff_with_jitter(self):
         """Test that exponential backoff is used for retries without Retry-After"""
@@ -982,19 +1026,15 @@ class TestConsumer(unittest.TestCase):
         # so it raises on the very first failure (1 attempt total).
         self.assertEqual(call_count, 1)
 
-    def test_parse_retry_after_http_date_logs_warning(self):
-        """parse_retry_after logs a warning for HTTP-date format and returns None"""
-        import logging
+    def test_parse_retry_after_http_date_in_past_returns_none(self):
+        """parse_retry_after returns None for an HTTP-date in the past"""
         from segment.analytics.request import parse_retry_after
 
         response = mock.Mock()
         response.headers = {'Retry-After': 'Wed, 21 Oct 2015 07:28:00 GMT'}
 
-        with self.assertLogs('segment', level=logging.WARNING) as cm:
-            result = parse_retry_after(response)
-
+        result = parse_retry_after(response)
         self.assertIsNone(result)
-        self.assertTrue(any('Unrecognized Retry-After' in line for line in cm.output))
 
     def test_410_and_460_retried(self):
         """410 and 460 are retryable status codes"""
@@ -1033,3 +1073,29 @@ class TestConsumer(unittest.TestCase):
             self.assertEqual(ctx.exception.status, 505)
 
         self.assertEqual(call_count, 1)
+
+    def test_retries_exhausted_calls_on_error(self):
+        """on_error is called with the batch when all retries are exhausted"""
+        q = Queue()
+        on_error_calls = []
+
+        def on_error(error, batch):
+            on_error_calls.append((error, batch))
+
+        consumer = Consumer(q, 'testsecret', retries=2, on_error=on_error)
+        track = {'type': 'track', 'event': 'test event', 'userId': 'user-1'}
+        q.put(track)
+
+        def mock_post_fn(*args, **kwargs):
+            raise APIError(500, 'error', 'Server Error')
+
+        with mock.patch('segment.analytics.consumer.post', side_effect=mock_post_fn):
+            with mock.patch('time.sleep'):
+                consumer.upload()
+
+        self.assertEqual(len(on_error_calls), 1)
+        error, batch = on_error_calls[0]
+        self.assertIsInstance(error, APIError)
+        self.assertEqual(error.status, 500)
+        self.assertEqual(len(batch), 1)
+        self.assertEqual(batch[0]['event'], 'test event')

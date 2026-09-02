@@ -1,4 +1,5 @@
-from datetime import datetime, date
+from datetime import datetime, date, timezone, timedelta
+import time
 import unittest
 import json
 import requests
@@ -188,9 +189,30 @@ class TestRequests(unittest.TestCase):
         self.assertIsNone(result)
 
     def test_parse_retry_after_invalid(self):
-        """Test parsing with invalid Retry-After header"""
+        """Test parsing with invalid Retry-After header (garbage string)"""
         response = mock.Mock()
         response.headers = {'Retry-After': 'invalid'}
+        result = parse_retry_after(response)
+        self.assertIsNone(result)
+
+    def test_parse_retry_after_http_date_future(self):
+        """Test parsing Retry-After as HTTP-date 2 seconds in future"""
+        from email.utils import format_datetime
+        future = datetime.now(tz=timezone.utc) + timedelta(seconds=2)
+        response = mock.Mock()
+        response.headers = {'Retry-After': format_datetime(future, usegmt=True)}
+        result = parse_retry_after(response)
+        # Should be approximately 2 seconds (allow 1-3 for timing)
+        self.assertIsNotNone(result)
+        self.assertGreaterEqual(result, 1)
+        self.assertLessEqual(result, 3)
+
+    def test_parse_retry_after_http_date_past(self):
+        """Test parsing Retry-After as HTTP-date in the past returns None"""
+        from email.utils import format_datetime
+        past = datetime.now(tz=timezone.utc) - timedelta(seconds=10)
+        response = mock.Mock()
+        response.headers = {'Retry-After': format_datetime(past, usegmt=True)}
         result = parse_retry_after(response)
         self.assertIsNone(result)
 
