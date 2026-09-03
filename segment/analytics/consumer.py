@@ -1,12 +1,11 @@
-import logging
-import time
-import random
-from threading import Thread
 import json
-
-from segment.analytics.request import post, APIError, DatetimeSerializer, parse_retry_after
-
+import logging
+import random
+import time
 from queue import Empty
+from threading import Thread
+
+from segment.analytics.request import APIError, DatetimeSerializer, parse_retry_after, post
 
 MAX_MSG_SIZE = 32 << 10
 
@@ -30,13 +29,25 @@ class FatalError(Exception):
 
 class Consumer(Thread):
     """Consumes the messages from the client's queue."""
-    log = logging.getLogger('segment')
 
-    def __init__(self, queue, write_key, upload_size=100, host=None,
-                 on_error=None, upload_interval=0.5, gzip=False, retries=10,
-                 timeout=15, proxies=None, oauth_manager=None,
-                 max_total_backoff_duration=DEFAULT_MAX_TOTAL_BACKOFF_DURATION,
-                 max_rate_limit_duration=DEFAULT_MAX_RATE_LIMIT_DURATION):
+    log = logging.getLogger("segment")
+
+    def __init__(
+        self,
+        queue,
+        write_key,
+        upload_size=100,
+        host=None,
+        on_error=None,
+        upload_interval=0.5,
+        gzip=False,
+        retries=10,
+        timeout=15,
+        proxies=None,
+        oauth_manager=None,
+        max_total_backoff_duration=DEFAULT_MAX_TOTAL_BACKOFF_DURATION,
+        max_rate_limit_duration=DEFAULT_MAX_RATE_LIMIT_DURATION,
+    ):
         """Create a consumer thread."""
         Thread.__init__(self)
         # Make consumer a daemon thread so that it doesn't block program exit
@@ -66,11 +77,11 @@ class Consumer(Thread):
 
     def run(self):
         """Runs the consumer."""
-        self.log.debug('consumer is running...')
+        self.log.debug("consumer is running...")
         while self.running:
             self.upload()
 
-        self.log.debug('consumer exited.')
+        self.log.debug("consumer exited.")
 
     def pause(self):
         """Pause the consumer."""
@@ -101,19 +112,14 @@ class Consumer(Thread):
             now = time.time()
 
             # Check if maxRateLimitDuration has been exceeded
-            if (self.rate_limit_start_time is not None and
-                    now - self.rate_limit_start_time > self.max_rate_limit_duration):
+            if self.rate_limit_start_time is not None and now - self.rate_limit_start_time > self.max_rate_limit_duration:
                 self.log.error(
-                    'Rate limit duration exceeded (%ds). Clearing rate-limit state and dropping batch.',
-                    self.max_rate_limit_duration
+                    "Rate limit duration exceeded (%ds). Clearing rate-limit state and dropping batch.", self.max_rate_limit_duration
                 )
                 self.clear_rate_limit_state()
                 # Drop the batch by marking items as done
                 if self.on_error:
-                    self.on_error(
-                        Exception('Rate limit duration exceeded, batch dropped'),
-                        batch
-                    )
+                    self.on_error(Exception("Rate limit duration exceeded, batch dropped"), batch)
                 for _ in batch:
                     self.queue.task_done()
                 return False
@@ -121,10 +127,7 @@ class Consumer(Thread):
             # Still rate-limited; wait until the rate limit expires
             wait_time = self.rate_limited_until - now
             if wait_time > 0:
-                self.log.debug(
-                    'Rate-limited. Waiting %.2fs before next upload attempt.',
-                    wait_time
-                )
+                self.log.debug("Rate-limited. Waiting %.2fs before next upload attempt.", wait_time)
                 time.sleep(wait_time)
 
         try:
@@ -134,7 +137,7 @@ class Consumer(Thread):
             success = True
         except APIError as e:
             if self.rate_limited_until is not None:
-                self.log.debug('Rate-limited (status %d). Re-queuing batch and halting upload iteration.', e.status)
+                self.log.debug("Rate-limited (status %d). Re-queuing batch and halting upload iteration.", e.status)
                 dropped = []
                 for item in batch:
                     try:
@@ -142,17 +145,17 @@ class Consumer(Thread):
                     except Exception:
                         dropped.append(item)
                 if dropped:
-                    self.log.error('Queue full during rate-limit re-queue. Dropping %d item(s).', len(dropped))
+                    self.log.error("Queue full during rate-limit re-queue. Dropping %d item(s).", len(dropped))
                     if self.on_error:
-                        self.on_error(Exception('Queue full, items dropped during rate-limit re-queue'), dropped)
+                        self.on_error(Exception("Queue full, items dropped during rate-limit re-queue"), dropped)
                 success = False
             else:
-                self.log.error('error uploading: %s', e)
+                self.log.error("error uploading: %s", e)
                 success = False
                 if self.on_error:
                     self.on_error(e, batch)
         except Exception as e:
-            self.log.error('error uploading: %s', e)
+            self.log.error("error uploading: %s", e)
             success = False
             if self.on_error:
                 self.on_error(e, batch)
@@ -177,24 +180,20 @@ class Consumer(Thread):
             if elapsed >= self.upload_interval:
                 break
             try:
-                item = queue.get(
-                    block=True, timeout=self.upload_interval - elapsed)
-                item_size = len(json.dumps(
-                    item, cls=DatetimeSerializer).encode())
+                item = queue.get(block=True, timeout=self.upload_interval - elapsed)
+                item_size = len(json.dumps(item, cls=DatetimeSerializer).encode())
                 if item_size > MAX_MSG_SIZE:
-                    self.log.error(
-                        'Item exceeds 32kb limit, dropping. (%s)', str(item))
+                    self.log.error("Item exceeds 32kb limit, dropping. (%s)", str(item))
                     continue
                 items.append(item)
                 total_size += item_size
                 if total_size >= BATCH_SIZE_LIMIT:
-                    self.log.debug(
-                        'hit batch size limit (size: %d)', total_size)
+                    self.log.debug("hit batch size limit (size: %d)", total_size)
                     break
             except Empty:
                 break
             except Exception as e:
-                self.log.exception('Exception: %s', e)
+                self.log.exception("Exception: %s", e)
 
         return items
 
@@ -240,15 +239,10 @@ class Consumer(Thread):
                 raise e
             backoff_attempts += 1
             if backoff_attempts >= self.retries + 1:
-                self.log.error(
-                    f"All {self.retries} retries exhausted after {total_attempts} total attempts. Final error: {e}"
-                )
+                self.log.error(f"All {self.retries} retries exhausted after {total_attempts} total attempts. Final error: {e}")
                 raise e
             delay = calculate_backoff_delay(backoff_attempts)
-            self.log.debug(
-                f"{label} {backoff_attempts}/{self.retries} (total attempts: {total_attempts}) "
-                f"after {delay:.2f}s: {e}"
-            )
+            self.log.debug(f"{label} {backoff_attempts}/{self.retries} (total attempts: {total_attempts}) after {delay:.2f}s: {e}")
             return delay
 
         total_attempts = 0
@@ -267,7 +261,7 @@ class Consumer(Thread):
                     batch=batch,
                     proxies=self.proxies,
                     oauth_manager=self.oauth_manager,
-                    retry_count=total_attempts - 1
+                    retry_count=total_attempts - 1,
                 )
                 return response
 
@@ -279,9 +273,7 @@ class Consumer(Thread):
 
             except APIError as e:
                 if not is_retryable_status(e.status):
-                    self.log.error(
-                        f"Non-retryable error {e.status} after {total_attempts} attempts: {e}"
-                    )
+                    self.log.error(f"Non-retryable error {e.status} after {total_attempts} attempts: {e}")
                     raise
 
                 # Any retryable status with valid Retry-After > 0: block pipeline, re-queue

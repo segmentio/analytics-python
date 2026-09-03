@@ -1,14 +1,15 @@
-import unittest
-import pkgutil
 import logging
+import pkgutil
 import sys
+import unittest
+
 import segment.analytics as analytics
 from segment.analytics.client import Client
 
 
 def all_names():
-    for _, modname, _ in pkgutil.iter_modules(__path__):
-        yield 'segment.analytics.test.' + modname
+    for _, modname, _ in pkgutil.iter_modules(__path__):  # noqa: F821
+        yield "segment.analytics.test." + modname
 
 
 def all():
@@ -20,7 +21,7 @@ class TestInit(unittest.TestCase):
     def test_writeKey(self):
         self.assertIsNone(analytics.default_client)
         analytics.flush()
-        self.assertEqual(analytics.default_client.write_key, 'test-init')
+        self.assertEqual(analytics.default_client.write_key, "test-init")
 
     def test_debug(self):
         self.assertIsNone(analytics.default_client)
@@ -31,7 +32,7 @@ class TestInit(unittest.TestCase):
         analytics.debug = False
         analytics.flush()
         self.assertFalse(analytics.default_client.debug)
-        analytics.default_client.log.setLevel(0) # reset log level after debug enable
+        analytics.default_client.log.setLevel(0)  # reset log level after debug enable
 
     def test_gzip(self):
         self.assertIsNone(analytics.default_client)
@@ -45,9 +46,9 @@ class TestInit(unittest.TestCase):
 
     def test_host(self):
         self.assertIsNone(analytics.default_client)
-        analytics.host = 'http://test-host'
+        analytics.host = "http://test-host"
         analytics.flush()
-        self.assertEqual(analytics.default_client.host, 'http://test-host')
+        self.assertEqual(analytics.default_client.host, "http://test-host")
         analytics.host = None
         analytics.default_client = None
 
@@ -59,7 +60,7 @@ class TestInit(unittest.TestCase):
 
     def test_max_retries(self):
         self.assertIsNone(analytics.default_client)
-        client = Client('testsecret', max_retries=42)
+        client = Client("testsecret", max_retries=42)
         for consumer in client.consumers:
             self.assertEqual(consumer.retries, 42)
 
@@ -80,8 +81,9 @@ class TestInit(unittest.TestCase):
         self.assertEqual(analytics.default_client.timeout, 1.234)
 
     def setUp(self):
-        analytics.write_key = 'test-init'
+        analytics.write_key = "test-init"
         analytics.default_client = None
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

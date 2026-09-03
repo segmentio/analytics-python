@@ -1,17 +1,17 @@
+import base64
+import json
+import logging
+import time as _time
 from datetime import date, datetime
 from email.utils import parsedate_to_datetime
-from io import BytesIO
 from gzip import GzipFile
-import logging
-import json
-import base64
-import time as _time
-from dateutil.tz import tzutc
+from io import BytesIO
 
+from dateutil.tz import tzutc
 from requests import sessions
 
-from segment.analytics.version import VERSION
 from segment.analytics.utils import remove_trailing_slash
+from segment.analytics.version import VERSION
 
 _session = sessions.Session()
 
@@ -25,7 +25,7 @@ def parse_retry_after(response):
     Returns the delay in seconds, or None if header is not present or invalid.
     Caps the value at MAX_RETRY_AFTER_SECONDS.
     """
-    retry_after = response.headers.get('Retry-After')
+    retry_after = response.headers.get("Retry-After")
     if not retry_after:
         return None
 
@@ -43,47 +43,47 @@ def parse_retry_after(response):
             return None
         return min(delay, MAX_RETRY_AFTER_SECONDS)
     except (TypeError, ValueError, OverflowError):
-        log = logging.getLogger('segment')
-        log.warning('Unrecognized Retry-After format %r; ignoring header.', retry_after)
+        log = logging.getLogger("segment")
+        log.warning("Unrecognized Retry-After format %r; ignoring header.", retry_after)
         return None
 
 
 def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manager=None, retry_count=0, **kwargs):
     """Post the `kwargs` to the API"""
-    log = logging.getLogger('segment')
+    log = logging.getLogger("segment")
     body = kwargs
-    if not "sentAt" in body.keys():
+    if "sentAt" not in body.keys():
         body["sentAt"] = datetime.now(tz=tzutc()).isoformat()
     body["writeKey"] = write_key
-    url = remove_trailing_slash(host or 'https://api.segment.io') + '/v1/batch'
+    url = remove_trailing_slash(host or "https://api.segment.io") + "/v1/batch"
     auth = None
     if oauth_manager:
         auth = oauth_manager.get_token()
     data = json.dumps(body, cls=DatetimeSerializer)
-    log.debug('making request: %s', data)
+    log.debug("making request: %s", data)
     headers = {
-        'Content-Type': 'application/json',
-        'User-Agent': 'analytics-python/' + VERSION,
+        "Content-Type": "application/json",
+        "User-Agent": "analytics-python/" + VERSION,
     }
     if retry_count > 0:
-        headers['X-Retry-Count'] = str(retry_count)
+        headers["X-Retry-Count"] = str(retry_count)
 
     # Add Authorization header - prefer OAuth Bearer token, fallback to Basic auth
     if auth:
-        headers['Authorization'] = 'Bearer {}'.format(auth)
+        headers["Authorization"] = "Bearer {}".format(auth)
     else:
         # Basic auth with write key (format: "writeKey:" encoded in base64)
-        credentials = '{}:'.format(write_key)
-        encoded = base64.b64encode(credentials.encode('utf-8')).decode('utf-8')
-        headers['Authorization'] = 'Basic {}'.format(encoded)
+        credentials = "{}:".format(write_key)
+        encoded = base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
+        headers["Authorization"] = "Basic {}".format(encoded)
 
     if gzip:
-        headers['Content-Encoding'] = 'gzip'
+        headers["Content-Encoding"] = "gzip"
         buf = BytesIO()
-        with GzipFile(fileobj=buf, mode='w') as gz:
+        with GzipFile(fileobj=buf, mode="w") as gz:
             # 'data' was produced by json.dumps(),
             # whose default encoding is utf-8.
-            gz.write(data.encode('utf-8'))
+            gz.write(data.encode("utf-8"))
         data = buf.getvalue()
 
     kwargs = {
@@ -93,7 +93,7 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manag
     }
 
     if proxies:
-        kwargs['proxies'] = proxies
+        kwargs["proxies"] = proxies
 
     try:
         res = _session.post(url, **kwargs)
@@ -101,7 +101,7 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manag
         raise e
 
     if 200 <= res.status_code < 400:
-        log.debug('data uploaded successfully')
+        log.debug("data uploaded successfully")
         return res
 
     if oauth_manager and res.status_code in [400, 401, 403, 511]:
@@ -109,15 +109,14 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manag
 
     try:
         payload = res.json()
-        log.debug('received response: %s', payload)
-        raise APIError(res.status_code, payload['code'], payload['message'], res)
+        log.debug("received response: %s", payload)
+        raise APIError(res.status_code, payload["code"], payload["message"], res)
     except (ValueError, KeyError):
-        log.error('Unknown error: [%s] %s', res.status_code, res.reason)
-        raise APIError(res.status_code, 'unknown', res.text, res)
+        log.error("Unknown error: [%s] %s", res.status_code, res.reason)
+        raise APIError(res.status_code, "unknown", res.text, res)
 
 
 class APIError(Exception):
-
     def __init__(self, status, code, message, response=None):
         self.message = message
         self.status = status
