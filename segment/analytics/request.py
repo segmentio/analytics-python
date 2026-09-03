@@ -2,7 +2,7 @@ import base64
 import json
 import logging
 import time as _time
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from email.utils import parsedate_to_datetime
 from gzip import GzipFile
 from io import BytesIO
@@ -38,6 +38,12 @@ def parse_retry_after(response):
     # Try HTTP-date format (RFC 7231 §7.1.1.1)
     try:
         target_dt = parsedate_to_datetime(retry_after)
+        if target_dt.tzinfo is None:
+            # parsedate_to_datetime returns a naive datetime for the RFC 5322
+            # "-0000" offset, which servers do emit. timestamp() would then read
+            # it in the host's local zone, so the same header yields different
+            # delays — or None — depending on where the process runs.
+            target_dt = target_dt.replace(tzinfo=timezone.utc)
         delay = int(target_dt.timestamp() - _time.time())
         if delay <= 0:
             return None

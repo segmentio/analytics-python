@@ -87,6 +87,30 @@ class Consumer(Thread):
         """Pause the consumer."""
         self.running = False
 
+    def _wait(self, seconds):
+        """Sleep in slices so pause()/join()/atexit are not blocked for up to
+        MAX_RETRY_AFTER_SECONDS. Returns False if the consumer was stopped."""
+        deadline = time.time() + seconds
+        while self.running:
+            remaining = deadline - time.time()
+            if remaining <= 0:
+                return True
+            time.sleep(min(1.0, remaining))
+        return False
+
+    def _requeue(self, batch):
+        """Put a batch back on the queue, reporting anything that no longer fits."""
+        dropped = []
+        for item in batch:
+            try:
+                self.queue.put(item, block=False)
+            except Exception:
+                dropped.append(item)
+        if dropped:
+            self.log.error("Queue full during rate-limit re-queue. Dropping %d item(s).", len(dropped))
+            if self.on_error:
+                self.on_error(Exception("Queue full, items dropped during rate-limit re-queue"), dropped)
+
     def set_rate_limit_state(self, response):
         """Set rate-limit state from a 429 response with a valid Retry-After header."""
         retry_after = parse_retry_after(response) if response is not None else None
@@ -107,12 +131,15 @@ class Consumer(Thread):
         if len(batch) == 0:
             return False
 
-        # Check rate-limit state before attempting upload
-        if self.rate_limited_until is not None:
+        # Check rate-limit state before attempting upload. Gate on the episode
+        # marker, not on rate_limited_until: the latter is cleared as soon as its
+        # wait has been served, so it cannot be used to decide whether we are
+        # still inside a rate-limit episode.
+        if self.rate_limit_start_time is not None:
             now = time.time()
 
             # Check if maxRateLimitDuration has been exceeded
-            if self.rate_limit_start_time is not None and now - self.rate_limit_start_time > self.max_rate_limit_duration:
+            if now - self.rate_limit_start_time > self.max_rate_limit_duration:
                 self.log.error(
                     "Rate limit duration exceeded (%ds). Clearing rate-limit state and dropping batch.", self.max_rate_limit_duration
                 )
@@ -125,10 +152,18 @@ class Consumer(Thread):
                 return False
 
             # Still rate-limited; wait until the rate limit expires
-            wait_time = self.rate_limited_until - now
-            if wait_time > 0:
-                self.log.debug("Rate-limited. Waiting %.2fs before next upload attempt.", wait_time)
-                time.sleep(wait_time)
+            if self.rate_limited_until is not None:
+                wait_time = self.rate_limited_until - now
+                if wait_time > 0:
+                    self.log.debug("Rate-limited. Waiting %.2fs before next upload attempt.", wait_time)
+                    if not self._wait(wait_time):
+                        # Shutting down: leave the batch queued rather than
+                        # uploading into a consumer that is stopping.
+                        self._requeue(batch)
+                        return False
+                # The wait has been served. Clearing it here keeps a stale
+                # timestamp from classifying later, unrelated errors as rate limits.
+                self.rate_limited_until = None
 
         try:
             self.request(batch)
@@ -136,18 +171,9 @@ class Consumer(Thread):
             self.clear_rate_limit_state()
             success = True
         except APIError as e:
-            if self.rate_limited_until is not None:
+            if getattr(e, "rate_limited", False):
                 self.log.debug("Rate-limited (status %d). Re-queuing batch and halting upload iteration.", e.status)
-                dropped = []
-                for item in batch:
-                    try:
-                        self.queue.put(item, block=False)
-                    except Exception:
-                        dropped.append(item)
-                if dropped:
-                    self.log.error("Queue full during rate-limit re-queue. Dropping %d item(s).", len(dropped))
-                    if self.on_error:
-                        self.on_error(Exception("Queue full, items dropped during rate-limit re-queue"), dropped)
+                self._requeue(batch)
                 success = False
             else:
                 self.log.error("error uploading: %s", e)
@@ -280,6 +306,9 @@ class Consumer(Thread):
                 retry_after = parse_retry_after(e.response) if e.response is not None else None
                 if retry_after is not None and retry_after > 0:
                     self.set_rate_limit_state(e.response)
+                    # Tell upload() this specific failure is a rate limit. Inferring
+                    # it from consumer state misclassifies every later error.
+                    e.rate_limited = True
                     raise
 
                 # No Retry-After: counted backoff

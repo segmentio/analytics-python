@@ -1,4 +1,5 @@
 import json
+import threading
 import time
 import unittest
 
@@ -419,6 +420,46 @@ class TestConsumer(unittest.TestCase):
         self.assertIsNotNone(consumer.rate_limited_until)
         self.assertIsNotNone(consumer.rate_limit_start_time)
         self.assertGreater(consumer.rate_limited_until, time.time())
+
+    def test_stale_rate_limit_state_does_not_misroute_later_errors(self):
+        """A past rate-limit episode must not make later non-retryable errors look rate-limited"""
+        q = Queue()
+        consumer = Consumer(q, "testsecret", retries=1)
+        consumer.on_error = mock.Mock()
+        track = {"type": "track", "event": "python event", "userId": "userId"}
+        q.put(track)
+
+        # Simulate having been rate-limited a moment ago and already served the wait.
+        consumer.rate_limit_start_time = time.time() - 1
+        consumer.rate_limited_until = time.time() - 0.5
+
+        def mock_post_fn(*args, **kwargs):
+            raise APIError(400, "bad_request", "Bad Request")
+
+        with mock.patch("segment.analytics.consumer.post", side_effect=mock_post_fn):
+            consumer.upload()
+
+        # The 400 is non-retryable: it must be dropped and reported, not re-queued.
+        self.assertTrue(consumer.on_error.called)
+        self.assertEqual(q.qsize(), 0)
+
+    def test_rate_limit_wait_is_interruptible(self):
+        """pause() must break the Retry-After wait rather than blocking for its full duration"""
+        consumer = Consumer(Queue(), "testsecret")
+
+        def stop_soon():
+            time.sleep(0.2)
+            consumer.pause()
+
+        t = threading.Thread(target=stop_soon)
+        t.start()
+        started = time.time()
+        completed = consumer._wait(30)
+        elapsed = time.time() - started
+        t.join()
+
+        self.assertFalse(completed, "the wait should report that it was interrupted")
+        self.assertLess(elapsed, 5, f"pause() did not interrupt the wait; it took {elapsed:.1f}s")
 
     def test_exponential_backoff_with_jitter(self):
         """Test that exponential backoff is used for retries without Retry-After"""
