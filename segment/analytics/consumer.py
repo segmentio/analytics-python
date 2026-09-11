@@ -131,10 +131,8 @@ class Consumer(Thread):
         if len(batch) == 0:
             return False
 
-        # Check rate-limit state before attempting upload. Gate on the episode
-        # marker, not on rate_limited_until: the latter is cleared as soon as its
-        # wait has been served, so it cannot be used to decide whether we are
-        # still inside a rate-limit episode.
+        # rate_limit_start_time marks the episode; rate_limited_until is only the
+        # current deadline and is cleared once served, so gate on the former.
         if self.rate_limit_start_time is not None:
             now = time.time()
 
@@ -161,8 +159,7 @@ class Consumer(Thread):
                         # uploading into a consumer that is stopping.
                         self._requeue(batch)
                         return False
-                # The wait has been served. Clearing it here keeps a stale
-                # timestamp from classifying later, unrelated errors as rate limits.
+                # Clear the served deadline so it cannot classify a later error.
                 self.rate_limited_until = None
 
         try:
@@ -306,8 +303,8 @@ class Consumer(Thread):
                 retry_after = parse_retry_after(e.response) if e.response is not None else None
                 if retry_after is not None and retry_after > 0:
                     self.set_rate_limit_state(e.response)
-                    # Tell upload() this specific failure is a rate limit. Inferring
-                    # it from consumer state misclassifies every later error.
+                    # upload() classifies on this flag rather than consumer state,
+                    # which may still hold an earlier episode's deadline.
                     e.rate_limited = True
                     raise
 
