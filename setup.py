@@ -19,7 +19,7 @@ This is the official python client that wraps the Segment REST API (https://segm
 Documentation and more details at https://github.com/segmentio/analytics-python
 """
 
-install_requires = ["requests~=2.7", "backoff~=2.1", "python-dateutil~=2.2", "PyJWT~=2.12"]
+install_requires = ["requests~=2.7", "python-dateutil~=2.2", "PyJWT~=2.12"]
 
 tests_require = [
     "mock==2.0.0",

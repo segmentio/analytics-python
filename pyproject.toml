@@ -26,7 +26,6 @@ classifiers = [
 ]
 dependencies = [
     "requests~=2.7",
-    "backoff~=2.1",
     "python-dateutil~=2.2",
     "PyJWT[crypto]~=2.12",
 ]

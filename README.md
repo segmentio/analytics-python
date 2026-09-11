@@ -41,7 +41,7 @@ Analytics helps you measure your users, product, and business. It unlocks insigh
 
     For example, you can capture data on any app:
     ```python
-    analytics.track('Order Completed', { price: 99.84 })
+    analytics.track("Order Completed", {price: 99.84})
     ```
     Then, query the resulting data in SQL:
     ```sql
@@ -71,7 +71,7 @@ Now inside your app, you'll want to **set your** `write_key` before making any a
 ```python
 import segment.analytics as analytics
 
-analytics.write_key = 'YOUR_WRITE_KEY'
+analytics.write_key = "YOUR_WRITE_KEY"
 ```
 **Note** If you need to send data to multiple Segment sources, you can initialize a new Client for each `write_key`
 

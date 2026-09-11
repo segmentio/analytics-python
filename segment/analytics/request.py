@@ -1,6 +1,9 @@
+import base64
 import json
 import logging
-from datetime import date, datetime
+import time as _time
+from datetime import date, datetime, timezone
+from email.utils import parsedate_to_datetime
 from gzip import GzipFile
 from io import BytesIO
 
@@ -12,8 +15,46 @@ from segment.analytics.version import VERSION
 
 _session = sessions.Session()
 
+# Maximum Retry-After delay to respect (5 minutes)
+MAX_RETRY_AFTER_SECONDS = 300
 
-def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manager=None, **kwargs):
+
+def parse_retry_after(response):
+    """
+    Parse Retry-After header from response.
+    Returns the delay in seconds, or None if header is not present or invalid.
+    Caps the value at MAX_RETRY_AFTER_SECONDS.
+    """
+    retry_after = response.headers.get("Retry-After")
+    if not retry_after:
+        return None
+
+    try:
+        delay = int(retry_after)
+        return min(max(delay, 0), MAX_RETRY_AFTER_SECONDS)
+    except ValueError:
+        pass
+
+    # Try HTTP-date format (RFC 7231 §7.1.1.1)
+    try:
+        target_dt = parsedate_to_datetime(retry_after)
+        if target_dt.tzinfo is None:
+            # parsedate_to_datetime returns a naive datetime for the RFC 5322
+            # "-0000" offset, which servers do emit. timestamp() would then read
+            # it in the host's local zone, so the same header yields different
+            # delays — or None — depending on where the process runs.
+            target_dt = target_dt.replace(tzinfo=timezone.utc)
+        delay = int(target_dt.timestamp() - _time.time())
+        if delay <= 0:
+            return None
+        return min(delay, MAX_RETRY_AFTER_SECONDS)
+    except (TypeError, ValueError, OverflowError):
+        log = logging.getLogger("segment")
+        log.warning("Unrecognized Retry-After format %r; ignoring header.", retry_after)
+        return None
+
+
+def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manager=None, retry_count=0, **kwargs):
     """Post the `kwargs` to the API"""
     log = logging.getLogger("segment")
     body = kwargs
@@ -26,9 +67,21 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manag
         auth = oauth_manager.get_token()
     data = json.dumps(body, cls=DatetimeSerializer)
     log.debug("making request: %s", data)
-    headers = {"Content-Type": "application/json", "User-Agent": "analytics-python/" + VERSION}
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "analytics-python/" + VERSION,
+    }
+    if retry_count > 0:
+        headers["X-Retry-Count"] = str(retry_count)
+
+    # Add Authorization header - prefer OAuth Bearer token, fallback to Basic auth
     if auth:
         headers["Authorization"] = "Bearer {}".format(auth)
+    else:
+        # Basic auth with write key (format: "writeKey:" encoded in base64)
+        credentials = "{}:".format(write_key)
+        encoded = base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
+        headers["Authorization"] = "Basic {}".format(encoded)
 
     if gzip:
         headers["Content-Encoding"] = "gzip"
@@ -53,27 +106,28 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manag
     except Exception as e:
         raise e
 
-    if res.status_code == 200:
+    if 200 <= res.status_code < 400:
         log.debug("data uploaded successfully")
         return res
 
-    if oauth_manager and res.status_code in [400, 401, 403]:
+    if oauth_manager and res.status_code in [400, 401, 403, 511]:
         oauth_manager.clear_token()
 
     try:
         payload = res.json()
         log.debug("received response: %s", payload)
-        raise APIError(res.status_code, payload["code"], payload["message"])
-    except ValueError:
+        raise APIError(res.status_code, payload["code"], payload["message"], res)
+    except (ValueError, KeyError):
         log.error("Unknown error: [%s] %s", res.status_code, res.reason)
-        raise APIError(res.status_code, "unknown", res.text)
+        raise APIError(res.status_code, "unknown", res.text, res)
 
 
 class APIError(Exception):
-    def __init__(self, status, code, message):
+    def __init__(self, status, code, message, response=None):
         self.message = message
         self.status = status
         self.code = code
+        self.response = response
 
     def __str__(self):
         msg = "[Segment] {0}: {1} ({2})"

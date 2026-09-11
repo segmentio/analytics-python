@@ -1,11 +1,12 @@
+import base64
 import json
 import unittest
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 from unittest import mock
 
 import requests
 
-from segment.analytics.request import DatetimeSerializer, post
+from segment.analytics.request import APIError, DatetimeSerializer, parse_retry_after, post
 
 
 class TestRequests(unittest.TestCase):
@@ -55,3 +56,165 @@ class TestRequests(unittest.TestCase):
             args, kwargs = mock_post.call_args
             self.assertIn("proxies", kwargs)
             self.assertEqual(kwargs["proxies"], proxies)
+
+    def test_authorization_header_basic_auth(self):
+        """Test that Basic Authorization header is added when no OAuth manager"""
+
+        def mock_post_fn(*args, **kwargs):
+            res = mock.Mock()
+            res.status_code = 200
+            return res
+
+        with mock.patch("segment.analytics.request._session.post", side_effect=mock_post_fn) as mock_post:
+            post("testsecret", batch=[{"userId": "userId", "event": "python event", "type": "track"}])
+
+            args, kwargs = mock_post.call_args
+            headers = kwargs["headers"]
+            self.assertIn("Authorization", headers)
+
+            # Verify it's Basic auth with correct encoding
+            expected_credentials = base64.b64encode(b"testsecret:").decode("utf-8")
+            expected_auth = f"Basic {expected_credentials}"
+            self.assertEqual(headers["Authorization"], expected_auth)
+
+    def test_authorization_header_oauth(self):
+        """Test that Bearer Authorization header is used with OAuth manager"""
+        oauth_manager = mock.Mock()
+        oauth_manager.get_token.return_value = "test_token_123"
+
+        def mock_post_fn(*args, **kwargs):
+            res = mock.Mock()
+            res.status_code = 200
+            return res
+
+        with mock.patch("segment.analytics.request._session.post", side_effect=mock_post_fn) as mock_post:
+            post("testsecret", oauth_manager=oauth_manager, batch=[{"userId": "userId", "event": "python event", "type": "track"}])
+
+            args, kwargs = mock_post.call_args
+            headers = kwargs["headers"]
+            self.assertIn("Authorization", headers)
+            self.assertEqual(headers["Authorization"], "Bearer test_token_123")
+
+    def test_x_retry_count_header(self):
+        """Test that X-Retry-Count header is omitted on first attempt and included on retries"""
+
+        def mock_post_fn(*args, **kwargs):
+            res = mock.Mock()
+            res.status_code = 200
+            return res
+
+        with mock.patch("segment.analytics.request._session.post", side_effect=mock_post_fn) as mock_post:
+            # Test with retry_count=0 (first attempt) — header should be absent
+            post("testsecret", retry_count=0, batch=[{"userId": "userId", "event": "python event", "type": "track"}])
+
+            args, kwargs = mock_post.call_args
+            headers = kwargs["headers"]
+            self.assertNotIn("X-Retry-Count", headers)
+
+        with mock.patch("segment.analytics.request._session.post", side_effect=mock_post_fn) as mock_post:
+            # Test with retry_count=5
+            post("testsecret", retry_count=5, batch=[{"userId": "userId", "event": "python event", "type": "track"}])
+
+            args, kwargs = mock_post.call_args
+            headers = kwargs["headers"]
+            self.assertEqual(headers["X-Retry-Count"], "5")
+
+    def test_non_200_2xx_treated_as_success(self):
+        """Test that 2xx and 3xx status codes are treated as success"""
+        for status_code in [200, 201, 204, 301, 302]:
+
+            def mock_post_fn(*args, **kwargs):
+                res = mock.Mock()
+                res.status_code = status_code
+                return res
+
+            with mock.patch("segment.analytics.request._session.post", side_effect=mock_post_fn):
+                res = post("testsecret", batch=[{"userId": "userId", "event": "python event", "type": "track"}])
+                self.assertEqual(res.status_code, status_code)
+
+    def test_parse_retry_after_integer(self):
+        """Test parsing Retry-After header with integer seconds"""
+        response = mock.Mock()
+        response.headers = {"Retry-After": "30"}
+        result = parse_retry_after(response)
+        self.assertEqual(result, 30)
+
+    def test_parse_retry_after_capped(self):
+        """Test that Retry-After is capped at 300 seconds"""
+        response = mock.Mock()
+        response.headers = {"Retry-After": "600"}
+        result = parse_retry_after(response)
+        self.assertEqual(result, 300)
+
+    def test_parse_retry_after_missing(self):
+        """Test parsing when Retry-After header is missing"""
+        response = mock.Mock()
+        response.headers = {}
+        result = parse_retry_after(response)
+        self.assertIsNone(result)
+
+    def test_parse_retry_after_invalid(self):
+        """Test parsing with invalid Retry-After header (garbage string)"""
+        response = mock.Mock()
+        response.headers = {"Retry-After": "invalid"}
+        result = parse_retry_after(response)
+        self.assertIsNone(result)
+
+    def test_parse_retry_after_http_date_future(self):
+        """Test parsing Retry-After as HTTP-date 2 seconds in future"""
+        from email.utils import format_datetime
+
+        future = datetime.now(tz=timezone.utc) + timedelta(seconds=2)
+        response = mock.Mock()
+        response.headers = {"Retry-After": format_datetime(future, usegmt=True)}
+        result = parse_retry_after(response)
+        # Should be approximately 2 seconds (allow 1-3 for timing)
+        self.assertIsNotNone(result)
+        self.assertGreaterEqual(result, 1)
+        self.assertLessEqual(result, 3)
+
+    def test_parse_retry_after_http_date_past(self):
+        """Test parsing Retry-After as HTTP-date in the past returns None"""
+        from email.utils import format_datetime
+
+        past = datetime.now(tz=timezone.utc) - timedelta(seconds=10)
+        response = mock.Mock()
+        response.headers = {"Retry-After": format_datetime(past, usegmt=True)}
+        result = parse_retry_after(response)
+        self.assertIsNone(result)
+
+    def test_oauth_token_cleared_on_511(self):
+        """Test that OAuth token is cleared on 511 status"""
+        oauth_manager = mock.Mock()
+        oauth_manager.get_token.return_value = "test_token"
+
+        def mock_post_fn(*args, **kwargs):
+            res = mock.Mock()
+            res.status_code = 511
+            res.json.return_value = {"code": "error", "message": "Network Authentication Required"}
+            return res
+
+        with mock.patch("segment.analytics.request._session.post", side_effect=mock_post_fn):
+            with self.assertRaises(APIError):
+                post("testsecret", oauth_manager=oauth_manager, batch=[{"userId": "userId", "event": "python event", "type": "track"}])
+
+            # Verify clear_token was called
+            oauth_manager.clear_token.assert_called_once()
+
+    def test_api_error_includes_response(self):
+        """Test that APIError includes the response object"""
+
+        def mock_post_fn(*args, **kwargs):
+            res = mock.Mock()
+            res.status_code = 429
+            res.json.return_value = {"code": "rate_limit", "message": "Too Many Requests"}
+            return res
+
+        with mock.patch("segment.analytics.request._session.post", side_effect=mock_post_fn):
+            try:
+                post("testsecret", batch=[{"userId": "userId", "event": "python event", "type": "track"}])
+            except APIError as e:
+                self.assertEqual(e.status, 429)
+                self.assertIsNotNone(e.response)
+            else:
+                self.fail("Expected APIError to be raised")

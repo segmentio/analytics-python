@@ -30,6 +30,8 @@ class Client(object):
         gzip = False
         timeout = 15
         max_retries = 10
+        max_total_backoff_duration = 43200
+        max_rate_limit_duration = 43200
         proxies = None
         thread = 1
         upload_interval = 0.5
@@ -65,8 +67,15 @@ class Client(object):
         oauth_key_id=DefaultConfig.oauth_key_id,
         oauth_auth_server=DefaultConfig.oauth_auth_server,
         oauth_scope=DefaultConfig.oauth_scope,
+        max_total_backoff_duration=DefaultConfig.max_total_backoff_duration,
+        max_rate_limit_duration=DefaultConfig.max_rate_limit_duration,
     ):
         require("write_key", write_key, str)
+
+        if max_total_backoff_duration is None or max_total_backoff_duration < 0:
+            raise ValueError("max_total_backoff_duration must be a non-negative number")
+        if max_rate_limit_duration is None or max_rate_limit_duration < 0:
+            raise ValueError("max_rate_limit_duration must be a non-negative number")
 
         self.queue = queue.Queue(max_queue_size)
         self.write_key = write_key
@@ -78,6 +87,8 @@ class Client(object):
         self.gzip = gzip
         self.timeout = timeout
         self.proxies = proxies
+        self.max_total_backoff_duration = max_total_backoff_duration
+        self.max_rate_limit_duration = max_rate_limit_duration
         self.oauth_manager = None
         if oauth_client_id and oauth_client_key and oauth_key_id:
             self.oauth_manager = OauthManager(
@@ -118,6 +129,8 @@ class Client(object):
                     timeout=timeout,
                     proxies=proxies,
                     oauth_manager=self.oauth_manager,
+                    max_total_backoff_duration=max_total_backoff_duration,
+                    max_rate_limit_duration=max_rate_limit_duration,
                 )
                 self.consumers.append(consumer)
 
@@ -345,7 +358,11 @@ class Client(object):
             return False, msg
 
     def flush(self):
-        """Forces a flush from the internal queue to the server"""
+        """Forces a flush from the internal queue to the server.
+
+        Warning: if the consumer is currently rate-limited, this call will
+        block until the rate limit clears or max_rate_limit_duration elapses.
+        """
         queue = self.queue
         size = queue.qsize()
         queue.join()
