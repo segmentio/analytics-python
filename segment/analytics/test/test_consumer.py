@@ -321,7 +321,7 @@ class TestConsumer(unittest.TestCase):
         self.assertIsNotNone(consumer.rate_limited_until)
         self.assertIsNotNone(consumer.rate_limit_start_time)
         # rate_limited_until should be ~10 seconds in the future
-        self.assertGreater(consumer.rate_limited_until, time.time() + 5)
+        self.assertGreater(consumer.rate_limited_until, time.monotonic() + 5)
 
     def test_retry_after_capped_at_300_seconds(self):
         """Test that Retry-After delay is capped at 300 seconds when setting rate-limit state"""
@@ -335,7 +335,7 @@ class TestConsumer(unittest.TestCase):
             error.response = response
             raise error
 
-        now = time.time()
+        now = time.monotonic()
         with mock.patch("segment.analytics.consumer.post", side_effect=mock_post_fn):
             with self.assertRaises(APIError):
                 consumer.request([track])
@@ -369,7 +369,7 @@ class TestConsumer(unittest.TestCase):
                 sleep_durations.append(duration)
 
             with mock.patch("segment.analytics.consumer.post", side_effect=mock_post_fn):
-                with mock.patch("time.sleep", side_effect=mock_sleep):
+                with mock.patch.object(Consumer, "_wait", side_effect=lambda seconds: mock_sleep(seconds) or True):
                     consumer.request([track])
 
             # Should use backoff delay (0 for first retry), not Retry-After
@@ -397,7 +397,7 @@ class TestConsumer(unittest.TestCase):
         # Rate-limit state should be set (pipeline-blocking)
         self.assertIsNotNone(consumer.rate_limited_until)
         self.assertIsNotNone(consumer.rate_limit_start_time)
-        self.assertGreater(consumer.rate_limited_until, time.time())
+        self.assertGreater(consumer.rate_limited_until, time.monotonic())
 
     def test_529_with_retry_after_sets_rate_limit_state(self):
         """529 with Retry-After > 0 blocks the pipeline (sets rate_limit_state) and raises"""
@@ -419,7 +419,7 @@ class TestConsumer(unittest.TestCase):
         # Rate-limit state should be set (pipeline-blocking)
         self.assertIsNotNone(consumer.rate_limited_until)
         self.assertIsNotNone(consumer.rate_limit_start_time)
-        self.assertGreater(consumer.rate_limited_until, time.time())
+        self.assertGreater(consumer.rate_limited_until, time.monotonic())
 
     def test_stale_rate_limit_state_does_not_misroute_later_errors(self):
         """A past rate-limit episode must not make later non-retryable errors look rate-limited"""
@@ -430,8 +430,8 @@ class TestConsumer(unittest.TestCase):
         q.put(track)
 
         # Simulate having been rate-limited a moment ago and already served the wait.
-        consumer.rate_limit_start_time = time.time() - 1
-        consumer.rate_limited_until = time.time() - 0.5
+        consumer.rate_limit_start_time = time.monotonic() - 1
+        consumer.rate_limited_until = time.monotonic() - 0.5
 
         def mock_post_fn(*args, **kwargs):
             raise APIError(400, "bad_request", "Bad Request")
@@ -453,9 +453,9 @@ class TestConsumer(unittest.TestCase):
 
         t = threading.Thread(target=stop_soon)
         t.start()
-        started = time.time()
+        started = time.monotonic()
         completed = consumer._wait(30)
-        elapsed = time.time() - started
+        elapsed = time.monotonic() - started
         t.join()
 
         self.assertFalse(completed, "the wait should report that it was interrupted")
@@ -482,7 +482,7 @@ class TestConsumer(unittest.TestCase):
             sleep_durations.append(duration)
 
         with mock.patch("segment.analytics.consumer.post", side_effect=mock_post_fn):
-            with mock.patch("time.sleep", side_effect=mock_sleep):
+            with mock.patch.object(Consumer, "_wait", side_effect=lambda seconds: mock_sleep(seconds) or True):
                 consumer.request([track])
 
         # Should have 3 backoff delays
@@ -610,7 +610,7 @@ class TestConsumer(unittest.TestCase):
             sleep_duration = duration
 
         with mock.patch("segment.analytics.consumer.post", side_effect=mock_post_fn):
-            with mock.patch("time.sleep", side_effect=mock_sleep):
+            with mock.patch.object(Consumer, "_wait", side_effect=lambda seconds: mock_sleep(seconds) or True):
                 consumer.request([track])
 
         # Should have two attempts
@@ -647,7 +647,7 @@ class TestConsumer(unittest.TestCase):
             sleep_duration = duration
 
         with mock.patch("segment.analytics.consumer.post", side_effect=mock_post_fn):
-            with mock.patch("time.sleep", side_effect=mock_sleep):
+            with mock.patch.object(Consumer, "_wait", side_effect=lambda seconds: mock_sleep(seconds) or True):
                 consumer.request([track])
 
         # Should have two attempts
@@ -864,7 +864,7 @@ class TestConsumer(unittest.TestCase):
 
         with mock.patch("segment.analytics.consumer.post", side_effect=mock_post_fn):
             with mock.patch("time.sleep"):
-                with mock.patch("time.time", side_effect=mock_time):
+                with mock.patch("time.monotonic", side_effect=mock_time):
                     with self.assertRaises(APIError) as ctx:
                         consumer.request([track])
                     self.assertEqual(ctx.exception.status, 500)
@@ -882,7 +882,7 @@ class TestConsumer(unittest.TestCase):
         track = {"type": "track", "event": "python event", "userId": "userId"}
 
         # Pre-set rate-limit state as if we entered it 15 seconds ago
-        now = time.time()
+        now = time.monotonic()
         consumer.rate_limit_start_time = now - 15  # 15s ago, exceeds 10s limit
         consumer.rate_limited_until = now + 5  # Would still be rate-limited
 
@@ -913,8 +913,8 @@ class TestConsumer(unittest.TestCase):
         track = {"type": "track", "event": "python event", "userId": "userId"}
 
         # Set rate-limit state
-        consumer.rate_limited_until = time.time() - 1  # Already expired
-        consumer.rate_limit_start_time = time.time() - 10
+        consumer.rate_limited_until = time.monotonic() - 1  # Already expired
+        consumer.rate_limit_start_time = time.monotonic() - 10
 
         q.put(track)
 
@@ -1021,7 +1021,7 @@ class TestConsumer(unittest.TestCase):
                     consumer.request([track])
 
         # With duration=0 and >= check, first failure sets first_failure_time
-        # and immediately satisfies time.time() - first_failure_time >= 0,
+        # and immediately satisfies time.monotonic() - first_failure_time >= 0,
         # so it raises on the very first failure (1 attempt total).
         self.assertEqual(call_count, 1)
 

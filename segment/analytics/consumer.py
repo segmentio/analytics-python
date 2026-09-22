@@ -90,9 +90,9 @@ class Consumer(Thread):
     def _wait(self, seconds):
         """Sleep in slices so pause()/join()/atexit are not blocked for up to
         MAX_RETRY_AFTER_SECONDS. Returns False if the consumer was stopped."""
-        deadline = time.time() + seconds
+        deadline = time.monotonic() + seconds
         while self.running:
-            remaining = deadline - time.time()
+            remaining = deadline - time.monotonic()
             if remaining <= 0:
                 return True
             time.sleep(min(1.0, remaining))
@@ -115,9 +115,9 @@ class Consumer(Thread):
         """Set rate-limit state from a 429 response with a valid Retry-After header."""
         retry_after = parse_retry_after(response) if response is not None else None
         if retry_after is not None:
-            self.rate_limited_until = time.time() + retry_after
+            self.rate_limited_until = time.monotonic() + retry_after
         if self.rate_limit_start_time is None:
-            self.rate_limit_start_time = time.time()
+            self.rate_limit_start_time = time.monotonic()
 
     def clear_rate_limit_state(self):
         """Clear rate-limit state after successful request or duration exceeded."""
@@ -134,7 +134,7 @@ class Consumer(Thread):
         # rate_limit_start_time marks the episode; rate_limited_until is only the
         # current deadline and is cleared once served, so gate on the former.
         if self.rate_limit_start_time is not None:
-            now = time.time()
+            now = time.monotonic()
 
             # Check if maxRateLimitDuration has been exceeded
             if now - self.rate_limit_start_time > self.max_rate_limit_duration:
@@ -155,9 +155,14 @@ class Consumer(Thread):
                 if wait_time > 0:
                     self.log.debug("Rate-limited. Waiting %.2fs before next upload attempt.", wait_time)
                     if not self._wait(wait_time):
-                        # Shutting down: leave the batch queued rather than
-                        # uploading into a consumer that is stopping.
+                        # Shutting down: hand the batch back rather than uploading
+                        # into a consumer that is stopping. This returns before the
+                        # try/finally below, so the get() obligations have to be
+                        # discharged here or queue.join() never completes; the
+                        # re-queued copies carry their own fresh obligations.
                         self._requeue(batch)
+                        for _ in batch:
+                            self.queue.task_done()
                         return False
                 # Clear the served deadline so it cannot classify a later error.
                 self.rate_limited_until = None
@@ -253,8 +258,8 @@ class Consumer(Thread):
             """Apply retry backoff logic. Returns delay if should retry, raises if exhausted."""
             nonlocal first_failure_time, backoff_attempts
             if first_failure_time is None:
-                first_failure_time = time.time()
-            if time.time() - first_failure_time >= self.max_total_backoff_duration:
+                first_failure_time = time.monotonic()
+            if time.monotonic() - first_failure_time >= self.max_total_backoff_duration:
                 self.log.error(
                     f"Max total backoff duration ({self.max_total_backoff_duration}s) exceeded "
                     f"after {total_attempts} attempts. Final error: {e}"
@@ -310,8 +315,10 @@ class Consumer(Thread):
 
                 # No Retry-After: counted backoff
                 delay = apply_backoff(e, f"Retry attempt (status {e.status})")
-                time.sleep(delay)
+                if not self._wait(delay):
+                    raise
 
             except Exception as e:
                 delay = apply_backoff(e, "Network error retry")
-                time.sleep(delay)
+                if not self._wait(delay):
+                    raise
