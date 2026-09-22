@@ -120,8 +120,8 @@ class TestRequests(unittest.TestCase):
             self.assertEqual(headers["X-Retry-Count"], "5")
 
     def test_non_200_2xx_treated_as_success(self):
-        """Test that 2xx and 3xx status codes are treated as success"""
-        for status_code in [200, 201, 204, 301, 302]:
+        """Test that all 2xx status codes are treated as success, not just 200"""
+        for status_code in [200, 201, 202, 204]:
 
             def mock_post_fn(*args, **kwargs):
                 res = mock.Mock()
@@ -131,6 +131,22 @@ class TestRequests(unittest.TestCase):
             with mock.patch("segment.analytics.request._session.post", side_effect=mock_post_fn):
                 res = post("testsecret", batch=[{"userId": "userId", "event": "python event", "type": "track"}])
                 self.assertEqual(res.status_code, status_code)
+
+    def test_3xx_is_not_success(self):
+        """requests follows what it can, so a 3xx here means nothing was uploaded"""
+        for status_code in [300, 301, 302, 304]:
+
+            def mock_post_fn(*args, **kwargs):
+                res = mock.Mock()
+                res.status_code = status_code
+                res.reason = "Redirect"
+                return res
+
+            with mock.patch("segment.analytics.request._session.post", side_effect=mock_post_fn):
+                with self.assertRaises(APIError) as ctx:
+                    post("testsecret", batch=[{"userId": "userId", "event": "python event", "type": "track"}])
+                self.assertEqual(ctx.exception.status, status_code)
+                self.assertEqual(ctx.exception.code, "redirect")
 
     def test_parse_retry_after_integer(self):
         """Test parsing Retry-After header with integer seconds"""

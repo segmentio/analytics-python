@@ -106,9 +106,20 @@ def post(write_key, host=None, gzip=False, timeout=15, proxies=None, oauth_manag
     except Exception as e:
         raise e
 
-    if 200 <= res.status_code < 400:
+    if 200 <= res.status_code < 300:
         log.debug("data uploaded successfully")
         return res
+
+    if 300 <= res.status_code < 400:
+        # requests follows any redirect it can, so a 3xx arriving here means it
+        # declined to: no Location, a 300, or a 304. Nothing was uploaded, and
+        # reporting it as "unknown" below would hide a misconfigured host.
+        log.error(
+            "Unexpected redirect (%s) from %s; batch not uploaded. Check whether the configured host points at a proxy or redirector.",
+            res.status_code,
+            url,
+        )
+        raise APIError(res.status_code, "redirect", res.reason, res)
 
     if oauth_manager and res.status_code in [400, 401, 403, 511]:
         oauth_manager.clear_token()
