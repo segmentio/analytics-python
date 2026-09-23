@@ -1,3 +1,22 @@
+# Unreleased
+### Upgrade note: new request headers and proxy allowlists
+This release sends two request headers that earlier versions did not:
+`Authorization` (HTTP Basic, carrying your write key) and `X-Retry-Count`
+(on retries only). If your traffic to Segment goes through a proxy, gateway
+or WAF that allowlists request headers, add both before upgrading or uploads
+will be rejected.
+
+- Send the write key as an `Authorization: Basic` header. It is still included in the request body, so no server-side change is required. OAuth deployments continue to send `Authorization: Bearer` and are unaffected.
+- Send `X-Retry-Count` on retries, so the server can distinguish a retry from a first attempt. Omitted on the first attempt.
+- Unified retry handling: 429, 408, 410, 460 and 5xx (except 501 and 505) are retried. `Retry-After` is honoured on all of them, not just 429, which brings 529 in through the generic 5xx rule. 511 asks the client to re-authenticate, so it is retried only when an `oauth_manager` is configured and is dropped otherwise.
+- `Retry-After` accepts numeric seconds and the RFC 7231 HTTP-date formats, capped at 300s.
+- Rate-limited retries are bounded by elapsed time rather than counted against the retry limit, so a long `Retry-After` no longer exhausts the budget.
+- New client options `max_total_backoff_duration` and `max_rate_limit_duration` (default 12 hours each) bound the two waits.
+- Only 2xx responses count as a successful upload. A 3xx is now reported as a failed upload rather than silently treated as delivered. It is not retried: a redirect the HTTP client already declined to follow will not succeed on a retry. The Segment endpoint does not redirect, so this only affects custom `host` values.
+- Backoff waits are interruptible, so `shutdown()` no longer blocks for the full delay.
+- Retry timing uses a monotonic clock, so a system clock change cannot stretch or collapse a backoff.
+- Fix a `queue.task_done()` leak that could leave `flush()` waiting forever when a batch was re-queued during shutdown.
+
 # 2.3.6 / 2026-4-7
 - Update and widen PyJWT version to address security issue
 

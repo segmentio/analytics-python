@@ -2,17 +2,35 @@
 
 E2E test CLI for the [analytics-python](https://github.com/segmentio/analytics-python) SDK. Accepts a JSON input describing events and SDK configuration, sends them through the real SDK, and outputs results as JSON.
 
-## Setup
+## Running E2E tests
+
+### With devbox (recommended)
 
 ```bash
-cd e2e-cli
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-pip install -e .
+# From repo root — activates Python 3.12 and installs deps automatically
+devbox shell
+
+# Then from e2e-cli dir:
+./run-e2e.sh
 ```
 
-## Usage
+### Without devbox
+
+Requires Python 3.9+ and Node.js 18+. Using a virtualenv is strongly recommended since macOS system Python is externally managed.
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+./run-e2e.sh
+```
+
+### Override sdk-e2e-tests location
+
+```bash
+E2E_TESTS_DIR=../my-e2e-tests ./run-e2e.sh
+```
+
+## Manual CLI usage
 
 ```bash
 e2e-cli --input '{"writeKey":"...", ...}'
@@ -21,7 +39,7 @@ e2e-cli --input '{"writeKey":"...", ...}'
 Or without installing:
 
 ```bash
-python3 -m src.cli --input '{"writeKey":"...", ...}'
+python3 src/cli.py --input '{"writeKey":"...", ...}'
 ```
 
 ## Input Format

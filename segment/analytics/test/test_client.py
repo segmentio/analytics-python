@@ -367,3 +367,32 @@ class TestClient(unittest.TestCase):
             args, kwargs = mock_post.call_args
             self.assertIn("proxies", kwargs)
             self.assertEqual(kwargs["proxies"], proxies)
+
+    def test_queue_full_returns_false(self):
+        """track() returns (False, msg) when the queue is full — caller should dead-letter"""
+        client = Client("testsecret", max_queue_size=1)
+        # Ensure consumer thread is no longer uploading
+        client.join()
+
+        # Fill the queue
+        client.track("user-1", "First Event")
+
+        # This one should be rejected
+        success, msg = client.track("user-2", "Overflow Event")
+
+        self.assertFalse(success)
+        self.assertEqual(msg["event"], "Overflow Event")
+
+    def test_queue_full_does_not_raise(self):
+        """track() never raises when the queue is full — returns False silently"""
+        client = Client("testsecret", max_queue_size=1)
+        # Ensure consumer thread is no longer uploading
+        client.join()
+
+        client.track("user-1", "First Event")
+
+        try:
+            success, _ = client.track("user-2", "Overflow Event")
+            self.assertFalse(success)
+        except Exception as e:
+            self.fail(f"track() raised unexpectedly on full queue: {e}")
