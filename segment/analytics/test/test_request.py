@@ -234,3 +234,28 @@ class TestRequests(unittest.TestCase):
                 self.assertIsNotNone(e.response)
             else:
                 self.fail("Expected APIError to be raised")
+
+
+class TestNonObjectErrorBody(unittest.TestCase):
+    def test_non_object_json_body_raises_apierror_not_typeerror(self):
+        """A 400 whose body is valid JSON but not an object must stay non-retryable.
+
+        payload["code"] subscripts a list, string or number with TypeError rather
+        than KeyError, so without TypeError in the handler it escaped as a generic
+        exception and the consumer retried a non-retryable 4xx ten times.
+        """
+        for body in ("[]", '"oops"', "5", "null"):
+            with self.subTest(body=body):
+                res = mock.Mock()
+                res.status_code = 400
+                res.json.return_value = json.loads(body)
+                res.text = body
+                res.reason = "Bad Request"
+
+                with mock.patch("segment.analytics.request._session") as session:
+                    session.post.return_value = res
+                    with self.assertRaises(APIError) as ctx:
+                        post("write_key", batch=[{"userId": "u", "type": "track"}])
+
+                self.assertEqual(400, ctx.exception.status)
+                self.assertEqual("unknown", ctx.exception.code)
