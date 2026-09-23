@@ -323,8 +323,13 @@ class TestConsumer(unittest.TestCase):
         # rate_limited_until should be ~10 seconds in the future
         self.assertGreater(consumer.rate_limited_until, time.monotonic() + 5)
 
-    def test_retry_after_capped_at_300_seconds(self):
-        """Test that Retry-After delay is capped at 300 seconds when setting rate-limit state"""
+    def test_retry_after_capped_at_60_seconds(self):
+        """Retry-After is clamped to MAX_RETRY_AFTER_SECONDS when setting rate-limit state.
+
+        The cap sits well below max_rate_limit_duration on purpose: at the old 300s it
+        equalled the whole budget, so one sleep consumed it and the rate-limit path
+        gave a single attempt.
+        """
         consumer = Consumer(None, "testsecret", retries=2)
         track = {"type": "track", "event": "python event", "userId": "userId"}
 
@@ -340,10 +345,32 @@ class TestConsumer(unittest.TestCase):
             with self.assertRaises(APIError):
                 consumer.request([track])
 
-        # rate_limited_until should be capped at ~300s from now (not 600s)
+        # rate_limited_until should be capped at ~60s from now, not 600s
         self.assertIsNotNone(consumer.rate_limited_until)
-        self.assertLessEqual(consumer.rate_limited_until, now + 310)
-        self.assertGreater(consumer.rate_limited_until, now + 290)
+        self.assertLessEqual(consumer.rate_limited_until, now + 65)
+        self.assertGreater(consumer.rate_limited_until, now + 55)
+
+    def test_rate_limit_wait_never_overshoots_the_budget(self):
+        """The wait is clamped to what is left of max_rate_limit_duration.
+
+        The budget is checked before the wait, so without clamping a check passing
+        just inside the budget would still sleep a full Retry-After on top — turning
+        a 5 minute budget into 6.
+        """
+        consumer = Consumer(Queue(), "testsecret", max_rate_limit_duration=300)
+        consumer.queue.put({"type": "track", "event": "e", "userId": "u"})
+
+        # An episode that began 299s ago: 1s of budget left, but Retry-After says 60.
+        consumer.rate_limit_start_time = time.monotonic() - 299
+        consumer.rate_limited_until = time.monotonic() + 60
+
+        waits = []
+        with mock.patch.object(Consumer, "_wait", side_effect=lambda s: waits.append(s) or True):
+            with mock.patch("segment.analytics.consumer.post", return_value=None):
+                consumer.upload()
+
+        self.assertTrue(waits, "expected the consumer to wait")
+        self.assertLessEqual(waits[0], 1.5, f"waited {waits[0]}s with ~1s of budget left")
 
     def test_408_and_503_without_retry_after_use_backoff(self):
         """Test that 408 and 503 without Retry-After header use exponential backoff"""

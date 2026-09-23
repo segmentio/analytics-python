@@ -31,7 +31,7 @@ class Client(object):
         timeout = 15
         max_retries = 10
         max_total_backoff_duration = 43200
-        max_rate_limit_duration = 43200
+        max_rate_limit_duration = 300
         proxies = None
         thread = 1
         upload_interval = 0.5

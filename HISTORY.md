@@ -1,4 +1,7 @@
 # Unreleased
+- `max_rate_limit_duration` now defaults to 5 minutes rather than 12 hours, and `Retry-After` is capped at 60s rather than 300s. The 12 hour value was meant as a backstop that a retry count would stop us reaching, but rate-limited attempts are deliberately uncounted, so it was the operative limit — a server that kept sending `Retry-After` could hold one batch, and with a single consumer thread the whole pipeline, for half a day. Five minutes lines up with the counted-backoff path's ~4 minute worst case. `flush()` and `shutdown()` are bounded by the same figure.
+- The rate-limit wait is clamped to the remaining budget. The budget is checked before waiting, so a check passing just inside it used to sleep a full `Retry-After` on top.
+
 ### Upgrade note: new request headers and proxy allowlists
 This release sends two request headers that earlier versions did not:
 `Authorization` (HTTP Basic, carrying your write key) and `X-Retry-Count`

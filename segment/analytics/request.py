@@ -16,7 +16,10 @@ from segment.analytics.version import VERSION
 _session = sessions.Session()
 
 # Maximum Retry-After delay to respect (5 minutes)
-MAX_RETRY_AFTER_SECONDS = 300
+# Capped well below max_rate_limit_duration so the budget buys several attempts
+# rather than one long sleep. Segment serving a Retry-After longer than this would
+# mean something has gone badly wrong upstream, so the cap costs nothing real.
+MAX_RETRY_AFTER_SECONDS = 60
 
 
 def parse_retry_after(response):

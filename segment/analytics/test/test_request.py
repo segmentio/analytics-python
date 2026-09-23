@@ -156,11 +156,11 @@ class TestRequests(unittest.TestCase):
         self.assertEqual(result, 30)
 
     def test_parse_retry_after_capped(self):
-        """Test that Retry-After is capped at 300 seconds"""
+        """Retry-After is capped at MAX_RETRY_AFTER_SECONDS (60s)"""
         response = mock.Mock()
         response.headers = {"Retry-After": "600"}
         result = parse_retry_after(response)
-        self.assertEqual(result, 300)
+        self.assertEqual(result, 60)
 
     def test_parse_retry_after_missing(self):
         """Test parsing when Retry-After header is missing"""
