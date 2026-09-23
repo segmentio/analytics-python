@@ -461,6 +461,39 @@ class TestConsumer(unittest.TestCase):
         self.assertFalse(completed, "the wait should report that it was interrupted")
         self.assertLess(elapsed, 5, f"pause() did not interrupt the wait; it took {elapsed:.1f}s")
 
+    def test_shutdown_during_backoff_requeues_instead_of_dropping(self):
+        """A batch interrupted mid-backoff still has budget, so it must be handed back.
+
+        The rate-limited wait already re-queued on shutdown; the counted-backoff wait
+        reported a hard failure and dropped the batch instead, which is the common case
+        (a 500 or a timeout, not a Retry-After).
+        """
+        q = Queue()
+        consumer = Consumer(q, "testsecret", retries=10)
+        track = {"type": "track", "event": "python event", "userId": "userId"}
+        q.put(track)
+
+        errors = []
+        consumer.on_error = lambda e, batch: errors.append(e)
+
+        # Fail with a retryable status carrying no Retry-After, so the batch takes
+        # the counted-backoff path, then shut down while it waits.
+        def mock_post_fn(*args, **kwargs):
+            raise APIError(503, "service_unavailable", "Service Unavailable")
+
+        def stop_soon():
+            time.sleep(0.2)
+            consumer.pause()
+
+        t = threading.Thread(target=stop_soon)
+        t.start()
+        with mock.patch("segment.analytics.consumer.post", side_effect=mock_post_fn):
+            consumer.upload()
+        t.join()
+
+        self.assertEqual(q.qsize(), 1, "the interrupted batch should have been re-queued")
+        self.assertEqual(errors, [], "shutdown is not an upload failure; on_error should not fire")
+
     def test_exponential_backoff_with_jitter(self):
         """Test that exponential backoff is used for retries without Retry-After"""
         consumer = Consumer(None, "testsecret", retries=4)

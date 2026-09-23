@@ -7,6 +7,15 @@ from threading import Thread
 
 from segment.analytics.request import APIError, DatetimeSerializer, parse_retry_after, post
 
+
+class ShutdownInterrupted(Exception):
+    """A retry wait was cut short by shutdown.
+
+    Distinct from an upload failure: the batch has not exhausted its budget, so it
+    is re-queued rather than reported through on_error.
+    """
+
+
 MAX_MSG_SIZE = 32 << 10
 
 # Our servers only accept batches less than 500KB. Here limit is set slightly
@@ -111,9 +120,15 @@ class Consumer(Thread):
             if self.on_error:
                 self.on_error(Exception("Queue full, items dropped during rate-limit re-queue"), dropped)
 
-    def set_rate_limit_state(self, response):
-        """Set rate-limit state from a 429 response with a valid Retry-After header."""
-        retry_after = parse_retry_after(response) if response is not None else None
+    def set_rate_limit_state(self, retry_after):
+        """Open or extend a rate-limit episode using an already-parsed Retry-After.
+
+        Takes the delay rather than the response on purpose. Parsing an HTTP-date
+        Retry-After reads the wall clock and truncates to whole seconds, so parsing
+        twice for one response can straddle a second boundary and disagree with
+        itself — leaving the episode open with no deadline, which skipped the wait
+        entirely on the next attempt.
+        """
         if retry_after is not None:
             self.rate_limited_until = time.monotonic() + retry_after
         if self.rate_limit_start_time is None:
@@ -172,6 +187,14 @@ class Consumer(Thread):
             # Success — clear rate-limit state
             self.clear_rate_limit_state()
             success = True
+        except ShutdownInterrupted:
+            # Budget was not exhausted; the wait was. Hand the batch back so the
+            # next run uploads it, rather than reporting a failure that did not
+            # happen. Matches the rate-limited wait above.
+            self.log.debug("Shutting down during retry backoff. Re-queuing batch.")
+            self._requeue(batch)
+            success = False
+
         except APIError as e:
             if getattr(e, "rate_limited", False):
                 self.log.debug("Rate-limited (status %d). Re-queuing batch and halting upload iteration.", e.status)
@@ -307,7 +330,7 @@ class Consumer(Thread):
                 # Any retryable status with valid Retry-After > 0: block pipeline, re-queue
                 retry_after = parse_retry_after(e.response) if e.response is not None else None
                 if retry_after is not None and retry_after > 0:
-                    self.set_rate_limit_state(e.response)
+                    self.set_rate_limit_state(retry_after)
                     # upload() classifies on this flag rather than consumer state,
                     # which may still hold an earlier episode's deadline.
                     e.rate_limited = True
@@ -316,9 +339,9 @@ class Consumer(Thread):
                 # No Retry-After: counted backoff
                 delay = apply_backoff(e, f"Retry attempt (status {e.status})")
                 if not self._wait(delay):
-                    raise
+                    raise ShutdownInterrupted() from e
 
             except Exception as e:
                 delay = apply_backoff(e, "Network error retry")
                 if not self._wait(delay):
-                    raise
+                    raise ShutdownInterrupted() from e
