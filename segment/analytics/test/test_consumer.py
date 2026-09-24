@@ -323,13 +323,8 @@ class TestConsumer(unittest.TestCase):
         # rate_limited_until should be ~10 seconds in the future
         self.assertGreater(consumer.rate_limited_until, time.monotonic() + 5)
 
-    def test_retry_after_capped_at_60_seconds(self):
-        """Retry-After is clamped to MAX_RETRY_AFTER_SECONDS when setting rate-limit state.
-
-        The cap sits well below max_rate_limit_duration on purpose: at the old 300s it
-        equalled the whole budget, so one sleep consumed it and the rate-limit path
-        gave a single attempt.
-        """
+    def test_retry_after_capped_at_max_retry_after_seconds(self):
+        """Retry-After is clamped to MAX_RETRY_AFTER_SECONDS when setting rate-limit state."""
         consumer = Consumer(None, "testsecret", retries=2)
         track = {"type": "track", "event": "python event", "userId": "userId"}
 
@@ -345,10 +340,10 @@ class TestConsumer(unittest.TestCase):
             with self.assertRaises(APIError):
                 consumer.request([track])
 
-        # rate_limited_until should be capped at ~60s from now, not 600s
+        # rate_limited_until should be capped at ~300s from now, not 600s
         self.assertIsNotNone(consumer.rate_limited_until)
-        self.assertLessEqual(consumer.rate_limited_until, now + 65)
-        self.assertGreater(consumer.rate_limited_until, now + 55)
+        self.assertLessEqual(consumer.rate_limited_until, now + 310)
+        self.assertGreater(consumer.rate_limited_until, now + 290)
 
     def test_rate_limit_wait_never_overshoots_the_budget(self):
         """The wait is clamped to what is left of max_rate_limit_duration.

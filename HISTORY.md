@@ -11,7 +11,7 @@ will be rejected.
 ### Retry handling
 
 - Uploads are retried on 408, 410, 429, 460, and 5xx except 501 and 505. 511 is retried only when an `oauth_manager` is configured, and dropped otherwise.
-- A `Retry-After` header is honoured on any retryable response, not only 429. Numeric seconds and the RFC 7231 HTTP-date formats are both accepted, and the value is capped at 60 seconds.
+- A `Retry-After` header is honoured on any retryable response, not only 429. Numeric seconds and the RFC 7231 HTTP-date formats are both accepted, and the value is capped at 300 seconds.
 - Responses carrying `Retry-After` are retried for up to `max_rate_limit_duration` and do not consume the retry count. Other failures use exponential backoff from 500ms to a 60 second ceiling, limited by `max_retries` and by `max_total_backoff_duration` as an upper bound.
 - New client options, both in seconds: `max_rate_limit_duration` (default 300) and `max_total_backoff_duration` (default 43200).
 - `flush()` and `shutdown()` are bounded by the same limits, and a pending retry does not delay shutdown.
