@@ -24,10 +24,9 @@ BATCH_SIZE_LIMIT = 475000
 
 # Default duration limits (12 hours in seconds)
 DEFAULT_MAX_TOTAL_BACKOFF_DURATION = 43200
-# Five minutes, in line with the counted-backoff path's ~4 minute worst case.
-# This was 12 hours, intended as a backstop that a retry count would stop us ever
-# reaching — but nothing counts rate-limited attempts, so it was the operative
-# limit rather than the backstop.
+# Rate-limited attempts are deliberately uncounted, so this duration is the only
+# thing bounding them. Five minutes keeps that in line with the counted-backoff
+# path's own worst case, so neither failure mode costs much more than the other.
 DEFAULT_MAX_RATE_LIMIT_DURATION = 300
 
 
