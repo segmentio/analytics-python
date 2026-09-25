@@ -170,11 +170,24 @@ class Consumer(Thread):
 
             # Still rate-limited; wait until the rate limit expires
             if self.rate_limited_until is not None:
-                # Clamped to what is left of the budget. The check above runs before
-                # the wait, so without this a check passing at 4:59 would still sleep
-                # a full Retry-After on top and overshoot the budget.
                 remaining = self.max_rate_limit_duration - (now - self.rate_limit_start_time)
-                wait_time = min(self.rate_limited_until - now, remaining)
+                wait_time = self.rate_limited_until - now
+                if wait_time > remaining:
+                    # Shortening the wait to fit the budget would send the next request
+                    # inside the window the server asked us to wait out — a request it
+                    # has already said it will not serve — and the budget would then be
+                    # spent, so it would be the last one anyway. Give up here instead of
+                    # spending a request to be told the same thing.
+                    self.log.error(
+                        "Rate limit budget (%ds) cannot accommodate the requested wait; dropping batch.",
+                        self.max_rate_limit_duration,
+                    )
+                    self.clear_rate_limit_state()
+                    if self.on_error:
+                        self.on_error(Exception("Rate limit duration exceeded, batch dropped"), batch)
+                    for _ in batch:
+                        self.queue.task_done()
+                    return False
                 if wait_time > 0:
                     self.log.debug("Rate-limited. Waiting %.2fs before next upload attempt.", wait_time)
                     if not self._wait(wait_time):

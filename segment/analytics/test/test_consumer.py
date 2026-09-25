@@ -10,6 +10,7 @@ try:
 except ImportError:
     from Queue import Queue
 
+from segment.analytics.client import Client
 from segment.analytics.consumer import (
     DEFAULT_MAX_RATE_LIMIT_DURATION,
     MAX_MSG_SIZE,
@@ -350,21 +351,41 @@ class TestConsumer(unittest.TestCase):
         self.assertLessEqual(consumer.rate_limited_until, now + 310)
         self.assertGreater(consumer.rate_limited_until, now + 290)
 
-    def test_rate_limit_wait_never_overshoots_the_budget(self):
-        """The wait is clamped to what is left of max_rate_limit_duration.
+    def test_a_wait_that_will_not_fit_the_budget_drops_instead_of_shortening(self):
+        """Never retry inside the window the server asked us to wait out.
 
-        The budget is checked before the wait, so without clamping a check passing
-        just inside the budget would still sleep a full Retry-After on top — turning
-        a 5 minute budget into 6.
+        Shortening the wait to fit the budget sends the next request before the
+        server said it would serve one, and the budget is spent by then, so it
+        would be the last attempt regardless. Dropping here costs the same batch
+        and one fewer request against a server already rate-limiting us.
         """
         consumer = Consumer(Queue(), "testsecret", max_rate_limit_duration=300)
         consumer.queue.put({"type": "track", "event": "e", "userId": "u"})
 
-        # An episode 30s from its end, against a Retry-After of 60. Deliberately not
-        # placed 1s from the end: next() blocks out the rest of upload_interval
-        # before the budget check runs, so a margin that tight turns any scheduling
-        # stall into a spurious budget-exceeded drop and an empty `waits`.
+        errors = []
+        consumer.on_error = lambda e, b: errors.append(e)
+
+        # 30s of budget left against a Retry-After of 60: it cannot fit.
         consumer.rate_limit_start_time = time.monotonic() - 270
+        consumer.rate_limited_until = time.monotonic() + 60
+
+        waits = []
+        posts = []
+        with mock.patch.object(Consumer, "_wait", side_effect=lambda s: waits.append(s) or True):
+            with mock.patch("segment.analytics.consumer.post", side_effect=lambda *a, **k: posts.append(1)):
+                consumer.upload()
+
+        self.assertEqual(waits, [], "should not have waited a shortened interval")
+        self.assertEqual(posts, [], "should not have sent a request inside the Retry-After window")
+        self.assertEqual(len(errors), 1, "the dropped batch must be reported")
+
+    def test_a_wait_that_fits_the_budget_is_honoured_in_full(self):
+        """The counterpart: a wait that fits is taken as the server asked for it."""
+        consumer = Consumer(Queue(), "testsecret", max_rate_limit_duration=300)
+        consumer.queue.put({"type": "track", "event": "e", "userId": "u"})
+
+        # 120s of budget left against a Retry-After of 60: it fits.
+        consumer.rate_limit_start_time = time.monotonic() - 180
         consumer.rate_limited_until = time.monotonic() + 60
 
         waits = []
@@ -373,8 +394,7 @@ class TestConsumer(unittest.TestCase):
                 consumer.upload()
 
         self.assertTrue(waits, "expected the consumer to wait")
-        self.assertGreater(waits[0], 0, "a wait of 0 would pass any upper bound vacuously")
-        self.assertLessEqual(waits[0], 31, f"waited {waits[0]}s with ~30s of budget left")
+        self.assertGreater(waits[0], 55, f"waited {waits[0]}s; the full Retry-After should be honoured")
 
     def test_408_and_503_without_retry_after_use_backoff(self):
         """Test that 408 and 503 without Retry-After header use exponential backoff"""
@@ -1181,10 +1201,21 @@ class TestConsumer(unittest.TestCase):
             "budget leaves room for fewer than two capped waits",
         )
 
-    def test_consumer_defaults_to_the_documented_rate_limit_budget(self):
-        """Pins the default the changelog advertises; nothing else asserts it."""
-        consumer = Consumer(Queue(), "testsecret")
-        self.assertEqual(consumer.max_rate_limit_duration, DEFAULT_MAX_RATE_LIMIT_DURATION)
+    def test_client_defaults_to_the_documented_rate_limit_budget(self):
+        """Pins what a real caller gets, which is not the same as Consumer's default.
+
+        Client.DefaultConfig carried its own literal and Client passes it into every
+        Consumer it builds, so raising only the Consumer default left every real user
+        on the old value while this suite stayed green.
+        """
+        client = Client("testsecret", send=False)
+        try:
+            self.assertEqual(
+                client.consumers[0].max_rate_limit_duration,
+                DEFAULT_MAX_RATE_LIMIT_DURATION,
+            )
+        finally:
+            client.shutdown()
 
     def test_non_rate_limited_failure_ends_the_episode(self):
         """A request that completed without a rate-limit signal ends the episode.
