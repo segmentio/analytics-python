@@ -25,9 +25,10 @@ BATCH_SIZE_LIMIT = 475000
 # Default duration limits (12 hours in seconds)
 DEFAULT_MAX_TOTAL_BACKOFF_DURATION = 43200
 # Rate-limited attempts are deliberately uncounted, so this duration is the only
-# thing bounding them. Five minutes keeps that in line with the counted-backoff
-# path's own worst case, so neither failure mode costs much more than the other.
-DEFAULT_MAX_RATE_LIMIT_DURATION = 300
+# thing bounding them. It is deliberately several times MAX_RETRY_AFTER_SECONDS:
+# when the two are equal a single maximal Retry-After consumes the whole budget,
+# leaving one attempt and no retry at all.
+DEFAULT_MAX_RATE_LIMIT_DURATION = 1800
 
 
 class FatalError(Exception):

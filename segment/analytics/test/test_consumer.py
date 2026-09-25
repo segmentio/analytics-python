@@ -10,8 +10,13 @@ try:
 except ImportError:
     from Queue import Queue
 
-from segment.analytics.consumer import MAX_MSG_SIZE, Consumer, FatalError
-from segment.analytics.request import APIError
+from segment.analytics.consumer import (
+    DEFAULT_MAX_RATE_LIMIT_DURATION,
+    MAX_MSG_SIZE,
+    Consumer,
+    FatalError,
+)
+from segment.analytics.request import MAX_RETRY_AFTER_SECONDS, APIError
 
 
 class TestConsumer(unittest.TestCase):
@@ -1153,3 +1158,26 @@ class TestConsumer(unittest.TestCase):
         self.assertEqual(error.status, 500)
         self.assertEqual(len(batch), 1)
         self.assertEqual(batch[0]["event"], "test event")
+
+    def test_default_rate_limit_budget_exceeds_the_retry_after_cap(self):
+        """The budget must leave room for more than one maximal Retry-After.
+
+        The elapsed check runs before the wait, so at parity a single capped
+        Retry-After spends the whole budget and the batch is dropped having been
+        attempted once, with no retry at all.
+        """
+        self.assertGreater(
+            DEFAULT_MAX_RATE_LIMIT_DURATION,
+            MAX_RETRY_AFTER_SECONDS,
+            "a capped Retry-After would consume the entire rate-limit budget",
+        )
+        self.assertGreaterEqual(
+            DEFAULT_MAX_RATE_LIMIT_DURATION // MAX_RETRY_AFTER_SECONDS,
+            2,
+            "budget leaves room for fewer than two capped waits",
+        )
+
+    def test_consumer_defaults_to_the_documented_rate_limit_budget(self):
+        """Pins the default the changelog advertises; nothing else asserts it."""
+        consumer = Consumer(Queue(), "testsecret")
+        self.assertEqual(consumer.max_rate_limit_duration, DEFAULT_MAX_RATE_LIMIT_DURATION)
