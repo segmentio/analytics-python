@@ -1204,9 +1204,9 @@ class TestConsumer(unittest.TestCase):
     def test_client_defaults_to_the_documented_rate_limit_budget(self):
         """Pins what a real caller gets, which is not the same as Consumer's default.
 
-        Client.DefaultConfig carried its own literal and Client passes it into every
-        Consumer it builds, so raising only the Consumer default left every real user
-        on the old value while this suite stayed green.
+        Client passes its own DefaultConfig value into every Consumer it builds, so
+        asserting Consumer's default here would stay green while a drifted Client
+        default shipped.
         """
         client = Client("testsecret", send=False)
         try:

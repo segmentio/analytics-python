@@ -25,9 +25,9 @@ BATCH_SIZE_LIMIT = 475000
 # Default duration limits (12 hours in seconds)
 DEFAULT_MAX_TOTAL_BACKOFF_DURATION = 43200
 # Rate-limited attempts are deliberately uncounted, so this duration is the only
-# thing bounding them. It is deliberately several times MAX_RETRY_AFTER_SECONDS:
-# when the two are equal a single maximal Retry-After consumes the whole budget,
-# leaving one attempt and no retry at all.
+# thing bounding them. Keep it several times MAX_RETRY_AFTER_SECONDS: at parity a
+# single maximal Retry-After consumes the whole budget, leaving one attempt and no
+# retry, and the cap stops binding because the remaining budget is always smaller.
 DEFAULT_MAX_RATE_LIMIT_DURATION = 1800
 
 
@@ -173,11 +173,10 @@ class Consumer(Thread):
                 remaining = self.max_rate_limit_duration - (now - self.rate_limit_start_time)
                 wait_time = self.rate_limited_until - now
                 if wait_time > remaining:
-                    # Shortening the wait to fit the budget would send the next request
-                    # inside the window the server asked us to wait out — a request it
-                    # has already said it will not serve — and the budget would then be
-                    # spent, so it would be the last one anyway. Give up here instead of
-                    # spending a request to be told the same thing.
+                    # Shortening the wait to fit sends the next request inside the
+                    # window the server asked us to wait out, which it has already said
+                    # it will not serve, and the budget is spent by then so it would be
+                    # the last attempt either way.
                     self.log.error(
                         "Rate limit budget (%ds) cannot accommodate the requested wait; dropping batch.",
                         self.max_rate_limit_duration,
@@ -222,19 +221,19 @@ class Consumer(Thread):
                 self._requeue(batch)
                 success = False
             else:
-                # The request completed and carried no rate-limit signal, so the
-                # episode is over. Leaving the marker set strands it: this consumer
-                # outlives the batch, upload() returns at the empty-batch guard
-                # before the budget block, and nothing else clears it — so the next
-                # batch to arrive after the budget elapses is dropped for a rate
-                # limit that ended here, without ever being sent.
+                # The request completed carrying no rate-limit signal, so the
+                # episode is over. The marker outlives the batch and nothing else
+                # clears it — upload() returns at the empty-batch guard above,
+                # before the budget block — so leaving it set means the next batch
+                # to arrive after the budget elapses is dropped for a rate limit
+                # that ended here, without ever being sent.
                 self.clear_rate_limit_state()
                 self.log.error("error uploading: %s", e)
                 success = False
                 if self.on_error:
                     self.on_error(e, batch)
         except Exception as e:
-            # Same reasoning as above.
+            # Same reasoning as the non-rate-limited APIError branch above.
             self.clear_rate_limit_state()
             self.log.error("error uploading: %s", e)
             success = False
