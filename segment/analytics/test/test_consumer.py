@@ -1243,9 +1243,7 @@ class TestConsumer(unittest.TestCase):
     def test_batch_after_an_ended_episode_is_still_sent(self):
         """The symptom: a stranded marker drops a batch that was never rate-limited."""
         q = Queue()
-        consumer = Consumer(
-            q, "testsecret", max_rate_limit_duration=1, on_error=lambda e, b: None
-        )
+        consumer = Consumer(q, "testsecret", max_rate_limit_duration=1, on_error=lambda e, b: None)
         consumer.rate_limit_start_time = time.monotonic()
 
         q.put({"event": "one"})
@@ -1259,11 +1257,7 @@ class TestConsumer(unittest.TestCase):
 
         sent = []
         q.put({"event": "two"})
-        with mock.patch(
-            "segment.analytics.consumer.post", side_effect=lambda *a, **k: sent.append(1)
-        ):
+        with mock.patch("segment.analytics.consumer.post", side_effect=lambda *a, **k: sent.append(1)):
             consumer.upload()
 
-        self.assertEqual(
-            len(sent), 1, "batch was dropped for a rate-limit episode that had already ended"
-        )
+        self.assertEqual(len(sent), 1, "batch was dropped for a rate-limit episode that had already ended")
