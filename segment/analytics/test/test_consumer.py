@@ -360,8 +360,11 @@ class TestConsumer(unittest.TestCase):
         consumer = Consumer(Queue(), "testsecret", max_rate_limit_duration=300)
         consumer.queue.put({"type": "track", "event": "e", "userId": "u"})
 
-        # An episode that began 299s ago: 1s of budget left, but Retry-After says 60.
-        consumer.rate_limit_start_time = time.monotonic() - 299
+        # An episode 30s from its end, against a Retry-After of 60. Deliberately not
+        # placed 1s from the end: next() blocks out the rest of upload_interval
+        # before the budget check runs, so a margin that tight turns any scheduling
+        # stall into a spurious budget-exceeded drop and an empty `waits`.
+        consumer.rate_limit_start_time = time.monotonic() - 270
         consumer.rate_limited_until = time.monotonic() + 60
 
         waits = []
@@ -370,7 +373,8 @@ class TestConsumer(unittest.TestCase):
                 consumer.upload()
 
         self.assertTrue(waits, "expected the consumer to wait")
-        self.assertLessEqual(waits[0], 1.5, f"waited {waits[0]}s with ~1s of budget left")
+        self.assertGreater(waits[0], 0, "a wait of 0 would pass any upper bound vacuously")
+        self.assertLessEqual(waits[0], 31, f"waited {waits[0]}s with ~30s of budget left")
 
     def test_408_and_503_without_retry_after_use_backoff(self):
         """Test that 408 and 503 without Retry-After header use exponential backoff"""
@@ -1181,3 +1185,54 @@ class TestConsumer(unittest.TestCase):
         """Pins the default the changelog advertises; nothing else asserts it."""
         consumer = Consumer(Queue(), "testsecret")
         self.assertEqual(consumer.max_rate_limit_duration, DEFAULT_MAX_RATE_LIMIT_DURATION)
+
+    def test_non_rate_limited_failure_ends_the_episode(self):
+        """A request that completed without a rate-limit signal ends the episode.
+
+        The marker outlives the batch that opened it, so leaving it set strands it:
+        upload() returns at the empty-batch guard before the budget block, and
+        nothing else clears it.
+        """
+        q = Queue()
+        q.put({"event": "one"})
+        consumer = Consumer(q, "testsecret", on_error=lambda e, b: None)
+        consumer.rate_limit_start_time = time.monotonic()
+
+        with mock.patch(
+            "segment.analytics.consumer.post",
+            side_effect=APIError(400, "invalid", "Bad Request"),
+        ):
+            consumer.upload()
+
+        self.assertIsNone(
+            consumer.rate_limit_start_time,
+            "a completed request carrying no rate-limit signal must end the episode",
+        )
+
+    def test_batch_after_an_ended_episode_is_still_sent(self):
+        """The symptom: a stranded marker drops a batch that was never rate-limited."""
+        q = Queue()
+        consumer = Consumer(
+            q, "testsecret", max_rate_limit_duration=1, on_error=lambda e, b: None
+        )
+        consumer.rate_limit_start_time = time.monotonic()
+
+        q.put({"event": "one"})
+        with mock.patch(
+            "segment.analytics.consumer.post",
+            side_effect=APIError(400, "invalid", "Bad Request"),
+        ):
+            consumer.upload()
+
+        time.sleep(1.1)  # longer than this consumer's 1 second budget
+
+        sent = []
+        q.put({"event": "two"})
+        with mock.patch(
+            "segment.analytics.consumer.post", side_effect=lambda *a, **k: sent.append(1)
+        ):
+            consumer.upload()
+
+        self.assertEqual(
+            len(sent), 1, "batch was dropped for a rate-limit episode that had already ended"
+        )

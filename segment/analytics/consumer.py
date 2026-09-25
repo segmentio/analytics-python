@@ -209,11 +209,20 @@ class Consumer(Thread):
                 self._requeue(batch)
                 success = False
             else:
+                # The request completed and carried no rate-limit signal, so the
+                # episode is over. Leaving the marker set strands it: this consumer
+                # outlives the batch, upload() returns at the empty-batch guard
+                # before the budget block, and nothing else clears it — so the next
+                # batch to arrive after the budget elapses is dropped for a rate
+                # limit that ended here, without ever being sent.
+                self.clear_rate_limit_state()
                 self.log.error("error uploading: %s", e)
                 success = False
                 if self.on_error:
                     self.on_error(e, batch)
         except Exception as e:
+            # Same reasoning as above.
+            self.clear_rate_limit_state()
             self.log.error("error uploading: %s", e)
             success = False
             if self.on_error:
