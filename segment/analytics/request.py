@@ -15,7 +15,10 @@ from segment.analytics.version import VERSION
 
 _session = sessions.Session()
 
-# Maximum Retry-After delay to respect (5 minutes)
+# A guard against an absurd header, not a second budget. Waiting less than the
+# server asked for does not make the next attempt more likely to succeed, it just
+# sends more requests at something already rate-limiting us; how long we keep
+# trying is max_rate_limit_duration's job.
 MAX_RETRY_AFTER_SECONDS = 300
 
 

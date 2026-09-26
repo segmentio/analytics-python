@@ -8,7 +8,12 @@ from uuid import uuid4
 
 from dateutil.tz import tzutc
 
-from segment.analytics.consumer import MAX_MSG_SIZE, Consumer
+from segment.analytics.consumer import (
+    DEFAULT_MAX_RATE_LIMIT_DURATION,
+    DEFAULT_MAX_TOTAL_BACKOFF_DURATION,
+    MAX_MSG_SIZE,
+    Consumer,
+)
 from segment.analytics.oauth_manager import OauthManager
 from segment.analytics.request import DatetimeSerializer, post
 from segment.analytics.utils import clean, guess_timezone
@@ -30,8 +35,8 @@ class Client(object):
         gzip = False
         timeout = 15
         max_retries = 10
-        max_total_backoff_duration = 43200
-        max_rate_limit_duration = 43200
+        max_total_backoff_duration = DEFAULT_MAX_TOTAL_BACKOFF_DURATION
+        max_rate_limit_duration = DEFAULT_MAX_RATE_LIMIT_DURATION
         proxies = None
         thread = 1
         upload_interval = 0.5
