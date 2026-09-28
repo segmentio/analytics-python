@@ -1,4 +1,4 @@
-# Unreleased
+# 2.4.0 / 2026-9-28
 
 ### Upgrade note: new request headers
 
