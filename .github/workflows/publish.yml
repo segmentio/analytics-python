@@ -10,8 +10,10 @@ env:
 jobs:
   test:
     name: Test - Python ${{ matrix.python-version }}
-    runs-on: ${{ github.repository_owner == 'twilio' && 'ubuntu-x64' || 'ubuntu-latest' }}
-    if: github.repository_owner == 'twilio'
+    runs-on: ubuntu-x64
+    # Guards against forks publishing. Bare ubuntu-latest gets no runner in
+    # this org, so the fork branch of the old expression was unusable anyway.
+    if: github.repository_owner == 'segmentio'
     permissions:
       contents: read
       id-token: write
@@ -34,8 +36,10 @@ jobs:
   deploy:
     name: Publish to PyPI
     needs: [test]
-    runs-on: ${{ github.repository_owner == 'twilio' && 'ubuntu-x64' || 'ubuntu-latest' }}
-    if: github.repository_owner == 'twilio'
+    runs-on: ubuntu-x64
+    # Guards against forks publishing. Bare ubuntu-latest gets no runner in
+    # this org, so the fork branch of the old expression was unusable anyway.
+    if: github.repository_owner == 'segmentio'
     environment: production
     permissions:
       contents: read
@@ -53,8 +57,10 @@ jobs:
       - name: Validate tag format and version match
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
-          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
-            echo "::error::Release tag must be in the form v1.2.3 (got '$TAG')"
+          # This repo's tags carry no v prefix (2.3.6, 2.3.5, ...); accept both
+          # so the existing convention keeps working.
+          if [[ ! "$TAG" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+            echo "::error::Release tag must be X.Y.Z or vX.Y.Z (got '$TAG')"
             exit 1
           fi
           VERSION="${TAG#v}"
