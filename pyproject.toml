@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "segment-analytics-python"
-version = "2.3.6"
+version = "2.4.0"
 description = "The hassle-free way to integrate analytics into any python application."
 readme = "README.md"
 license = "MIT"
