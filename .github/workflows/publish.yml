@@ -80,4 +80,4 @@ jobs:
       - name: Publish to PyPI
         run: |
           pip install "twine>=5.0"
-          twine upload --repository pypi --trusted-publishing=always dist/*
+          twine upload --non-interactive --repository pypi dist/*
