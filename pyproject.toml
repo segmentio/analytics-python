@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "segment-analytics-python"
-version = "2.4.0"
+dynamic = ["version"]
 description = "The hassle-free way to integrate analytics into any python application."
 readme = "README.md"
 license = "MIT"
@@ -40,6 +40,9 @@ dev = [
     "ruff>=0.4",
     "mock>=2.0",
 ]
+
+[tool.hatch.version]
+path = "segment/analytics/version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["segment"]

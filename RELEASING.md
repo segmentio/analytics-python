@@ -4,9 +4,9 @@ Releasing
 Publishing happens in CI through PyPI Trusted Publishing (OIDC). There is no PyPI token
 to hold locally.
 
-1. Update the version in **both** `pyproject.toml` and `segment/analytics/version.py`.
-   The publish workflow validates the release tag against `pyproject.toml` and fails if
-   the two disagree.
+1. Update `VERSION` in `segment/analytics/version.py`. This is the only place the
+   version lives — hatchling reads it at build time, and the publish workflow validates
+   the release tag against it.
 2. In `HISTORY.md`, change the `Unreleased` heading to `X.Y.Z / YYYY-M-D`.
 3. `git commit -am "Release X.Y.Z."`
 4. Open a PR and merge it to `master`.
