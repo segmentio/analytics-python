@@ -64,13 +64,13 @@ jobs:
             exit 1
           fi
           VERSION="${TAG#v}"
-          PKG_VERSION=$(python -c "
-          import tomllib
-          with open('pyproject.toml', 'rb') as f:
-              print(tomllib.load(f)['project']['version'])
-          ")
+          PKG_VERSION=$(sed -nE 's/.*VERSION *= *"([^"]+)".*/\1/p' segment/analytics/version.py)
+          if [ -z "$PKG_VERSION" ]; then
+            echo "::error::Could not read VERSION from segment/analytics/version.py"
+            exit 1
+          fi
           if [ "$VERSION" != "$PKG_VERSION" ]; then
-            echo "::error::Tag $TAG does not match pyproject.toml version $PKG_VERSION"
+            echo "::error::Tag $TAG does not match VERSION $PKG_VERSION in segment/analytics/version.py"
             exit 1
           fi
 
