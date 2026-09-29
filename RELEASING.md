@@ -1,20 +1,29 @@
 Releasing
 =========
 
-Publishing happens in CI through PyPI Trusted Publishing (OIDC). There is no
-PyPI token to hold locally, and `make release` is not the release path — it
-uploads with a stored credential and skips provenance.
+Publishing happens in CI through PyPI Trusted Publishing (OIDC). There is no PyPI token
+to hold locally, and `make release` is not the release path — it uploads with a stored
+credential and skips provenance.
 
-1. Update the version in **both** `pyproject.toml` and
-   `segment/analytics/version.py`. The publish workflow validates the release
-   tag against `pyproject.toml` and fails if the two disagree.
-2. Update `HISTORY.md`.
-3. `git commit -am "Release X.Y.Z."` (where X.Y.Z is the new version)
+1. Update the version in **both** `pyproject.toml` and `segment/analytics/version.py`.
+   The publish workflow validates the release tag against `pyproject.toml` and fails if
+   the two disagree.
+2. In `HISTORY.md`, change the `Unreleased` heading to `X.Y.Z / YYYY-M-D`.
+3. `git commit -am "Release X.Y.Z."`
 4. Open a PR and merge it to `master`.
-5. Tag the merged commit and push it:
-   `git tag -a X.Y.Z -m "Version X.Y.Z" && git push --tags`
+5. Tag the merged commit — no `v` prefix:
+
+   ```
+   git tag X.Y.Z && git push origin X.Y.Z
+   ```
+
 6. Create a **GitHub Release** for that tag. The workflow triggers on
    `release: published`; pushing the tag by itself does not start it.
+7. Approve the `production` environment when the publish job requests review.
 
-The workflow then runs the test matrix, builds with `uv`, and uploads to PyPI
-with `--trusted-publishing=always`.
+The workflow runs the test matrix, builds with `uv`, and uploads with twine, which
+performs the OIDC exchange itself — no flag is needed.
+
+> **Note:** the workflow runs from the *tagged* commit. If it needs fixing, the tag has
+> to be recreated after the fix lands; merging to `master` alone changes nothing for a
+> release that is already tagged.
