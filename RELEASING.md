@@ -2,8 +2,7 @@ Releasing
 =========
 
 Publishing happens in CI through PyPI Trusted Publishing (OIDC). There is no PyPI token
-to hold locally, and `make release` is not the release path — it uploads with a stored
-credential and skips provenance.
+to hold locally.
 
 1. Update the version in **both** `pyproject.toml` and `segment/analytics/version.py`.
    The publish workflow validates the release tag against `pyproject.toml` and fails if
