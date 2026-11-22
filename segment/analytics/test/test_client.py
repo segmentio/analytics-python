@@ -266,6 +266,17 @@ class TestClient(unittest.TestCase):
         for consumer in client.consumers:
             self.assertFalse(consumer.is_alive())
 
+    def test_thread_option_keeps_every_consumer(self):
+        client = Client("testsecret", thread=3, on_error=self.fail)
+        try:
+            self.assertEqual(len(client.consumers), 3)
+            self.assertTrue(all(consumer.is_alive() for consumer in client.consumers))
+        finally:
+            client.shutdown()
+        # shutdown() has to stop every consumer thread, not only the last one
+        for consumer in client.consumers:
+            self.assertFalse(consumer.is_alive())
+
     def test_synchronous(self):
         client = Client("testsecret", sync_mode=True)
 
